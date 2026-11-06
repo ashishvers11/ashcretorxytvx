@@ -41,6 +41,88 @@ interface ChannelIdea {
   sources: string[];
 }
 
+// Channel 0: Kids & 3D Pixar Animation (@CURIOKID_VERS)
+const IDEAS_KIDS_ANIMATION: ChannelIdea[] = [
+  {
+    id: 101,
+    title: "शेर और नटखट खरगोश की जादुी दोस्ती (3D Animation Moral Story)",
+    format: "story",
+    potential: "Massive Family Viral (21.4% CTR)",
+    audience: "Kids, parents, and cartoon story lovers",
+    curiosityAngle: "How intelligence and kindness outsmarts raw strength in the animal kingdom",
+    hook: "'जंगल के सबसे खूंखार शेर ने जब एक नन्हे खरगोश को अपनी गुफा में बुलाया, तो सबने सोचा खरगोश का बचना नामुमकिन है... लेकिन!'",
+    visualStyle: "3D Pixar Animation / 2D Cartoon Story",
+    estimatedDuration: "50s",
+    originalityScore: 98,
+    sources: ["Panchatantra Wisdom Classic", "Aesop Fable Moral Collection"],
+  },
+  {
+    id: 102,
+    title: "डायनासोर असल में कैसे गायब हुए? Kids 3D Adventure Explainer",
+    format: "guide",
+    potential: "Breakout Curiosity (19.8% CTR)",
+    audience: "Curious kids & little scientists",
+    curiosityAngle: "Chicxulub asteroid impact explained with cute dinosaur explorers and cosmic dust",
+    hook: "'6 करोड़ 60 लाख साल पहले आसमान से गिरी वो जादुई चट्टान, जिसने डायनासोरों की दुनिया को हमेशा के लिए बदल दिया!'",
+    visualStyle: "3D Pixar Animation / 2D Cartoon Story",
+    estimatedDuration: "55s",
+    originalityScore: 96,
+    sources: ["NASA Astrobiology", "Smithsonian Paleobiology Dept"],
+  },
+  {
+    id: 103,
+    title: "चींटी अपने वजन से 50 गुना ज्यादा वजन कैसे उठाती है? Tiny Superhero",
+    format: "guide",
+    potential: "High Retention Kids Wonder (17.2% CTR)",
+    audience: "Young curious minds & animal fans",
+    curiosityAngle: "Ant superhero neck joint biomechanics shown with fun cartoon weights",
+    hook: "'अगर आपके पास चींटी जितनी ताकत होती, तो आप एक भारी बस को एक उंगली पर उठा लेते!'",
+    visualStyle: "3D Pixar Animation / 2D Cartoon Story",
+    estimatedDuration: "45s",
+    originalityScore: 94,
+    sources: ["National Geographic Kids", "Entomological Society of America"],
+  },
+  {
+    id: 104,
+    title: "आसमान का रंग हमेशा नीला ही क्यों दिखता है? Little Scientist",
+    format: "guide",
+    potential: "Evergreen Educational (16.5% CTR)",
+    audience: "Preschool to primary school kids & parents",
+    curiosityAngle: "Sunlight bouncing like colorful rubber balls through air particles",
+    hook: "'सूरज की रोशनी असल में सफेद होती है, फिर दोपहर में आसमान इतना चमकदार नीला कैसे बन जाता है?'",
+    visualStyle: "3D Pixar Animation / 2D Cartoon Story",
+    estimatedDuration: "48s",
+    originalityScore: 95,
+    sources: ["NASA Science for Kids", "American Physical Society Outreach"],
+  },
+  {
+    id: 105,
+    title: "चाँद दिन के उजाले में भी आसमान में क्यों दिखाई देता है?",
+    format: "story",
+    potential: "Bedtime Wonder (15.9% CTR)",
+    audience: "Kids & night bedtime learners",
+    curiosityAngle: "Lunar orbital reflection explained with glowing mirror balls",
+    hook: "'सूरज निकला हुआ है, फिर भी आसमान के एक कोने में चाँद चुपके से क्या कर रहा है?'",
+    visualStyle: "3D Pixar Animation / 2D Cartoon Story",
+    estimatedDuration: "45s",
+    originalityScore: 93,
+    sources: ["European Space Agency Kids", "Royal Observatory Greenwich"],
+  },
+  {
+    id: 106,
+    title: "इंद्रधनुष के 7 रंगों का जादुई रहस्य (Rainbow Colors Quest)",
+    format: "challenge",
+    potential: "Visual Delight (18.6% CTR)",
+    audience: "Kids learning colors and light magic",
+    curiosityAngle: "Raindrop crystal prism refraction with dancing animated color characters",
+    hook: "'बारिश रुकते ही आसमान में ये 7 रंगों का खूबसूरत पुल कौन बनाता है? मिलिए पानी की जादुई बूंद से!'",
+    visualStyle: "3D Pixar Animation / 2D Cartoon Story",
+    estimatedDuration: "50s",
+    originalityScore: 97,
+    sources: ["Caltech Light & Optics", "Kids Weather Science Project"],
+  },
+];
+
 // Channel A: Science Curiosities & 2D Stickman (@ashishfn)
 const IDEAS_STICKMAN_SCIENCE: ChannelIdea[] = [
   {
@@ -227,17 +309,31 @@ export default function VideoIdeasPage() {
   const [formatFilter, setFormatFilter] = React.useState<"all" | "guide" | "challenge" | "story">("all");
   const [isGenerating, setIsGenerating] = React.useState(false);
 
-  // Determine active channel idea bank based on its Style DNA
+  // Determine active channel idea bank based on its Style DNA and Niche
   const activeIdeasPool = React.useMemo(() => {
-    const styleType = activeChannelStyle?.visualAnimationStyle;
-    if (styleType === "paper_cutout") {
+    const styleType = (activeChannelStyle?.visualAnimationStyle || "") as string;
+    const niche = (activeChannelStyle?.channelNiche || "").toLowerCase();
+    const title = (channel?.channel_title || "").toLowerCase();
+
+    const isKids =
+      styleType === "pixar_3d" ||
+      styleType === "animation_2d" ||
+      niche.includes("kid") ||
+      niche.includes("animation") ||
+      title.includes("curiokid") ||
+      title.includes("kid");
+
+    if (isKids) {
+      return IDEAS_KIDS_ANIMATION;
+    }
+    if (styleType === "paper_cutout" || niche.includes("paper") || niche.includes("history")) {
       return IDEAS_PAPER_HISTORY;
     }
-    if (styleType === "asmr_satisfying") {
+    if (styleType === "asmr_satisfying" || niche.includes("asmr")) {
       return IDEAS_ASMR_PHYSICS;
     }
     return IDEAS_STICKMAN_SCIENCE;
-  }, [activeChannelStyle]);
+  }, [activeChannelStyle, channel]);
 
   const [ideas, setIdeas] = React.useState<ChannelIdea[]>(activeIdeasPool);
 

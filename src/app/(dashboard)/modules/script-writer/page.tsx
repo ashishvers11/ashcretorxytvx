@@ -80,9 +80,19 @@ function VideoIntelligenceStudioContent() {
   const { channel, activeChannelStyle } = useAuth();
 
   // Form State
-  const [topic, setTopic] = React.useState(
-    titleFromUrl || "लौंग असल में फूल है या फल? (The Science Behind Cloves)"
-  );
+  const defaultTopicForChannel = React.useMemo(() => {
+    if (titleFromUrl) return titleFromUrl;
+    if (activeChannelStyle?.popularTopics && activeChannelStyle.popularTopics.length > 0) {
+      return activeChannelStyle.popularTopics[0];
+    }
+    const title = (channel?.channel_title || "").toLowerCase();
+    if (title.includes("curiokid") || title.includes("kid")) {
+      return "शेर और नटखट खरगोश की जादुई कहानी (3D Moral Story)";
+    }
+    return "लौंग असल में फूल है या फल? (The Science Behind Cloves)";
+  }, [titleFromUrl, activeChannelStyle, channel]);
+
+  const [topic, setTopic] = React.useState(defaultTopicForChannel);
   const [format, setFormat] = React.useState<"shorts" | "longform">("shorts");
   const [durationSeconds, setDurationSeconds] = React.useState<number>(55);
 
@@ -105,20 +115,22 @@ function VideoIntelligenceStudioContent() {
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
   const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
 
-  // Auto-sync style when channel or URL changes
+  // Auto-sync style and topic when channel or URL changes
   React.useEffect(() => {
     if (styleFromUrl) {
       setSelectedStyleId(styleFromUrl);
     } else if (activeChannelStyle?.visualAnimationStyle) {
       setSelectedStyleId(activeChannelStyle.visualAnimationStyle as SupportedVideoStyleId);
     }
-  }, [styleFromUrl, activeChannelStyle]);
+  }, [styleFromUrl, activeChannelStyle?.visualAnimationStyle]);
 
   React.useEffect(() => {
-    if (titleFromUrl && titleFromUrl !== topic) {
+    if (titleFromUrl) {
       setTopic(titleFromUrl);
+    } else if (activeChannelStyle?.popularTopics && activeChannelStyle.popularTopics.length > 0) {
+      setTopic(activeChannelStyle.popularTopics[0]);
     }
-  }, [titleFromUrl]);
+  }, [titleFromUrl, activeChannelStyle?.profileId]);
 
   // Run the Complete Video Intelligence Engine
   const runGeneration = React.useCallback(

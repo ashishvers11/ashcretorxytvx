@@ -46,12 +46,26 @@ export default function TrendResearchPage() {
 
   const channelTitle = channel?.channel_title || "";
   const niche = activeChannelStyle?.channelNiche || "";
+  const style = (activeChannelStyle?.visualAnimationStyle || "") as string;
 
   const isKids =
+    style === "pixar_3d" ||
+    style === "animation_2d" ||
     channelTitle.toLowerCase().includes("curiokid") ||
     channelTitle.toLowerCase().includes("kid") ||
     niche.toLowerCase().includes("kid") ||
     niche.toLowerCase().includes("animation");
+
+  const isPaper =
+    style === "paper_cutout" ||
+    channelTitle.toLowerCase().includes("paper") ||
+    niche.toLowerCase().includes("paper") ||
+    niche.toLowerCase().includes("history");
+
+  const isAsmr =
+    style === "asmr_satisfying" ||
+    channelTitle.toLowerCase().includes("asmr") ||
+    niche.toLowerCase().includes("asmr");
 
   // Fetch live YouTube trends with channel intelligence parameters
   const fetchTrends = React.useCallback(
@@ -63,6 +77,7 @@ export default function TrendResearchPage() {
         if (cat) params.set("category", cat);
         if (channelTitle) params.set("channelTitle", channelTitle);
         if (niche) params.set("niche", niche);
+        if (style) params.set("style", style);
 
         const res = await fetch(`/api/youtube/trends?${params.toString()}`);
         const data = await res.json();
@@ -76,12 +91,12 @@ export default function TrendResearchPage() {
         setIsLoading(false);
       }
     },
-    [channelTitle, niche]
+    [channelTitle, niche, style]
   );
 
   React.useEffect(() => {
     fetchTrends("", selectedCategory);
-  }, [fetchTrends, selectedCategory]);
+  }, [fetchTrends, selectedCategory, channel?.id, activeChannelStyle?.profileId]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,12 +107,32 @@ export default function TrendResearchPage() {
   const quickSeeds = React.useMemo(() => {
     if (isKids) {
       return [
+        "शेर और खरगोश की कहानी",
         "डायनासोर कैसे गायब हुए",
-        "आसमान नीला क्यों होता है",
         "चींटी की ताकत का रहस्य",
-        "चाँद पर कौन रहता है",
-        "इंद्रधनुष के 7 रंग",
-        "Kids Moral Stories 3D",
+        "आसमान नीला क्यों होता है",
+        "चाँद दिन में क्यों दिखता है",
+        "इंद्रधनुष के जादुई 7 रंग",
+      ];
+    }
+    if (isPaper) {
+      return [
+        "द ग्रेट लाइब्रेरी ऑफ अलेक्जेंड्रिया",
+        "रोम की 9वीं सेना का रहस्य",
+        "वाइकिंग्स का जादुई सनस्टोन",
+        "सिंधु घाटी सभ्यता का सच",
+        "ताजमहल के 22 बंद कमरे",
+        "पिरामिड बनाने वालों की डायरी",
+      ];
+    }
+    if (isAsmr) {
+      return [
+        "पिघला हुआ बिस्मथ क्रिस्टल",
+        "हाइड्रोलिक प्रेस vs स्टील",
+        "काइनेटिक सैंड हॉट नाइफ",
+        "प्रिंस रूपर्ट ड्रॉप बुलेट",
+        "लिक्विड नाइट्रोजन ग्लास",
+        "Hypnotic Kinetic Loops",
       ];
     }
     return [
@@ -108,7 +143,7 @@ export default function TrendResearchPage() {
       "धरती 5 सेकंड रुक जाए तो",
       "Daily Life Curiosities",
     ];
-  }, [isKids]);
+  }, [isKids, isPaper, isAsmr]);
 
   // Categories adapt to channel
   const categories = React.useMemo(() => {
@@ -121,13 +156,28 @@ export default function TrendResearchPage() {
         { id: "stories", label: "Moral Stories" },
       ];
     }
+    if (isPaper) {
+      return [
+        { id: "all", label: "All Topics" },
+        { id: "stories", label: "Historical Mysteries" },
+        { id: "curiosity", label: "Tactile Paper Craft" },
+        { id: "science", label: "Ancient Engineering" },
+      ];
+    }
+    if (isAsmr) {
+      return [
+        { id: "all", label: "All Topics" },
+        { id: "science", label: "Macro Physics" },
+        { id: "curiosity", label: "Satisfying Textures" },
+      ];
+    }
     return [
       { id: "all", label: "All Topics" },
       { id: "science", label: "Science Facts" },
       { id: "curiosity", label: "Daily Curiosities" },
       { id: "space", label: "Space & Physics" },
     ];
-  }, [isKids]);
+  }, [isKids, isPaper, isAsmr]);
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-12 max-w-6xl mx-auto px-1 sm:px-0">

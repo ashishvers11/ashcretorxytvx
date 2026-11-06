@@ -319,6 +319,48 @@ export const PRESET_CHANNEL_PROFILES: Record<string, Partial<ChannelStyleProfile
     contentRestrictions: ["No loud shouting voiceover", "No aggressive jump-cuts", "Keep visuals soothing and pristine"],
     dominantPacingWpm: 105,
   },
+
+  // Channel D: Kids & 3D Pixar Animation (@CURIOKID_VERS)
+  curiokid_vers_preset: {
+    channelName: "CURIOKID VERS",
+    channelNiche: "Kids & Family Animation Stories",
+    channelSubNiche: "3D Moral Adventures, Animal Friends & Fun Curiosities",
+    targetAudience: "Kids, parents, and curious family animation viewers",
+    audienceAgeGroup: "Kids 4–12 & Family",
+    primaryLanguage: "Hindi",
+    contentFormat: "YouTube Shorts (9:16)",
+    videoDuration: "40–55s animated adventure shorts",
+    visualAnimationStyle: "pixar_3d",
+    visualStyleLabel: "3D Pixar Animation / 2D Cartoon Story",
+    editingStyle: "Snappy cartoon rhythm, expressive sound effects, colorful character action",
+    voiceoverStyle: "Warm, animated, enthusiastic kid-friendly storyteller",
+    storytellingStyle: "Exciting Adventure Hook -> Cute Character Problem -> Magical Discovery -> Warm Moral Lesson",
+    hookStyle: "Friendly animated character opening with a magical question or funny problem",
+    averageVideoLength: 50,
+    popularTopics: [
+      "शेर और नटखट खरगोश की जादुई कहानी (3D Moral Story)",
+      "डायनासोर असल में कैसे गायब हुए? (Kids 3D Adventure)",
+      "चींटी अपने वजन से 50 गुना ज्यादा वजन कैसे उठाती है?",
+      "आसमान का रंग हमेशा नीला क्यों दिखता है? (Little Scientist)",
+      "चाँद दिन में भी आसमान में क्यों दिखाई देता है?",
+      "इंद्रधनुष के 7 रंगों का जादुई रहस्य (Rainbow Quest)",
+    ],
+    successfulVideoPatterns: [
+      "Vibrant 3D character greeting in first 1.5 seconds",
+      "Fun cartoon sound effect (pop/whoosh) accompanying movement",
+      "Relatable kid question answered through playful animation",
+      "Happy positive ending with cute character gesture",
+    ],
+    competitorChannels: ["Cocomelon", "Infobells Hindi", "ChuChu TV", "Koo Koo TV"],
+    contentRestrictions: [
+      "No violence or scary visuals",
+      "No dry scientific textbook formulas",
+      "Keep pacing upbeat, joyful, and wholesome",
+    ],
+    characterAnchor: "Cute expressive 3D Pixar-style animated boy explorer character wearing a tiny explorer cap, vibrant jacket, sparkling curious eyes, accompanied by a playful animal friend",
+    characterName: "Curio Explorer",
+    dominantPacingWpm: 130,
+  },
 };
 
 // ==============================================================================
@@ -341,8 +383,15 @@ export function analyzeAndGenerateChannelDNA(
   const channelId = channel.id || `chan-${channel.youtube_channel_id}`;
   const ytId = channel.youtube_channel_id;
 
-  // Check if a pre-calibrated signature profile exists (e.g. @ashishfn)
-  const preset = PRESET_CHANNEL_PROFILES[ytId];
+  // Check if a pre-calibrated signature profile exists (e.g. @ashishfn, @CURIOKID_VERS)
+  let preset = PRESET_CHANNEL_PROFILES[ytId];
+  if (!preset) {
+    const lowerName = (channel.channel_title || "").toLowerCase();
+    const lowerHandle = (channel.custom_url || "").toLowerCase();
+    if (lowerName.includes("curiokid") || lowerHandle.includes("curiokid")) {
+      preset = PRESET_CHANNEL_PROFILES["curiokid_vers_preset"];
+    }
+  }
 
   // Aggregate video title text to detect dominant keywords and format
   const allTitles = recentVideos.map((v) => v.title).join(" ").toLowerCase();
@@ -352,34 +401,202 @@ export function analyzeAndGenerateChannelDNA(
     .toLowerCase();
   const corpus = `${channel.channel_title} ${channel.description || ""} ${allTitles} ${allDescriptions}`.toLowerCase();
 
-  // Detect Visual Animation Style
+  // Detect Visual Animation Style & Dominant Niche
   let detectedStyle: VisualAnimationType = "stickman_doodle";
+  const isKidsCorpus =
+    corpus.includes("curiokid") ||
+    corpus.includes("kid") ||
+    corpus.includes("cartoon") ||
+    corpus.includes("animation") ||
+    corpus.includes("chuchu") ||
+    corpus.includes("cocomelon") ||
+    corpus.includes("kinder") ||
+    channel.channel_title.toLowerCase().includes("kid") ||
+    channel.channel_title.toLowerCase().includes("curiokid");
+
+  const isPaperCraft =
+    corpus.includes("paper") ||
+    corpus.includes("cutout") ||
+    corpus.includes("craft") ||
+    corpus.includes("cut out") ||
+    corpus.includes("origami");
+
+  const isAsmr =
+    corpus.includes("asmr") ||
+    corpus.includes("satisfying") ||
+    corpus.includes("relaxing") ||
+    corpus.includes("zen") ||
+    corpus.includes("kinetic sand");
+
+  const isGaming =
+    corpus.includes("game") ||
+    corpus.includes("gaming") ||
+    corpus.includes("minecraft") ||
+    corpus.includes("gta") ||
+    corpus.includes("roblox") ||
+    corpus.includes("gameplay");
+
+  const isHorror =
+    corpus.includes("horror") ||
+    corpus.includes("mystery") ||
+    corpus.includes("crime") ||
+    corpus.includes("dark") ||
+    corpus.includes("paranormal") ||
+    corpus.includes("bhoot");
+
   if (preset?.visualAnimationStyle) {
     detectedStyle = preset.visualAnimationStyle;
-  } else if (corpus.includes("paper") || corpus.includes("cutout") || corpus.includes("craft") || corpus.includes("cut out")) {
+  } else if (isKidsCorpus) {
+    detectedStyle = "pixar_3d";
+  } else if (isPaperCraft) {
     detectedStyle = "paper_cutout";
-  } else if (corpus.includes("asmr") || corpus.includes("satisfying") || corpus.includes("relaxing") || corpus.includes("zen")) {
+  } else if (isAsmr) {
     detectedStyle = "asmr_satisfying";
+  } else if (isGaming) {
+    detectedStyle = "realistic_cinematic";
+  } else if (isHorror) {
+    detectedStyle = "noir_mystery";
   } else if (corpus.includes("stickman") || corpus.includes("doodle") || corpus.includes("ashish") || corpus.includes("sketch")) {
     detectedStyle = "stickman_doodle";
-  } else if (corpus.includes("pixar") || corpus.includes("disney") || corpus.includes("3d animation") || corpus.includes("cartoon")) {
-    detectedStyle = "pixar_3d";
   } else if (corpus.includes("whiteboard") || corpus.includes("drawing") || corpus.includes("hand drawn")) {
     detectedStyle = "whiteboard_explainer";
-  } else if (corpus.includes("cinematic") || corpus.includes("documentary") || corpus.includes("real life") || corpus.includes("8k")) {
-    detectedStyle = "realistic_cinematic";
-  } else if (corpus.includes("unreal") || corpus.includes("physics") || corpus.includes("sci-fi") || corpus.includes("space")) {
-    detectedStyle = "unreal_3d";
-  } else if (corpus.includes("mystery") || corpus.includes("crime") || corpus.includes("dark") || corpus.includes("noir")) {
-    detectedStyle = "noir_mystery";
   } else {
-    // Default to clean 2D Stickman for Ashish Studio or realistic cinematic for unknown
     detectedStyle = channel.channel_title.toLowerCase().includes("ashish")
       ? "stickman_doodle"
       : "realistic_cinematic";
   }
 
   const styleDef = VISUAL_STYLE_DEFINITIONS[detectedStyle];
+
+  // Infer Dynamic Niche, Sub-Niche, and Channel-Specific Popular Topics
+  let inferredNiche = "Education & Science Facts";
+  let inferredSubNiche = "Curious Questions, Everyday Mysteries & Science Breakdowns";
+  let inferredTargetAudience = "Curious Hindi-speaking youth, learners & fact enthusiasts";
+  let inferredAgeGroup = "18–28 Curious Minds";
+  let inferredHookStyle = "Direct counter-intuitive question that challenges popular assumptions";
+  let inferredStorytelling = "Curiosity Hook -> Misconception -> Scientific Explanation -> Story Development -> Payoff Revelation";
+  let inferredPopularTopics = [
+    "लौंग असल में फूल है या फल? (Botanical Mythbuster)",
+    "अगर धरती 5 सेकंड के लिए घूमना बंद कर दे तो क्या होगा?",
+    "हवाई जहाज का रंग हमेशा सफेद ही क्यों होता है?",
+    "मोबाइल की बैटरी को 80% पर ही क्यों रोक देना चाहिए?",
+  ];
+  let inferredCompetitors = ["FactTechz", "Science Fiction Hindi", "Curious Guruji"];
+  let inferredRestrictions = [
+    "Never use generic textbook explanations",
+    "Never invent fake statistics or unverified claims",
+    "No repetitive AI buzzwords (e.g. 'dive in', 'delve', 'unravel')",
+  ];
+
+  if (isKidsCorpus) {
+    inferredNiche = "Kids & Family Animation Stories";
+    inferredSubNiche = "3D Moral Adventures, Animal Friends & Fun Curiosities";
+    inferredTargetAudience = "Young kids, parents, and curious family viewers";
+    inferredAgeGroup = "Kids 4–12 & Family";
+    inferredHookStyle = "Friendly animated character opening with a magical question or exciting problem";
+    inferredStorytelling = "Exciting Adventure Hook -> Cute Character Problem -> Magical Discovery -> Warm Moral Lesson";
+    inferredPopularTopics = [
+      "शेर और नटखट खरगोश की जादुई कहानी (3D Moral Story)",
+      "डायनासोर असल में कैसे गायब हुए? (Kids 3D Adventure)",
+      "चींटी अपने वजन से 50 गुना ज्यादा वजन कैसे उठाती है?",
+      "आसमान का रंग हमेशा नीला क्यों दिखता है? (Little Scientist)",
+      "चाँद दिन में भी आसमान में क्यों दिखाई देता है?",
+      "इंद्रधनुष के 7 रंगों का जादुई रहस्य (Rainbow Quest)",
+    ];
+    inferredCompetitors = ["Cocomelon", "Infobells Hindi", "ChuChu TV", "Koo Koo TV"];
+    inferredRestrictions = [
+      "No scary themes or violence",
+      "No dense textbook scientific formulas",
+      "Keep language warm, fun, and kid-appropriate",
+    ];
+  } else if (isPaperCraft) {
+    inferredNiche = "Tactile Paper Craft & Historical Mysteries";
+    inferredSubNiche = "Lost Civilizations, Ancient Engineering & Parchment Chronicles";
+    inferredTargetAudience = "Documentary lovers, history enthusiasts & craft viewers";
+    inferredAgeGroup = "18–35 Curious Learners";
+    inferredHookStyle = "Tactile paper unfold revealing an ancient forgotten relic";
+    inferredStorytelling = "Ancient Parchment Reveal -> Tactical Conflict -> Archaeological Clue -> Echo in Modern World";
+    inferredPopularTopics = [
+      "द ग्रेट लाइब्रेरी ऑफ अलेक्जेंड्रिया कैसे जली? (Paper Cut-Out History)",
+      "रोम की 9वीं सेना रहस्यमयी तरीके से कहाँ गायब हो गई?",
+      "वाइकिंग्स बादलों में सूर्य की दिशा कैसे पहचानते थे?",
+      "सिंधु घाटी सभ्यता के लोग अचानक कहाँ चले गए?",
+      "ताजमहल के नीचे बंद 22 कमरों का ऐतिहासिक सच",
+      "पिरामिड बनाने वाले कारीगरों की डायरी से निकला रहस्य",
+    ];
+    inferredCompetitors = ["Fall of Civilizations", "Oversimplified", "Kings and Generals"];
+    inferredRestrictions = [
+      "Never use modern digital neon colors",
+      "Maintain textured papercraft aesthetic",
+      "Factually accurate historical dates",
+    ];
+  } else if (isAsmr) {
+    inferredNiche = "Sensory ASMR & Hypnotic Material Transformations";
+    inferredSubNiche = "Macro Crystal Growth, Sand Slicing & Sound Loops";
+    inferredTargetAudience = "Relaxation seekers, satisfying physics lovers";
+    inferredAgeGroup = "Broad 16–40 Sensory Audience";
+    inferredHookStyle = "Intense close-up sound and hypnotic texture transformation in scene 1";
+    inferredStorytelling = "Hypnotic Visual Opening -> Micro Mechanism Reveal -> Mind-Soothing Realization";
+    inferredPopularTopics = [
+      "पिघले हुए बिस्मथ से रेनबो क्रिस्टल कैसे बनते हैं? (Satisfying Macro)",
+      "हाइड्रोलिक प्रेस बनाम 1000 परतों वाला दामस्कस स्टील",
+      "काइनेटिक सैंड को गर्म चाकू से काटने पर क्या होता है?",
+      "प्रिंस रूपर्ट ड्रॉप के सिर पर गोली मारने का सुपर स्लो मोशन",
+      "ग्लास के अंदर लिक्विड नाइट्रोजन डालने पर जादुई फ्रीज",
+    ];
+    inferredCompetitors = ["The Action Lab", "NileRed Shorts", "Oddly Satisfying"];
+    inferredRestrictions = [
+      "No loud jarring sound effects",
+      "No aggressive shouting voiceovers",
+      "Audio must be smooth and binaural",
+    ];
+  } else if (isGaming) {
+    inferredNiche = "Gaming Lore, Secrets & Speedrun Physics";
+    inferredSubNiche = "Hidden Easter Eggs, Unsolved Mysteries & Glitches";
+    inferredTargetAudience = "Gamers, virtual world explorers & youth";
+    inferredAgeGroup = "13–25 Active Gamers";
+    inferredHookStyle = "High-stakes gaming mystery or impossible glitch hook";
+    inferredStorytelling = "Impossible In-Game Feat -> Developer Secret -> Physics Engine Exploit -> Epic Payoff";
+    inferredPopularTopics = [
+      "GTA 5 के माउंट चिलियाड का अनसुलझा एलियन रहस्य",
+      "Minecraft के हेरोब्राइन की असली कहानी क्या है?",
+      "Red Dead Redemption 2 के 5 सबसे डरावने सीक्रेट्स",
+      "वीडियो गेम्स में आईने (Mirrors) बनाना इतना मुश्किल क्यों होता है?",
+      "Speedrunners गेम की दीवारों के आर-पार कैसे चले जाते हैं?",
+    ];
+    inferredCompetitors = ["Total Gaming", "Mythpat", "Game Theorists", "IGN"];
+    inferredRestrictions = [
+      "Accurate game engine details",
+      "Dynamic kinetic capture pacing",
+    ];
+  } else if (isHorror) {
+    inferredNiche = "Dark Psychological Mysteries & Unsolved Cases";
+    inferredSubNiche = "Unexplained Phenomena, Urban Legends & Forensic Crime";
+    inferredTargetAudience = "Crime, paranormal & suspense mystery lovers";
+    inferredAgeGroup = "18–35 Thriller Fans";
+    inferredHookStyle = "Chilling real-life quote or haunting archival photo hook";
+    inferredStorytelling = "Ominous Setting -> The Vanishing Incident -> Forensic Clues -> Unresolved Theory";
+    inferredPopularTopics = [
+      "डायटलोव पास पर 9 पर्वतारोहियों की रहस्यमयी मौत का सच",
+      "बर्मूडा ट्रायंगल के नीचे असल में क्या छुपा है?",
+      "भानगढ़ किले में सूरज ढलने के बाद क्या होता है?",
+      "मैरी सेलेस्टे जहाज से सभी लोग कहाँ गायब हो गए?",
+      "दुनिया का सबसे डरावना साउंड: द ब्लोप (The Bloop)",
+    ];
+    inferredCompetitors = ["Khooni Monday", "FactVerse Horror", "Dark Web Files"];
+    inferredRestrictions = [
+      "Treat sensitive real victims with respect",
+      "Preserve atmospheric dread",
+    ];
+  }
+
+  // If the channel has actual uploaded video titles, integrate them into popular topics!
+  if (recentVideos.length > 0) {
+    const extractedTitles = recentVideos.slice(0, 4).map((v) => v.title.replace(/#\w+/g, "").trim()).filter(Boolean);
+    if (extractedTitles.length > 0) {
+      inferredPopularTopics = [...extractedTitles, ...inferredPopularTopics.slice(extractedTitles.length)];
+    }
+  }
 
   // Detect Language
   const isHindiDominant =
@@ -411,14 +628,10 @@ export function analyzeAndGenerateChannelDNA(
       channel.description ||
       preset?.channelDescription ||
       "Official YouTube Channel synced with ASH Creator Studio 2.0 Content Intelligence",
-    channelNiche: preset?.channelNiche || "Education & Science Facts",
-    channelSubNiche: preset?.channelSubNiche || "Curious Questions, Everyday Mysteries & Science Breakdowns",
-    targetAudience:
-      preset?.targetAudience ||
-      (primaryLanguage === "Hindi"
-        ? "Curious Hindi-speaking youth, learners & fact enthusiasts"
-        : "Curious global learners and documentary viewers"),
-    audienceAgeGroup: preset?.audienceAgeGroup || "18–28 Curious Minds",
+    channelNiche: preset?.channelNiche || inferredNiche,
+    channelSubNiche: preset?.channelSubNiche || inferredSubNiche,
+    targetAudience: preset?.targetAudience || inferredTargetAudience,
+    audienceAgeGroup: preset?.audienceAgeGroup || inferredAgeGroup,
     primaryLanguage,
     contentFormat,
     videoDuration: preset?.videoDuration || "45–60s fast-paced shorts",
@@ -432,18 +645,10 @@ export function analyzeAndGenerateChannelDNA(
       (primaryLanguage === "Hindi"
         ? "Energetic, engaging, conversational Hindi narrator with natural pacing"
         : "Articulate, engaging English documentary voiceover with clear enunciation"),
-    storytellingStyle:
-      preset?.storytellingStyle ||
-      "Curiosity Hook -> Misconception -> Scientific Explanation -> Story Development -> Payoff Revelation",
-    hookStyle: preset?.hookStyle || "Direct counter-intuitive question that challenges popular assumptions",
+    storytellingStyle: preset?.storytellingStyle || inferredStorytelling,
+    hookStyle: preset?.hookStyle || inferredHookStyle,
     averageVideoLength: preset?.averageVideoLength || 52,
-    popularTopics:
-      preset?.popularTopics || [
-        "लौंग का असली सच (फूल या फल?)",
-        "धरती 5 सेकंड रुक जाए तो",
-        "हवाई जहाज का रंग सफेद ही क्यों",
-        "मोबाइल 100% चार्जिंग मिथ",
-      ],
+    popularTopics: preset?.popularTopics || inferredPopularTopics,
     successfulVideoPatterns:
       preset?.successfulVideoPatterns || [
         "Hook within 1-2 seconds with curiosity gap",
@@ -451,13 +656,8 @@ export function analyzeAndGenerateChannelDNA(
         "Visual-audio synchronization on every scene",
         "Seamless next-video binge recommendation",
       ],
-    competitorChannels: preset?.competitorChannels || ["FactTechz", "Science Fiction Hindi", "Curious Guruji"],
-    contentRestrictions:
-      preset?.contentRestrictions || [
-        "Never use generic textbook explanations",
-        "Never invent fake statistics or unverified claims",
-        "No repetitive AI buzzwords (e.g. 'dive in', 'delve', 'unravel')",
-      ],
+    competitorChannels: preset?.competitorChannels || inferredCompetitors,
+    contentRestrictions: preset?.contentRestrictions || inferredRestrictions,
     visualPromptModifier: styleDef.promptModifier,
     negativePrompt: styleDef.negativePrompt,
     lightingPreference: styleDef.lightingPreference,

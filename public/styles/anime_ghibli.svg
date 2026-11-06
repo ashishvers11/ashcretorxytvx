@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="40%" stop-color="#38bdf8"/>
+      <stop offset="70%" stop-color="#bae6fd"/>
+      <stop offset="100%" stop-color="#f0fdf4"/>
+    </linearGradient>
+    <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="70%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="hillsGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="60%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="240" fill="url(#skyGrad)"/>
+
+  <!-- Sun Rays Radiating Through Clouds -->
+  <g opacity="0.25">
+    <polygon points="120,0 200,240 160,240 100,0" fill="#fef08a"/>
+    <polygon points="180,0 300,240 260,240 160,0" fill="#fef08a"/>
+  </g>
+
+  <!-- Giant Fluffy Ghibli / Makoto Shinkai Cumulus Clouds -->
+  <g fill="url(#cloudGrad)" opacity="0.95">
+    <circle cx="160" cy="110" r="45"/>
+    <circle cx="215" cy="90" r="55"/>
+    <circle cx="270" cy="105" r="45"/>
+    <circle cx="320" cy="120" r="35"/>
+    <circle cx="110" cy="125" r="30"/>
+  </g>
+
+  <!-- Distant Blue Mountains -->
+  <path d="M 0 150 Q 100 125 180 145 Q 260 115 400 145 L 400 240 L 0 240 Z" fill="#64748b" opacity="0.35"/>
+
+  <!-- Rolling Lush Green Hills -->
+  <path d="M 0 170 Q 120 140 230 175 Q 310 150 400 165 L 400 240 L 0 240 Z" fill="url(#hillsGrad)"/>
+  <path d="M 0 195 Q 160 165 400 190 L 400 240 L 0 240 Z" fill="#15803d"/>
+
+  <!-- Lone Anime Tree on Hill with Wind Swirls -->
+  <g transform="translate(110, 155)">
+    <!-- Trunk -->
+    <path d="M 0 25 Q -3 10 0 0 Q 3 10 4 25 Z" fill="#78350f"/>
+    <!-- Foliage / Canopy -->
+    <circle cx="2" cy="-12" r="16" fill="#16a34a"/>
+    <circle cx="-6" cy="-8" r="12" fill="#22c55e"/>
+    <circle cx="8" cy="-6" r="14" fill="#4ade80"/>
+  </g>
+
+  <!-- Flying bird silhouettes -->
+  <path d="M 280 60 Q 285 55 290 60 Q 295 55 300 60" stroke="#0369a1" stroke-width="2" fill="none"/>
+  <path d="M 310 45 Q 314 41 318 45 Q 322 41 326 45" stroke="#0369a1" stroke-width="1.5" fill="none"/>
+
+  <!-- Badge -->
+  <g transform="translate(15, 202)">
+    <rect width="245" height="26" rx="6" fill="#0284c7" fill-opacity="0.9"/>
+    <text x="10" y="17" fill="#ffffff" font-family="system-ui, sans-serif" font-size="11" font-weight="800">
+      ★ STUDIO GHIBLI / ANIME NATURE
+    </text>
+  </g>
+</svg>

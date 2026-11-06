@@ -216,30 +216,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             if (savedChannel) {
-              setChannel(JSON.parse(savedChannel));
+              try {
+                const parsed = JSON.parse(savedChannel);
+                // Clear the legacy auto-connected mock channel so creators connect their own channel
+                if (parsed?.id === "chan-ashishfn") {
+                  localStorage.removeItem(LOCAL_STORAGE_KEY_CHANNEL);
+                  setChannel(null);
+                } else {
+                  setChannel(parsed);
+                }
+              } catch {
+                localStorage.removeItem(LOCAL_STORAGE_KEY_CHANNEL);
+                setChannel(null);
+              }
             } else {
-              const ashishChannel: Channel = {
-                id: "chan-ashishfn",
-                user_id: defaultUserId,
-                youtube_channel_id: "UCq_9aJ9FOog48qCfPikSKdg",
-                channel_title: "ASHISH FN",
-                custom_url: "ashishfn",
-                description: "Official YouTube Channel for ASHISH FN — Education, Science Facts & Curiosities",
-                thumbnail_url: "https://yt3.googleusercontent.com/t6sER0GNq6k1ZviJujhUdP8dLqv9sHDa137pz-Zmlz8-IsSFDwERMAHjFf5GeGAYpxUcv7msvw=s200-c-k-c0x00ffffff-no-rj",
-                subscriber_count: 2,
-                video_count: 8,
-                view_count: 1240,
-                is_primary: true,
-                is_connected: true,
-                uploads_playlist_id: "UUq_9aJ9FOog48qCfPikSKdg",
-                published_at: "2024-01-01T00:00:00Z",
-                is_oauth_authorized: true,
-                connected_at: new Date().toISOString(),
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              };
-              setChannel(ashishChannel);
-              localStorage.setItem(LOCAL_STORAGE_KEY_CHANNEL, JSON.stringify(ashishChannel));
+              setChannel(null);
             }
           }
         } catch (err) {

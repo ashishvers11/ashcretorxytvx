@@ -56,29 +56,29 @@ export function ChannelSection({ onConnectClick }: ChannelSectionProps) {
 
   return (
     <Card className="border-slate-200/80 dark:border-navy-800">
-      <CardHeader className="flex flex-row items-center justify-between pb-3">
-        <div>
-          <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
+        <div className="min-w-0">
+          <CardTitle className="text-base sm:text-lg flex flex-wrap items-center gap-2">
             <span>Connected Channel</span>
             {channel ? (
-              <Badge variant="success" className="text-[10px] gap-1 font-bold">
+              <Badge variant="success" className="text-[10px] gap-1 font-bold whitespace-nowrap shrink-0">
                 <CheckCircle2 className="h-3 w-3" />
                 <span>Isolated DNA Active</span>
               </Badge>
             ) : (
-              <Badge variant="warning" className="text-[10px]">
+              <Badge variant="warning" className="text-[10px] whitespace-nowrap shrink-0">
                 Not Connected
               </Badge>
             )}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs sm:text-sm mt-0.5">
             {channel
               ? `Channel intelligence profile isolated for ${channel.channel_title}`
               : "Link your YouTube channel to activate metric tracking, style analysis & script generation"}
           </CardDescription>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
           {channel && channels.length > 1 && (
             <div className="relative">
               <Button
@@ -188,9 +188,9 @@ export function ChannelSection({ onConnectClick }: ChannelSectionProps) {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end shrink-0">
-                <Link href="/modules/script-writer">
-                  <Button size="sm" className="gap-1.5 text-xs bg-brand-600 hover:bg-brand-700">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:self-auto justify-start sm:justify-end shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 dark:border-navy-800/60">
+                <Link href="/modules/script-writer" className="flex-1 sm:flex-initial">
+                  <Button size="sm" className="w-full sm:w-auto gap-1.5 text-xs bg-brand-600 hover:bg-brand-700">
                     <Sparkles className="h-3.5 w-3.5 text-amber-300" />
                     <span>Create AI Script</span>
                   </Button>
@@ -199,7 +199,7 @@ export function ChannelSection({ onConnectClick }: ChannelSectionProps) {
                   href={`https://youtube.com/channel/${channel.youtube_channel_id}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex-1 sm:flex-initial"
                 >
                   <span>View on YouTube</span>
                   <ExternalLink className="h-3 w-3" />

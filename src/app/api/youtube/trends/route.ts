@@ -1,16 +1,77 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 interface TrendItem {
   keyword: string;
   volume: string;
   growth: string;
   competition: "Low" | "Medium" | "High";
-  category: "science" | "curiosity" | "health" | "space";
+  category: "kids" | "stories" | "science" | "curiosity" | "health" | "space" | "animals";
   badge: "Breakout" | "Viral Trend" | "High Intent" | "Evergreen";
   angle: string;
 }
 
-const DEFAULT_EDUCATION_TRENDS: TrendItem[] = [
+// 1. Curated Trends for Kids & Family / Animation Channels (e.g. CURIOKID VERS)
+const KIDS_ANIMATION_TRENDS: TrendItem[] = [
+  {
+    keyword: "डायनासोर असल में कैसे गायब हुए? 3D Animation Story for Kids",
+    volume: "890K Searches/mo",
+    growth: "+620%",
+    competition: "Low",
+    category: "kids",
+    badge: "Breakout",
+    angle: "Fun 3D Pixar animated adventure showing the asteroid impact with friendly dinosaur characters.",
+  },
+  {
+    keyword: "आसमान का रंग हमेशा नीला ही क्यों दिखता है? Curious Kids Facts",
+    volume: "740K Searches/mo",
+    growth: "+480%",
+    competition: "Low",
+    category: "curiosity",
+    badge: "Evergreen",
+    angle: "Kid-friendly light scattering visual: sunlight bouncing through air molecules like bouncing rubber balls.",
+  },
+  {
+    keyword: "चींटी अपने वजन से 50 गुना ज्यादा वजन कैसे उठा लेती है?",
+    volume: "610K Searches/mo",
+    growth: "+410%",
+    competition: "Low",
+    category: "animals",
+    badge: "Viral Trend",
+    angle: "Micro-animation biomechanics: tiny ant with superhero strength showing neck joint physics.",
+  },
+  {
+    keyword: "चाँद दिन में भी आसमान में क्यों दिखाई देता है?",
+    volume: "520K Searches/mo",
+    growth: "+350%",
+    competition: "Low",
+    category: "space",
+    badge: "High Intent",
+    angle: "Bedtime curiosity storytelling: why the moon reflects enough sunlight to be seen beside the sun.",
+  },
+  {
+    keyword: "इंद्रधनुष में 7 रंग ही क्यों होते हैं? (Rainbow Secrets for Kids)",
+    volume: "680K Searches/mo",
+    growth: "+390%",
+    competition: "Low",
+    category: "kids",
+    badge: "Evergreen",
+    angle: "Prism droplet water physics animated with colorful dancing droplets and magical light beams.",
+  },
+  {
+    keyword: "समुद्र का पानी खारा (नमकीन) क्यों होता है? Fun Science Story",
+    volume: "470K Searches/mo",
+    growth: "+290%",
+    competition: "Low",
+    category: "stories",
+    badge: "High Intent",
+    angle: "Rivers washing minerals from rocks over billions of years, explained with cute water droplet journey.",
+  },
+];
+
+// 2. Curated Trends for Science & Curiosity Channels (e.g. ASHISH FN)
+const SCIENCE_EDUCATION_TRENDS: TrendItem[] = [
   {
     keyword: "लौंग असल में फूल है या फल? (Is Clove Flower or Fruit?)",
     volume: "640K Searches/mo",
@@ -72,17 +133,46 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("query")?.trim() || "";
     const category = searchParams.get("category") || "all";
+    const channelTitle = searchParams.get("channelTitle")?.toLowerCase() || "";
+    const niche = searchParams.get("niche")?.toLowerCase() || "";
 
-    if (!query) {
-      const filtered = category === "all" 
-        ? DEFAULT_EDUCATION_TRENDS 
-        : DEFAULT_EDUCATION_TRENDS.filter((t) => t.category === category);
-      return NextResponse.json({ success: true, trends: filtered, source: "curated_education" });
+    const isKidsChannel =
+      channelTitle.includes("curiokid") ||
+      channelTitle.includes("kid") ||
+      channelTitle.includes("cartoon") ||
+      channelTitle.includes("animation") ||
+      channelTitle.includes("story") ||
+      niche.includes("kid") ||
+      niche.includes("cartoon") ||
+      niche.includes("animation");
+
+    // Select default channel-specific base trends
+    const defaultTrends = isKidsChannel ? KIDS_ANIMATION_TRENDS : SCIENCE_EDUCATION_TRENDS;
+
+    // If query is provided, query live YouTube Suggestion API
+    // If NO query is provided, we can either query YouTube for the channel's top seed, or return curated channel trends
+    let targetQuery = query;
+    if (!targetQuery) {
+      if (category !== "all") {
+        const filtered = defaultTrends.filter((t) => t.category === category);
+        return NextResponse.json({
+          success: true,
+          trends: filtered.length > 0 ? filtered : defaultTrends,
+          source: isKidsChannel ? "channel_kids_curated" : "channel_science_curated",
+          channelNiche: isKidsChannel ? "Kids & Animation" : "Science & Curiosities",
+        });
+      }
+      return NextResponse.json({
+        success: true,
+        trends: defaultTrends,
+        source: isKidsChannel ? "channel_kids_curated" : "channel_science_curated",
+        channelNiche: isKidsChannel ? "Kids & Animation" : "Science & Curiosities",
+      });
     }
 
     // Query live YouTube Suggestion API
     const ytUrl = `https://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q=${encodeURIComponent(
-      query
+      targetQuery
     )}`;
 
     const res = await fetch(ytUrl, {
@@ -94,7 +184,12 @@ export async function GET(request: Request) {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ success: true, trends: DEFAULT_EDUCATION_TRENDS, source: "fallback" });
+      return NextResponse.json({
+        success: true,
+        trends: defaultTrends,
+        source: "fallback",
+        channelNiche: isKidsChannel ? "Kids & Animation" : "Science & Curiosities",
+      });
     }
 
     const data = await res.json();
@@ -103,12 +198,13 @@ export async function GET(request: Request) {
     if (suggestions.length === 0) {
       return NextResponse.json({
         success: true,
-        trends: DEFAULT_EDUCATION_TRENDS,
+        trends: defaultTrends,
         source: "fallback_empty",
+        channelNiche: isKidsChannel ? "Kids & Animation" : "Science & Curiosities",
       });
     }
 
-    // Transform live YouTube autocomplete suggestions into educational trend cards
+    // Transform live YouTube autocomplete suggestions into channel-adapted trend cards
     const liveTrends: TrendItem[] = suggestions.slice(0, 8).map((kw, i) => {
       const volumes = ["840K", "620K", "510K", "390K", "280K", "220K", "180K", "150K"];
       const growths = ["+490%", "+380%", "+295%", "+240%", "+190%", "+165%", "+140%", "+120%"];
@@ -118,12 +214,11 @@ export async function GET(request: Request) {
         "High Intent",
         "Evergreen",
       ];
-      const categories: ("science" | "curiosity" | "health" | "space")[] = [
-        "science",
-        "curiosity",
-        "health",
-        "space",
-      ];
+      const categories: ("kids" | "stories" | "science" | "curiosity" | "health" | "space" | "animals")[] = isKidsChannel
+        ? ["kids", "stories", "curiosity", "animals", "space", "kids", "animals", "stories"]
+        : ["science", "curiosity", "health", "space", "science", "curiosity", "space", "health"];
+
+      const format = isKidsChannel ? "3D Animated Short or Kids Story" : "60s Educational Short or Science Explainer";
 
       return {
         keyword: kw,
@@ -132,7 +227,7 @@ export async function GET(request: Request) {
         competition: i % 3 === 0 ? "Low" : i % 3 === 1 ? "Medium" : "Low",
         category: categories[i % categories.length],
         badge: badges[i % badges.length],
-        angle: `Target high-retention 60s educational Short or 6-min long-form explainer uncovering the science behind "${kw}".`,
+        angle: `Target high-retention ${format} uncovering the fascinating story behind "${kw}".`,
       };
     });
 
@@ -140,13 +235,14 @@ export async function GET(request: Request) {
       success: true,
       trends: liveTrends,
       source: "youtube_live_api",
-      query,
+      query: targetQuery,
+      channelNiche: isKidsChannel ? "Kids & Animation" : "Science & Curiosities",
     });
   } catch (error: any) {
     console.error("Error fetching live YouTube trends:", error);
     return NextResponse.json({
       success: true,
-      trends: DEFAULT_EDUCATION_TRENDS,
+      trends: SCIENCE_EDUCATION_TRENDS,
       source: "error_fallback",
     });
   }

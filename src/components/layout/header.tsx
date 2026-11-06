@@ -96,7 +96,7 @@ export function Header({ onMenuClick }: HeaderProps) {
     <>
       <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-slate-200/90 dark:border-navy-800/90 bg-white/95 dark:bg-navy-950/95 backdrop-blur-md shadow-sm px-3 sm:px-6">
         {/* Left: Mobile Menu & Page Title */}
-        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           <button
             onClick={onMenuClick}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 active:scale-95 transition-all lg:hidden shadow-xs"
@@ -105,7 +105,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             <Menu className="h-5 w-5" />
           </button>
 
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <h1 className="text-sm sm:text-base md:text-lg font-bold text-slate-900 dark:text-white truncate capitalize">
                 {getPageTitle()}
@@ -113,9 +113,9 @@ export function Header({ onMenuClick }: HeaderProps) {
 
               {/* Active Channel Pill */}
               {channel && (
-                <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/20 px-2.5 py-0.5 text-[11px] font-bold text-red-600 dark:text-red-400">
+                <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/20 px-2.5 py-0.5 text-[11px] font-bold text-red-600 dark:text-red-400 shrink-0">
                   <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-                  <span>@{channel.custom_url || "ashishfn"}</span>
+                  <span>@{channel.custom_url || "channel"}</span>
                 </span>
               )}
             </div>
@@ -137,16 +137,16 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
 
         {/* Center / Right: Channel Switcher & Actions */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Multi-Channel Switcher Dropdown */}
           <div className="relative" ref={channelDropdownRef}>
             {channel ? (
               <button
                 type="button"
                 onClick={() => setChannelDropdownOpen(!channelDropdownOpen)}
-                className="flex items-center gap-2 rounded-xl border border-slate-200/90 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/80 px-2 sm:px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-navy-800 transition-all text-left shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="flex items-center gap-1.5 sm:gap-2 rounded-xl border border-slate-200/90 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/80 p-1 sm:px-3 sm:py-1.5 hover:bg-slate-100 dark:hover:bg-navy-800 transition-all text-left shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
-                <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg overflow-hidden bg-red-600 text-white font-bold text-xs">
+                <div className="relative flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg overflow-hidden bg-red-600 text-white font-bold text-xs">
                   {channel.thumbnail_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -168,16 +168,17 @@ export function Header({ onMenuClick }: HeaderProps) {
                   </div>
                 </div>
 
-                <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => setIsConnectModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-bold text-red-600 dark:text-red-400 transition-all"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-red-600 dark:text-red-400 transition-all"
               >
                 <Youtube className="h-4 w-4 text-red-500" />
-                <span>Connect Channel</span>
+                <span className="hidden xs:inline">Connect Channel</span>
+                <span className="xs:hidden">Connect</span>
               </button>
             )}
 
@@ -260,15 +261,14 @@ export function Header({ onMenuClick }: HeaderProps) {
             )}
           </div>
 
-          {/* Quick Launch AI Video Studio Button */}
+          {/* Quick Launch AI Video Studio Button (Hidden on small mobile to avoid crowding) */}
           {pathname !== "/modules/script-writer" && (
             <Link
               href="/modules/script-writer"
-              className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 px-2.5 sm:px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-brand-500/25 hover:from-brand-500 hover:to-indigo-500 active:scale-95 transition-all"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-brand-500/25 hover:from-brand-500 hover:to-indigo-500 active:scale-95 transition-all"
             >
               <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
-              <span className="hidden xs:inline sm:inline">Create AI Video</span>
-              <span className="xs:hidden sm:hidden">AI Video</span>
+              <span>Create AI Video</span>
             </Link>
           )}
 

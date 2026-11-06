@@ -57,38 +57,40 @@ export function ChannelSection({ onConnectClick }: ChannelSectionProps) {
   return (
     <Card className="border-slate-200/80 dark:border-navy-800">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
-        <div className="min-w-0">
-          <CardTitle className="text-base sm:text-lg flex flex-wrap items-center gap-2">
-            <span>Connected Channel</span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-semibold text-base sm:text-lg text-slate-900 dark:text-white">
+              Connected Channel
+            </h3>
             {channel ? (
-              <Badge variant="success" className="text-[10px] gap-1 font-bold whitespace-nowrap shrink-0">
-                <CheckCircle2 className="h-3 w-3" />
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                <CheckCircle2 className="h-3 w-3 shrink-0" />
                 <span>Isolated DNA Active</span>
-              </Badge>
+              </span>
             ) : (
-              <Badge variant="warning" className="text-[10px] whitespace-nowrap shrink-0">
+              <span className="inline-flex items-center rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400 whitespace-nowrap">
                 Not Connected
-              </Badge>
+              </span>
             )}
-          </CardTitle>
-          <CardDescription className="text-xs sm:text-sm mt-0.5">
+          </div>
+          <CardDescription className="text-xs sm:text-sm mt-1">
             {channel
               ? `Channel intelligence profile isolated for ${channel.channel_title}`
               : "Link your YouTube channel to activate metric tracking, style analysis & script generation"}
           </CardDescription>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           {channel && channels.length > 1 && (
             <div className="relative">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowSwitchMenu(!showSwitchMenu)}
-                className="text-xs gap-1.5"
+                className="text-xs gap-1.5 h-8 px-2.5"
               >
                 <Layers className="h-3.5 w-3.5 text-brand-500" />
-                <span>Switch Channel ({channels.length})</span>
+                <span>Switch ({channels.length})</span>
                 <ChevronDown className="h-3 w-3" />
               </Button>
 
@@ -125,10 +127,10 @@ export function ChannelSection({ onConnectClick }: ChannelSectionProps) {
               variant="outline"
               size="sm"
               onClick={onConnectClick}
-              className="text-xs gap-1.5"
+              className="text-xs gap-1.5 h-8 px-2.5"
             >
               <PlusCircle className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Add Channel</span>
+              <span>Add Channel</span>
             </Button>
           )}
 
@@ -138,10 +140,10 @@ export function ChannelSection({ onConnectClick }: ChannelSectionProps) {
               size="sm"
               onClick={handleDisconnect}
               isLoading={isDisconnecting}
-              className="text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+              className="text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 gap-1 h-8 px-2"
             >
-              <Unlink className="h-3.5 w-3.5 mr-1" />
-              Disconnect
+              <Unlink className="h-3.5 w-3.5" />
+              <span>Disconnect</span>
             </Button>
           )}
         </div>

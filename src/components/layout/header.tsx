@@ -99,7 +99,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           <button
             onClick={onMenuClick}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 active:scale-95 transition-all lg:hidden shadow-xs"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 active:scale-95 transition-all lg:hidden shadow-xs"
             aria-label="Open navigation menu"
           >
             <Menu className="h-5 w-5" />
@@ -107,7 +107,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h1 className="text-sm sm:text-base md:text-lg font-bold text-slate-900 dark:text-white truncate capitalize">
+              <h1 className="text-xs sm:text-base md:text-lg font-bold text-slate-900 dark:text-white truncate capitalize">
                 {getPageTitle()}
               </h1>
 
@@ -281,7 +281,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
               className="flex items-center gap-2 rounded-xl border border-slate-200/80 dark:border-navy-700 bg-white dark:bg-navy-900 p-1 sm:p-1.5 sm:pr-2.5 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-indigo-600 text-white font-bold text-xs shadow-xs">
+              <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-indigo-600 text-white font-bold text-xs shadow-xs">
                 {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : "A"}
               </div>
               <div className="hidden text-left sm:block">
@@ -292,7 +292,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                   {channel ? channel.channel_title : profile?.creator_type || "Creator"}
                 </p>
               </div>
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+              <ChevronDown className="hidden sm:block h-3.5 w-3.5 text-slate-400" />
             </button>
 
             {/* User Dropdown */}

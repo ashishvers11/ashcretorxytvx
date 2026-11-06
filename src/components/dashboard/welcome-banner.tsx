@@ -20,7 +20,7 @@ export function WelcomeBanner({ onConnectClick }: { onConnectClick: () => void }
         <div className="space-y-2 max-w-2xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-brand-400/30 bg-brand-500/15 px-3 py-1 text-xs font-semibold text-brand-300">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>ASH Creator Studio v1.0 • Beta</span>
+            <span>ASH Creator Studio 2.0 • Video Intelligence Engine</span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">

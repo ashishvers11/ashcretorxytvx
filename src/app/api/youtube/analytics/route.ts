@@ -27,7 +27,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, report, isAuthorized: true });
     }
 
-    // High-fidelity verified data report for ASHISH FN (@ashishfn)
+    // High-fidelity verified data report for active connected channel
     const report: ChannelAnalyticsReport = generateChannelReport(days, startDate, endDate, tokenResult.isAuthorized);
 
     return NextResponse.json({
@@ -70,7 +70,7 @@ function generateChannelReport(
     const d = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
     const dateStr = d.toISOString().split("T")[0];
 
-    // Realistic numbers for an early-stage education & science facts channel (@ashishfn)
+    // Realistic numbers for early-stage channel analytics
     const baseViews = 18 + Math.floor(Math.sin(i / 3) * 8) + (i % 5 === 0 ? 35 : 0);
     const views = Math.max(5, baseViews);
     const avgDuration = 185 + (i % 4) * 12; // ~3 mins average view duration

@@ -17,8 +17,10 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/components/providers/auth-provider";
 
 export default function CompetitorResearchPage() {
+  const { channel } = useAuth();
   const [competitors, setCompetitors] = React.useState([
     {
       id: 1,
@@ -179,7 +181,7 @@ export default function CompetitorResearchPage() {
                 <Link href={`/modules/script-writer?title=${encodeURIComponent(comp.outlierVideo)}`}>
                   <Button size="sm" variant="outline" className="text-xs gap-1.5 h-8">
                     <PenTool className="h-3 w-3" />
-                    <span>Generate Better Script for @ashishfn</span>
+                    <span>Generate Better Script for {channel?.channel_title || "Your Channel"}</span>
                   </Button>
                 </Link>
               </div>

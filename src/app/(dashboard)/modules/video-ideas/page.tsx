@@ -41,7 +41,7 @@ interface ChannelIdea {
   sources: string[];
 }
 
-// Channel 0: Kids & 3D Pixar Animation (@CURIOKID_VERS)
+// Category 0: Kids & 3D Pixar Animation Style Ideas
 const IDEAS_KIDS_ANIMATION: ChannelIdea[] = [
   {
     id: 101,
@@ -123,7 +123,7 @@ const IDEAS_KIDS_ANIMATION: ChannelIdea[] = [
   },
 ];
 
-// Channel A: Science Curiosities & 2D Stickman (@ashishfn)
+// Category A: Science Curiosities & 2D Stickman Style Ideas
 const IDEAS_STICKMAN_SCIENCE: ChannelIdea[] = [
   {
     id: 1,
@@ -320,8 +320,8 @@ export default function VideoIdeasPage() {
       styleType === "animation_2d" ||
       niche.includes("kid") ||
       niche.includes("animation") ||
-      title.includes("curiokid") ||
-      title.includes("kid");
+      title.includes("kid") ||
+      title.includes("cartoon");
 
     if (isKids) {
       return IDEAS_KIDS_ANIMATION;

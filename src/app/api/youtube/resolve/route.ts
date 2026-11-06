@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const channelUrl = searchParams.get("channelUrl") || searchParams.get("handle") || "@ashishfn";
+  const channelUrl = searchParams.get("channelUrl") || searchParams.get("handle");
+  if (!channelUrl) {
+    return NextResponse.json(
+      { error: "Please enter a valid YouTube channel URL or @handle" },
+      { status: 400 }
+    );
+  }
   return resolveChannel(channelUrl);
 }
 
@@ -51,7 +57,7 @@ async function resolveChannel(channelUrl: string | null) {
     }
 
     // Default fallback values based on handle
-    const cleanHandle = handle ? handle.replace(/^@/, "") : "ashishfn";
+    const cleanHandle = handle ? handle.replace(/^@/, "") : cleanUrl.replace(/https?:\/\/(www\.)?youtube\.com\/?/, "").replace(/\//g, "") || "channel";
     let channelTitle = cleanHandle
       .split(/[-_.]/)
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
@@ -164,35 +170,12 @@ async function resolveChannel(channelUrl: string | null) {
       console.warn("Could not fetch YouTube about page:", aboutErr);
     }
 
-    // Special exact resolution for presets
-    if (cleanHandle.toLowerCase() === "ashishfn") {
-      channelTitle = "ASHISH FN";
-      youtubeChannelId = "UCq_9aJ9FOog48qCfPikSKdg";
-      thumbnailUrl =
-        "https://yt3.googleusercontent.com/t6sER0GNq6k1ZviJujhUdP8dLqv9sHDa137pz-Zmlz8-IsSFDwERMAHjFf5GeGAYpxUcv7msvw=s200-c-k-c0x00ffffff-no-rj";
-      handle = "@ashishfn";
-      if (!subscriberCount) subscriberCount = 2;
-      if (!videoCount) videoCount = 6;
-      if (!viewCount) viewCount = 4202;
-      description = "Education & Science Facts channel exploring daily mysteries, curious questions, and scientific truths.";
-    } else if (cleanHandle.toLowerCase() === "curiouspaper") {
-      channelTitle = "The Paper Chronicle";
-      youtubeChannelId = "UC_paper_cutout_demo_chan";
-      thumbnailUrl = "https://api.dicebear.com/7.x/bottts/svg?seed=curiouspaper";
-      handle = "@curiouspaper";
-      subscriberCount = 84200;
-      videoCount = 42;
-      viewCount = 14200000;
-      description = "History & Lost Civilizations through layered paper cut-out stop-motion craft documentaries.";
-    } else if (cleanHandle.toLowerCase() === "zenfacts") {
-      channelTitle = "Microscopic Zen";
-      youtubeChannelId = "UC_asmr_zen_demo_chan";
-      thumbnailUrl = "https://api.dicebear.com/7.x/bottts/svg?seed=zenfacts";
-      handle = "@zenfacts";
-      subscriberCount = 215000;
-      videoCount = 68;
-      viewCount = 38500000;
-      description = "Sensory Science, Macro Fluid Dynamics & Hypnotic ASMR Physics.";
+    // If channelTitle is still generic, refine from cleanHandle
+    if (!channelTitle || channelTitle === "Channel") {
+      channelTitle = cleanHandle
+        .split(/[-_.]/)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ");
     }
 
     return NextResponse.json({

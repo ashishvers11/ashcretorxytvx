@@ -35,20 +35,20 @@ export async function GET(request: Request) {
   // 2. Demo simulation fallback for development testing
   if (isDemo || (!code && process.env.NODE_ENV === "development")) {
     const defaultUserId = "demo-creator-uuid";
-    const demoChannelId = "chan-ashishfn";
+    const demoChannelId = "chan-creator-demo";
 
     await saveYouTubeConnection(defaultUserId, demoChannelId, {
-      accessToken: "demo_access_token_ashishfn_verified",
-      refreshToken: "demo_refresh_token_ashishfn_verified",
+      accessToken: "demo_access_token_verified",
+      refreshToken: "demo_refresh_token_verified",
       expiresIn: 3600,
       scope: "https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly",
-      googleAccountId: "google-usr-ashishfn",
-      googleEmail: "ashishfn.creator@gmail.com",
+      googleAccountId: "google-usr-creator",
+      googleEmail: "creator@youtube-studio.io",
     });
 
     const redirectUrl = new URL(redirectPath, request.url);
     redirectUrl.searchParams.set("connected", "true");
-    redirectUrl.searchParams.set("channel", "ASHISH FN");
+    redirectUrl.searchParams.set("channel", "Verified Channel");
     redirectUrl.searchParams.set("mode", "authorized");
     return NextResponse.redirect(redirectUrl.toString());
   }

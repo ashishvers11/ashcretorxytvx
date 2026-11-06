@@ -302,7 +302,6 @@ export function generateCompleteVideoPackage(params: {
 
   // Check if Animation Mode applies
   const isAnimationChannel =
-    channelName.toLowerCase().includes("curiokid") ||
     channelName.toLowerCase().includes("kid") ||
     channelName.toLowerCase().includes("cartoon") ||
     channelName.toLowerCase().includes("anim") ||

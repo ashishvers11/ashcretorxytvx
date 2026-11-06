@@ -89,7 +89,7 @@ export const TRENDING_AI_STYLES: AIVideoStyle[] = [
     name: "Vibrant 3D Pixar Animation",
     badge: "Kids & Family ⭐",
     description: "Warm, friendly, expressive animated characters with rich personality, Disney/Pixar lighting & magical wonder",
-    bestFor: "Kids Stories, Relatable Curiosities, Family Shorts, Curiokid Vers Adventures",
+    bestFor: "Kids Stories, Relatable Curiosities, Family Shorts, Animated Adventures",
     promptModifier: "Pixar and Disney 3D animated feature film aesthetic, expressive character with rich emotional personality, soft subsurface scattering, warm vibrant colors, whimsical detailed environment, Octane 3D render",
     negativePrompt: "creepy, realistic uncanny valley skin pores, ugly, photorealism, dull colors",
     lightingPreference: "Warm golden sunlight with soft pastel bounce light and magical sparkles",
@@ -190,28 +190,28 @@ export const TRENDING_AI_STYLES: AIVideoStyle[] = [
   },
 ];
 
-// Pre-built Consistent Character Anchors
+// Pre-built Consistent Character Archetypes (Adaptive to any connected channel)
 export const DEFAULT_CHARACTERS: ConsistentCharacter[] = [
   {
-    id: "ashish_stickman",
-    name: "Ashish (2D Expressive Stickman Explainer)",
+    id: "stickman_host",
+    name: "2D Expressive Stickman Explainer",
     description: "Minimalist clean doodle stick figure with expressive eyes, glasses, pointer, and curiosity gestures",
-    anchorPrompt: "Consistent Protagonist: Minimalist 2D vector stickman character named Ashish, clean bold lineart silhouette on background, highly expressive cartoon eyes with animated eyebrows, wearing modern minimalist doodle glasses, holding a hand-drawn pointer or magnifying glass, hyper-expressive comedic and analytical body language",
-    avatarSeed: "StickmanAshish",
+    anchorPrompt: "Consistent Protagonist: Minimalist 2D vector stickman host, clean bold lineart silhouette on background, highly expressive cartoon eyes with animated eyebrows, wearing modern minimalist doodle glasses, holding a hand-drawn pointer or magnifying glass, hyper-expressive comedic and analytical body language",
+    avatarSeed: "StickmanHost",
   },
   {
-    id: "curiokid_hero",
-    name: "CurioKid (Curious 3D Adventurer)",
-    description: "Friendly animated kid adventurer with big sparkling eyes, colorful explorer jacket, and cute animated companion",
-    anchorPrompt: "Consistent Protagonist: Charming 3D Pixar-style young child adventurer named CurioKid, wide sparkling curious brown eyes, playful smiling expression, wearing a vibrant turquoise explorer hoodie with yellow accents, accompanied by a small cute animated hovering robot buddy",
-    avatarSeed: "CurioKid",
+    id: "pixar_hero",
+    name: "Curious 3D Pixar Adventurer",
+    description: "Friendly animated adventurer with big sparkling eyes, colorful explorer jacket, and cute animated companion",
+    anchorPrompt: "Consistent Protagonist: Charming 3D Pixar-style young child adventurer, wide sparkling curious eyes, playful smiling expression, wearing a vibrant turquoise explorer hoodie with yellow accents, accompanied by a small cute animated companion",
+    avatarSeed: "PixarHero",
   },
   {
-    id: "ashish_investigator",
-    name: "Ashish (Science Investigator)",
-    description: "24yo Indian male science investigator, black technical hoodie, short neat hair, inquisitive look",
-    anchorPrompt: "Consistent Protagonist: 24-year-old South Asian male science investigator named Ashish, short neat black hair, expressive dark brown eyes, subtle stubble, wearing a modern charcoal-black technical hoodie with rolled-up sleeves, thoughtful and inquisitive expression",
-    avatarSeed: "AshishFN",
+    id: "documentary_investigator",
+    name: "Investigative Host",
+    description: "Modern professional investigator, technical hoodie/jacket, inquisitive and engaging presence",
+    anchorPrompt: "Consistent Protagonist: Modern professional documentary investigator host, expressive eyes, wearing a clean charcoal-black technical jacket, thoughtful and inquisitive expression, cinematic documentary lighting",
+    avatarSeed: "InvestigatorHost",
   },
 ];
 
@@ -220,10 +220,10 @@ export const DEFAULT_CHARACTERS: ConsistentCharacter[] = [
  */
 export function recommendStyleForTopic(topic: string): AIVideoStyle {
   const lower = topic.toLowerCase();
-  if (lower.includes("curiokid") || lower.includes("kid") || lower.includes("बच्‍चे") || lower.includes("कहानी") || lower.includes("cartoon") || lower.includes("dinosaur") || lower.includes("डायनासोर")) {
+  if (lower.includes("kid") || lower.includes("बच्‍चे") || lower.includes("कहानी") || lower.includes("cartoon") || lower.includes("dinosaur") || lower.includes("डायनासोर")) {
     return TRENDING_AI_STYLES[1]; // Vibrant 3D Pixar
   }
-  if (lower.includes("stickman") || lower.includes("doodle") || lower.includes("ashish") || lower.includes("रोचक")) {
+  if (lower.includes("stickman") || lower.includes("doodle") || lower.includes("रोचक")) {
     return TRENDING_AI_STYLES[0]; // 2D Stickman
   }
   if (lower.includes("लौंग") || lower.includes("clove") || lower.includes("plant") || lower.includes("पौधे") || lower.includes("cell")) {
@@ -380,13 +380,13 @@ export function generateScenePackage(params: {
 
   // Check if this is an Animation Channel ("jiska animation ka chenal hoga no ned to any script")
   const isAnimationChannel =
-    channelName.toLowerCase().includes("curiokid") ||
     channelName.toLowerCase().includes("kid") ||
     channelName.toLowerCase().includes("cartoon") ||
     channelName.toLowerCase().includes("anim") ||
     channelNiche.toLowerCase().includes("kid") ||
     channelNiche.toLowerCase().includes("anim") ||
-    style.id === "pixar_3d";
+    style.id === "pixar_3d" ||
+    style.id === "animation_2d";
 
   const charAnchor = characterEnabled && character ? `${character.anchorPrompt}, ` : "";
   const recStyle = recommendStyleForTopic(title);

@@ -26,8 +26,12 @@ export default function ChannelAuditPage() {
   const [activeTab, setActiveTab] = React.useState<"issues" | "strengths" | "actionPlan">("issues");
   const [completedSteps, setCompletedSteps] = React.useState<number[]>([]);
 
-  const channelTitle = channel?.channel_title || "ASHISH FN";
-  const handle = channel?.custom_url ? `@${channel.custom_url}` : "@ashishfn";
+  const channelTitle = channel?.channel_title || "Connected Channel";
+  const handle = channel?.custom_url
+    ? `@${channel.custom_url}`
+    : channel?.channel_title
+    ? `@${channel.channel_title.toLowerCase().replace(/\s+/g, "")}`
+    : "@channel";
 
   const handleRerun = () => {
     setIsScanning(true);

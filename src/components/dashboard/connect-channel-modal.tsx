@@ -34,7 +34,7 @@ interface ConnectChannelModalProps {
 export function ConnectChannelModal({ isOpen, onClose }: ConnectChannelModalProps) {
   const { connectChannel } = useAuth();
   const [activeMethod, setActiveMethod] = React.useState<"oauth" | "link">("link");
-  const [channelLink, setChannelLink] = React.useState("https://www.youtube.com/@ashishfn");
+  const [channelLink, setChannelLink] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [analysisStep, setAnalysisStep] = React.useState<string>("");
   const [error, setError] = React.useState<string | null>(null);
@@ -194,59 +194,59 @@ export function ConnectChannelModal({ isOpen, onClose }: ConnectChannelModalProp
               <div className="space-y-1.5">
                 <Input
                   label="YouTube Channel URL or @Handle"
-                  placeholder="https://www.youtube.com/@ashishfn or @ashishfn"
+                  placeholder="https://www.youtube.com/@channel or @handle"
                   value={channelLink}
                   onChange={(e) => setChannelLink(e.target.value)}
-                  helperText="Enter any YouTube channel. Our engine will research its video style & generate its isolated Style DNA."
+                  helperText="Enter any YouTube channel URL or @handle. The engine will automatically research its video style & generate an isolated Style DNA."
                   disabled={isSubmitting}
                   required
                 />
 
-                {/* Quick Presets to test multi-channel separation */}
+                {/* Quick Examples to test different channel styles */}
                 <div className="pt-2">
                   <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-                    Quick test channels (multi-style demonstration):
+                    Or select a public style template to test:
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <button
                       type="button"
                       disabled={isSubmitting}
-                      onClick={() => handlePresetSelect("@ashishfn")}
+                      onClick={() => handlePresetSelect("@veritasium")}
                       className="flex flex-col items-start p-2 rounded-lg border border-slate-200/80 dark:border-navy-800 bg-white dark:bg-navy-900 hover:border-brand-500/50 hover:bg-brand-50/20 text-left transition-all group"
                     >
                       <span className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-brand-500">
-                        @ashishfn
+                        @veritasium
                       </span>
                       <span className="text-[10px] text-brand-600 dark:text-brand-400 font-medium">
-                        🎯 2D Stickman & Doodle
+                        🔬 Science & Curiosity
                       </span>
                     </button>
 
                     <button
                       type="button"
                       disabled={isSubmitting}
-                      onClick={() => handlePresetSelect("@curiouspaper")}
+                      onClick={() => handlePresetSelect("@kurzgesagt")}
                       className="flex flex-col items-start p-2 rounded-lg border border-slate-200/80 dark:border-navy-800 bg-white dark:bg-navy-900 hover:border-amber-500/50 hover:bg-amber-50/20 text-left transition-all group"
                     >
                       <span className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-500">
-                        @curiouspaper
+                        @kurzgesagt
                       </span>
                       <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-                        📜 Paper Cut-Out Craft
+                        🎨 2D Vector Animation
                       </span>
                     </button>
 
                     <button
                       type="button"
                       disabled={isSubmitting}
-                      onClick={() => handlePresetSelect("@zenfacts")}
+                      onClick={() => handlePresetSelect("@crashcourse")}
                       className="flex flex-col items-start p-2 rounded-lg border border-slate-200/80 dark:border-navy-800 bg-white dark:bg-navy-900 hover:border-teal-500/50 hover:bg-teal-50/20 text-left transition-all group"
                     >
                       <span className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-teal-500">
-                        @zenfacts
+                        @crashcourse
                       </span>
                       <span className="text-[10px] text-teal-600 dark:text-teal-400 font-medium">
-                        🎧 Satisfying ASMR Macro
+                        📚 Fast-Paced Education
                       </span>
                     </button>
                   </div>

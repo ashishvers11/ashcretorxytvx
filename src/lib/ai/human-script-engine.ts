@@ -188,7 +188,6 @@ export function generateHumanScriptPackage(params: {
   const cleanedSubject = cleanTopic(topic);
 
   const isKidsChannel =
-    activeStyle.channelName.toLowerCase().includes("curiokid") ||
     activeStyle.channelName.toLowerCase().includes("kid") ||
     activeStyle.channelNiche.toLowerCase().includes("kid") ||
     activeStyle.channelNiche.toLowerCase().includes("cartoon") ||

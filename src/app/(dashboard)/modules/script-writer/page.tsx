@@ -86,8 +86,18 @@ function VideoIntelligenceStudioContent() {
       return activeChannelStyle.popularTopics[0];
     }
     const title = (channel?.channel_title || "").toLowerCase();
-    if (title.includes("curiokid") || title.includes("kid")) {
+    const style = (activeChannelStyle?.visualAnimationStyle || "") as string;
+    if (style === "pixar_3d" || title.includes("kid") || title.includes("cartoon")) {
       return "शेर और नटखट खरगोश की जादुई कहानी (3D Moral Story)";
+    }
+    if (style === "paper_cutout" || title.includes("paper") || title.includes("history")) {
+      return "द ग्रेट लाइब्रेरी ऑफ अलेक्जेंड्रिया कैसे जली? (Paper Cut-Out History)";
+    }
+    if (style === "asmr_satisfying" || title.includes("asmr")) {
+      return "पिघले हुए बिस्मथ से रेनबो क्रिस्टल कैसे बनते हैं? (Satisfying Macro)";
+    }
+    if (style === "noir_mystery" || title.includes("horror")) {
+      return "डायटलोव पास पर 9 पर्वतारोहियों की रहस्यमयी मौत का सच";
     }
     return "लौंग असल में फूल है या फल? (The Science Behind Cloves)";
   }, [titleFromUrl, activeChannelStyle, channel]);

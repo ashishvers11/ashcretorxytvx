@@ -20,8 +20,10 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/components/providers/auth-provider";
 
 function SeoStudioContent() {
+  const { channel } = useAuth();
   const searchParams = useSearchParams();
   const titleFromUrl = searchParams.get("title");
 
@@ -40,17 +42,15 @@ function SeoStudioContent() {
 3:45 - बीट 3: दांत दर्द में असरदार क्यों? (Eugenol Power)
 4:30 - निष्कर्ष और अगला विज्ञान रहस्य
 
-🔔 चैनल को सब्सक्राइब करें और हर हफ्ते नए विज्ञान और रोचक रहस्यों के वीडियो देखें:
-https://www.youtube.com/@ashishfn
+🔔 चैनल को सब्सक्राइब करें और हर हफ्ते नए और रोचक वीडियो देखें!
 
-#ScienceFacts #HindiFacts #AshishFN #DailyCuriosity #Education #BiologyTruth`
+#Shorts #Viral #Facts #Education #Explore`
   );
 
   const [tags, setTags] = React.useState<string[]>([
     "लौंग फूल है या फल",
     "clove flower or fruit",
-    "science facts hindi",
-    "ashish fn",
+    "curiosity facts",
     "daily life curiosities",
     "biology facts hindi",
     "interesting facts in hindi",
@@ -104,10 +104,9 @@ https://www.youtube.com/@ashishfn
 3:45 - Core Fact Beat 3 & Experiment
 4:30 - Seamless Conclusion
 
-🔔 Subscribe to ASHISH FN for daily educational & curiosity breakdowns:
-https://www.youtube.com/@ashishfn
+🔔 Subscribe to ${channel?.channel_title || "our channel"} for more great videos!
 
-#ScienceFacts #HindiScience #AshishFN #Curiosity #Education`
+#Trending #Shorts #Facts #Curiosity #Education`
       );
       setIsGenerating(false);
     }, 800);
@@ -159,7 +158,7 @@ https://www.youtube.com/@ashishfn
             <Badge variant="brand">Education & Facts</Badge>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Generate high-ranking Hindi & English YouTube tags and descriptions calibrated for <strong className="text-slate-800 dark:text-slate-200">@ashishfn</strong>
+            Generate high-ranking Hindi & English YouTube tags and descriptions calibrated for <strong className="text-slate-800 dark:text-slate-200">{channel?.channel_title || "your channel"}</strong>
           </p>
         </div>
 

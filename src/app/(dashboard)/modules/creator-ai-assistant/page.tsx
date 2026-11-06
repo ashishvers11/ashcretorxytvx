@@ -27,8 +27,12 @@ interface Message {
 
 export default function CreatorAiAssistantPage() {
   const { channel, profile } = useAuth();
-  const channelTitle = channel?.channel_title || "ASHISH FN";
-  const handle = channel?.custom_url ? `@${channel.custom_url}` : "@ashishfn";
+  const channelTitle = channel?.channel_title || "Connected Channel";
+  const handle = channel?.custom_url
+    ? `@${channel.custom_url}`
+    : channel?.channel_title
+    ? `@${channel.channel_title.toLowerCase().replace(/\s+/g, "")}`
+    : "@channel";
 
   const [inputMessage, setInputMessage] = React.useState("");
   const [isTyping, setIsTyping] = React.useState(false);
@@ -89,7 +93,7 @@ export default function CreatorAiAssistantPage() {
   };
 
   const samplePrompts = [
-    `Give me a 30-day growth plan for @${channel?.custom_url || "ashishfn"}`,
+    `Give me a 30-day growth plan for ${channel?.channel_title || "my channel"}`,
     "Generate 5 high-CTR titles for Science Facts & Curiosities",
     "How do I fix a sharp drop-off in my first 30 seconds?",
     "How to double my CTR on thumbnails?",

@@ -247,10 +247,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } else if (savedChannel) {
               try {
                 const parsed = JSON.parse(savedChannel);
-                if (parsed?.id !== "chan-ashishfn") {
+                if (parsed?.id) {
                   loadedChannels = [parsed];
-                } else {
-                  localStorage.removeItem(LOCAL_STORAGE_KEY_CHANNEL);
                 }
               } catch {
                 loadedChannels = [];

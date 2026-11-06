@@ -12,7 +12,7 @@ interface TrendItem {
   angle: string;
 }
 
-// 1. Curated Trends for Kids & Family / Animation Channels (e.g. CURIOKID VERS)
+// 1. Curated Trends for Kids & Family / Animation Channels
 const KIDS_ANIMATION_TRENDS: TrendItem[] = [
   {
     keyword: "डायनासोर असल में कैसे गायब हुए? 3D Animation Story for Kids",
@@ -247,7 +247,6 @@ export async function GET(request: Request) {
     const isKidsChannel =
       style.includes("pixar") ||
       style.includes("2d") ||
-      channelTitle.includes("curiokid") ||
       channelTitle.includes("kid") ||
       channelTitle.includes("cartoon") ||
       channelTitle.includes("animation") ||

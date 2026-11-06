@@ -224,46 +224,15 @@ export const VISUAL_STYLE_DEFINITIONS: Record<
 };
 
 // ==============================================================================
-// 2. CHANNEL SIGNATURE PRESETS (Guaranteed Independent Separation for Testing)
+// 2. CHANNEL SIGNATURE PRESETS & TEMPLATES (Pure Generic Presets for Demonstration)
 // ==============================================================================
 
 /**
- * Pre-calibrated Channel Profiles for testing & demonstration of multi-channel separation
+ * Generic sample presets for testing multi-channel separation (no personal channel hardcoding)
  */
 export const PRESET_CHANNEL_PROFILES: Record<string, Partial<ChannelStyleProfile>> = {
-  // Channel A: Stickman & Doodle Explainer (@ashishfn)
-  "UCq_9aJ9FOog48qCfPikSKdg": {
-    channelName: "ASHISH FN",
-    channelNiche: "Education & Science Curiosities",
-    channelSubNiche: "Everyday Science Mysteries, Micro Biology & What-Ifs",
-    targetAudience: "Curious Hindi-speaking youth, students, and fact lovers",
-    audienceAgeGroup: "16–28 Young Curious Thinkers",
-    primaryLanguage: "Hindi",
-    contentFormat: "YouTube Shorts (9:16)",
-    videoDuration: "45–60s fast-paced shorts",
-    visualAnimationStyle: "stickman_doodle",
-    visualStyleLabel: "2D Animated Stickman & Doodle Explainer",
-    editingStyle: "Snappy 1.5–2s cuts with comic sound effects, zoom-ins on doodle reactions",
-    voiceoverStyle: "Energetic, engaging, conversational Hindi narrator with curious tone",
-    storytellingStyle: "Curiosity Question -> Misconception -> Micro Anatomy -> Shocking Payoff -> Next Video CTA",
-    hookStyle: "Bold counter-intuitive question (e.g. 'फूल या फल? 99% लोग गलत!')",
-    averageVideoLength: 52,
-    popularTopics: ["लौंग का सच", "धरती 5 सेकंड रुक जाए तो", "हवाई जहाज सफेद क्यों होता है", "फोन 100% चार्जिंग"],
-    successfulVideoPatterns: [
-      "Open with 1s bold curiosity visual",
-      "Challenge common assumption in second sentence",
-      "Use stickman doodle to explain anatomical/scientific proof",
-      "Seamless loop or endscreen next video nudge",
-    ],
-    competitorChannels: ["FactTechz", "Science Fiction Hindi", "Curious Guruji"],
-    contentRestrictions: ["No generic textbook definitions", "No robotic AI words", "Must be factually verified"],
-    characterAnchor: "Minimalist 2D vector stickman character named Ashish, clean bold lineart silhouette on background, highly expressive cartoon eyes with animated eyebrows, wearing modern minimalist doodle glasses, holding a hand-drawn pointer or magnifying glass",
-    characterName: "Ashish (Stickman Explainer)",
-    dominantPacingWpm: 145,
-  },
-
-  // Channel B: Paper Cut-out Animation (@curiouspaper)
-  "UC_paper_cutout_demo_chan": {
+  // Demo Channel 1: Historical Paper Cut-out
+  "demo-paper-history": {
     channelName: "The Paper Chronicle",
     channelNiche: "History & Lost Civilizations",
     channelSubNiche: "Ancient Engineering, Tactical Battles & Royal Mysteries",
@@ -288,18 +257,18 @@ export const PRESET_CHANNEL_PROFILES: Record<string, Partial<ChannelStyleProfile
     competitorChannels: ["Oversimplified", "Kings and Generals", "Fall of Civilizations"],
     contentRestrictions: ["Never use modern digital stickmen or neon visuals", "Must preserve historical parchment tone"],
     characterAnchor: "Handcrafted layered paper cut-out explorer figure, textured parchment clothing with subtle torn paper edges, vintage bronze magnifying glass",
-    characterName: "The Paper Historian",
+    characterName: "Paper Historian",
     dominantPacingWpm: 125,
   },
 
-  // Channel C: Satisfying ASMR & Micro-World (@zenfacts)
-  "UC_asmr_zen_demo_chan": {
+  // Demo Channel 2: Satisfying ASMR
+  "demo-asmr-physics": {
     channelName: "Microscopic Zen",
     channelNiche: "Sensory Science & Macro Physics",
     channelSubNiche: "Fluid Dynamics, Crystal Growth & Chemical Reactions",
     targetAudience: "Stress relief seekers, physics fans, late-night thinkers",
     audienceAgeGroup: "18–34 ASMR & Relaxation Viewers",
-    primaryLanguage: "Hindi",
+    primaryLanguage: "English",
     contentFormat: "YouTube Shorts (9:16)",
     videoDuration: "30–45s soothing loops",
     visualAnimationStyle: "asmr_satisfying",
@@ -307,7 +276,7 @@ export const PRESET_CHANNEL_PROFILES: Record<string, Partial<ChannelStyleProfile
     editingStyle: "Ultra-smooth fluid transitions, 60fps macro close-ups, soothing binaural audio",
     voiceoverStyle: "Calm, gentle, ASMR-paced whispering narrator with deep breath cadence",
     storytellingStyle: "Hypnotic visual opening -> Micro mechanism reveal -> Mind-soothing realization",
-    hookStyle: "Intense macro texture question (e.g. 'क्या आपने कभी पानी के जमने की असली आवाज सुनी है?')",
+    hookStyle: "Intense macro texture question",
     averageVideoLength: 35,
     popularTopics: ["Bismuth Crystal Formation", "Liquid Nitrogen vs Molten Glass", "Soap Film Geometry"],
     successfulVideoPatterns: [
@@ -317,51 +286,92 @@ export const PRESET_CHANNEL_PROFILES: Record<string, Partial<ChannelStyleProfile
     ],
     competitorChannels: ["Veritasium", "The Action Lab", "NileRed Shorts"],
     contentRestrictions: ["No loud shouting voiceover", "No aggressive jump-cuts", "Keep visuals soothing and pristine"],
+    characterAnchor: "Macro-scale hypnotic tactile focal visuals with pristine crystal clear lighting",
+    characterName: "Macro Zen Guide",
     dominantPacingWpm: 105,
   },
-
-  // Channel D: Kids & 3D Pixar Animation (@CURIOKID_VERS)
-  curiokid_vers_preset: {
-    channelName: "CURIOKID VERS",
-    channelNiche: "Kids & Family Animation Stories",
-    channelSubNiche: "3D Moral Adventures, Animal Friends & Fun Curiosities",
-    targetAudience: "Kids, parents, and curious family animation viewers",
-    audienceAgeGroup: "Kids 4–12 & Family",
-    primaryLanguage: "Hindi",
-    contentFormat: "YouTube Shorts (9:16)",
-    videoDuration: "40–55s animated adventure shorts",
-    visualAnimationStyle: "pixar_3d",
-    visualStyleLabel: "3D Pixar Animation / 2D Cartoon Story",
-    editingStyle: "Snappy cartoon rhythm, expressive sound effects, colorful character action",
-    voiceoverStyle: "Warm, animated, enthusiastic kid-friendly storyteller",
-    storytellingStyle: "Exciting Adventure Hook -> Cute Character Problem -> Magical Discovery -> Warm Moral Lesson",
-    hookStyle: "Friendly animated character opening with a magical question or funny problem",
-    averageVideoLength: 50,
-    popularTopics: [
-      "शेर और नटखट खरगोश की जादुई कहानी (3D Moral Story)",
-      "डायनासोर असल में कैसे गायब हुए? (Kids 3D Adventure)",
-      "चींटी अपने वजन से 50 गुना ज्यादा वजन कैसे उठाती है?",
-      "आसमान का रंग हमेशा नीला क्यों दिखता है? (Little Scientist)",
-      "चाँद दिन में भी आसमान में क्यों दिखाई देता है?",
-      "इंद्रधनुष के 7 रंगों का जादुई रहस्य (Rainbow Quest)",
-    ],
-    successfulVideoPatterns: [
-      "Vibrant 3D character greeting in first 1.5 seconds",
-      "Fun cartoon sound effect (pop/whoosh) accompanying movement",
-      "Relatable kid question answered through playful animation",
-      "Happy positive ending with cute character gesture",
-    ],
-    competitorChannels: ["Cocomelon", "Infobells Hindi", "ChuChu TV", "Koo Koo TV"],
-    contentRestrictions: [
-      "No violence or scary visuals",
-      "No dry scientific textbook formulas",
-      "Keep pacing upbeat, joyful, and wholesome",
-    ],
-    characterAnchor: "Cute expressive 3D Pixar-style animated boy explorer character wearing a tiny explorer cap, vibrant jacket, sparkling curious eyes, accompanied by a playful animal friend",
-    characterName: "Curio Explorer",
-    dominantPacingWpm: 130,
-  },
 };
+
+/**
+ * Generates an adaptive, style-accurate character anchor for any connected channel.
+ * Never hardcodes personal creator names or static channel handles.
+ */
+export function generateDynamicCharacterAnchor(
+  channelTitle: string,
+  style: VisualAnimationType
+): { characterName: string; characterAnchor: string } {
+  const cleanTitle = (channelTitle || "Creator").trim();
+  const characterName = `${cleanTitle} Host`;
+
+  switch (style) {
+    case "pixar_3d":
+      return {
+        characterName,
+        characterAnchor: `Charming and expressive 3D Pixar-style animated protagonist representing ${cleanTitle}, wide sparkling curious eyes, vibrant signature outfit, warm friendly demeanor, cinematic three-point lighting`,
+      };
+    case "stickman_doodle":
+      return {
+        characterName,
+        characterAnchor: `Clean minimalist 2D vector stickman host representing ${cleanTitle}, bold lineart silhouette on crisp background, highly expressive cartoon eyes, engaging presentation gestures`,
+      };
+    case "paper_cutout":
+      return {
+        characterName,
+        characterAnchor: `Handcrafted layered paper cut-out narrator figure representing ${cleanTitle}, textured parchment styling with subtle torn paper edges, vintage warm cinematic lighting`,
+      };
+    case "whiteboard_explainer":
+      return {
+        characterName,
+        characterAnchor: `Educational hand-drawn animated host with crisp clean marker lineart representing ${cleanTitle}, clear conceptual diagramming and pointing gestures`,
+      };
+    case "asmr_satisfying":
+      return {
+        characterName: `${cleanTitle} Macro Guide`,
+        characterAnchor: `Hypnotic macro-scale textured focal elements representing ${cleanTitle}, pristine satisfying lighting and soothing visual aesthetics`,
+      };
+    case "noir_mystery":
+      return {
+        characterName,
+        characterAnchor: `Mysterious silhouette investigative narrator representing ${cleanTitle}, dramatic chiaroscuro golden hour shadows, 35mm documentary film grain`,
+      };
+    case "unreal_3d":
+      return {
+        characterName,
+        characterAnchor: `Hyper-detailed 3D Unreal Engine 5 protagonist representing ${cleanTitle}, volumetric lighting, photorealistic raytraced reflections and cinematic depth`,
+      };
+    case "motion_graphics":
+      return {
+        characterName,
+        characterAnchor: `Sleek modern 2D vector animated host representing ${cleanTitle}, clean geometric shapes, smooth transitions and vibrant jewel tone aesthetic`,
+      };
+    case "stop_motion":
+      return {
+        characterName,
+        characterAnchor: `Handcrafted claymation stop-motion figure representing ${cleanTitle}, tactile plasticine clay textures, cozy studio directional lighting`,
+      };
+    case "retro_comic":
+      return {
+        characterName,
+        characterAnchor: `Dynamic retro pop-art comic character representing ${cleanTitle}, bold halftone dot patterns, black ink outlines, energetic framing`,
+      };
+    case "anime_ghibli":
+      return {
+        characterName,
+        characterAnchor: `Studio Ghibli inspired anime protagonist representing ${cleanTitle}, soft expressive facial features, hand-painted watercolor tones and warm nostalgic morning glow`,
+      };
+    case "faceless_documentary":
+      return {
+        characterName: `${cleanTitle} Narrator`,
+        characterAnchor: `Modern faceless documentary visual flow with kinetic infographics, sleek overlays, and high-impact b-roll representing ${cleanTitle}`,
+      };
+    case "realistic_cinematic":
+    default:
+      return {
+        characterName,
+        characterAnchor: `Professional cinematic documentary presentation visuals representing ${cleanTitle}, high-end cinematic 8K lighting and photorealistic depth`,
+      };
+  }
+}
 
 // ==============================================================================
 // 3. CHANNEL RESEARCH & DNA GENERATOR
@@ -383,15 +393,8 @@ export function analyzeAndGenerateChannelDNA(
   const channelId = channel.id || `chan-${channel.youtube_channel_id}`;
   const ytId = channel.youtube_channel_id;
 
-  // Check if a pre-calibrated signature profile exists (e.g. @ashishfn, @CURIOKID_VERS)
-  let preset = PRESET_CHANNEL_PROFILES[ytId];
-  if (!preset) {
-    const lowerName = (channel.channel_title || "").toLowerCase();
-    const lowerHandle = (channel.custom_url || "").toLowerCase();
-    if (lowerName.includes("curiokid") || lowerHandle.includes("curiokid")) {
-      preset = PRESET_CHANNEL_PROFILES["curiokid_vers_preset"];
-    }
-  }
+  // Check if a pre-calibrated preset exists for this exact ID or handle
+  let preset = PRESET_CHANNEL_PROFILES[ytId] || PRESET_CHANNEL_PROFILES[channelId];
 
   // Aggregate video title text to detect dominant keywords and format
   const allTitles = recentVideos.map((v) => v.title).join(" ").toLowerCase();
@@ -401,18 +404,18 @@ export function analyzeAndGenerateChannelDNA(
     .toLowerCase();
   const corpus = `${channel.channel_title} ${channel.description || ""} ${allTitles} ${allDescriptions}`.toLowerCase();
 
-  // Detect Visual Animation Style & Dominant Niche
-  let detectedStyle: VisualAnimationType = "stickman_doodle";
+  // Detect Visual Animation Style & Dominant Niche purely based on content semantics
+  let detectedStyle: VisualAnimationType = "realistic_cinematic";
   const isKidsCorpus =
-    corpus.includes("curiokid") ||
     corpus.includes("kid") ||
+    corpus.includes("child") ||
     corpus.includes("cartoon") ||
     corpus.includes("animation") ||
-    corpus.includes("chuchu") ||
-    corpus.includes("cocomelon") ||
+    corpus.includes("moral story") ||
+    corpus.includes("family") ||
     corpus.includes("kinder") ||
-    channel.channel_title.toLowerCase().includes("kid") ||
-    channel.channel_title.toLowerCase().includes("curiokid");
+    corpus.includes("fairy tale") ||
+    corpus.includes("nursery");
 
   const isPaperCraft =
     corpus.includes("paper") ||
@@ -442,7 +445,8 @@ export function analyzeAndGenerateChannelDNA(
     corpus.includes("crime") ||
     corpus.includes("dark") ||
     corpus.includes("paranormal") ||
-    corpus.includes("bhoot");
+    corpus.includes("bhoot") ||
+    corpus.includes("scary");
 
   if (preset?.visualAnimationStyle) {
     detectedStyle = preset.visualAnimationStyle;
@@ -453,35 +457,38 @@ export function analyzeAndGenerateChannelDNA(
   } else if (isAsmr) {
     detectedStyle = "asmr_satisfying";
   } else if (isGaming) {
-    detectedStyle = "realistic_cinematic";
+    detectedStyle = "unreal_3d";
   } else if (isHorror) {
     detectedStyle = "noir_mystery";
-  } else if (corpus.includes("stickman") || corpus.includes("doodle") || corpus.includes("ashish") || corpus.includes("sketch")) {
+  } else if (corpus.includes("stickman") || corpus.includes("doodle") || corpus.includes("sketch")) {
     detectedStyle = "stickman_doodle";
   } else if (corpus.includes("whiteboard") || corpus.includes("drawing") || corpus.includes("hand drawn")) {
     detectedStyle = "whiteboard_explainer";
+  } else if (corpus.includes("ghibli") || corpus.includes("anime") || corpus.includes("manga")) {
+    detectedStyle = "anime_ghibli";
+  } else if (corpus.includes("motion graphics") || corpus.includes("infographic") || corpus.includes("tech") || corpus.includes("coding")) {
+    detectedStyle = "motion_graphics";
+  } else if (corpus.includes("documentary") || corpus.includes("history") || corpus.includes("investigative")) {
+    detectedStyle = "faceless_documentary";
   } else {
-    detectedStyle = channel.channel_title.toLowerCase().includes("ashish")
-      ? "stickman_doodle"
-      : "realistic_cinematic";
+    detectedStyle = "realistic_cinematic";
   }
 
   const styleDef = VISUAL_STYLE_DEFINITIONS[detectedStyle];
 
   // Infer Dynamic Niche, Sub-Niche, and Channel-Specific Popular Topics
-  let inferredNiche = "Education & Science Facts";
-  let inferredSubNiche = "Curious Questions, Everyday Mysteries & Science Breakdowns";
-  let inferredTargetAudience = "Curious Hindi-speaking youth, learners & fact enthusiasts";
-  let inferredAgeGroup = "18–28 Curious Minds";
-  let inferredHookStyle = "Direct counter-intuitive question that challenges popular assumptions";
-  let inferredStorytelling = "Curiosity Hook -> Misconception -> Scientific Explanation -> Story Development -> Payoff Revelation";
+  let inferredNiche = `${channel.channel_title} Content`;
+  let inferredSubNiche = "General High-Engagement Video Production";
+  let inferredTargetAudience = "Engaged YouTube viewers and curious subscribers";
+  let inferredAgeGroup = "18–34 YouTube Viewers";
+  let inferredHookStyle = "High-retention curiosity hook opening";
+  let inferredStorytelling = "Engaging Hook -> Insight Development -> Core Climax -> Call to Action";
   let inferredPopularTopics = [
-    "लौंग असल में फूल है या फल? (Botanical Mythbuster)",
-    "अगर धरती 5 सेकंड के लिए घूमना बंद कर दे तो क्या होगा?",
-    "हवाई जहाज का रंग हमेशा सफेद ही क्यों होता है?",
-    "मोबाइल की बैटरी को 80% पर ही क्यों रोक देना चाहिए?",
+    `${channel.channel_title} Viral Episode 1`,
+    `${channel.channel_title} Deep Breakdown`,
+    `${channel.channel_title} Ultimate Guide`,
   ];
-  let inferredCompetitors = ["FactTechz", "Science Fiction Hindi", "Curious Guruji"];
+  let inferredCompetitors = ["Top Channels in Niche"];
   let inferredRestrictions = [
     "Never use generic textbook explanations",
     "Never invent fake statistics or unverified claims",
@@ -588,9 +595,24 @@ export function analyzeAndGenerateChannelDNA(
       "Treat sensitive real victims with respect",
       "Preserve atmospheric dread",
     ];
+  } else if (detectedStyle === "stickman_doodle") {
+    inferredNiche = "Everyday Curiosities & Quick Facts";
+    inferredSubNiche = "Rapid Science Breakdowns & Daily What-Ifs";
+    inferredTargetAudience = "Curious youth, students, and fact lovers";
+    inferredAgeGroup = "16–28 Young Curious Thinkers";
+    inferredHookStyle = "Bold counter-intuitive question that challenges popular assumptions";
+    inferredStorytelling = "Curiosity Question -> Misconception -> Visual Proof -> Shocking Payoff";
+    inferredPopularTopics = [
+      "लौंग असल में फूल है या फल? (Botanical Truth)",
+      "अगर धरती 5 सेकंड के लिए घूमना बंद कर दे तो क्या होगा?",
+      "हवाई जहाज का रंग हमेशा सफेद ही क्यों होता है?",
+      "मोबाइल की बैटरी को 80% पर ही क्यों रोक देना चाहिए?",
+    ];
+    inferredCompetitors = ["Curious Guruji", "FactTechz"];
+    inferredRestrictions = ["Keep lineart clean and minimal", "Factually accurate breakdowns"];
   }
 
-  // If the channel has actual uploaded video titles, integrate them into popular topics!
+  // If the channel has actual uploaded video titles, prioritize them!
   if (recentVideos.length > 0) {
     const extractedTitles = recentVideos.slice(0, 4).map((v) => v.title.replace(/#\w+/g, "").trim()).filter(Boolean);
     if (extractedTitles.length > 0) {
@@ -598,14 +620,15 @@ export function analyzeAndGenerateChannelDNA(
     }
   }
 
-  // Detect Language
+  // Detect Language dynamically from corpus
   const isHindiDominant =
     /[\u0900-\u097F]/.test(corpus) ||
     corpus.includes("hindi") ||
     corpus.includes("kya") ||
+    corpus.includes("kaise") ||
     corpus.includes("sach") ||
     corpus.includes("kyon") ||
-    channel.channel_title.toLowerCase().includes("ashish");
+    corpus.includes("kahani");
 
   const primaryLanguage = preset?.primaryLanguage || (isHindiDominant ? "Hindi" : "English");
 
@@ -619,15 +642,17 @@ export function analyzeAndGenerateChannelDNA(
   const contentFormat =
     preset?.contentFormat || (isShortsDominant ? "YouTube Shorts (9:16)" : "Hybrid");
 
+  const dynamicChar = generateDynamicCharacterAnchor(channel.channel_title, detectedStyle);
+
   const profile: ChannelStyleProfile = {
-    profileId: `dna-${channel.youtube_channel_id}-${Date.now()}`,
+    profileId: `dna-${channel.youtube_channel_id || channel.id}-${Date.now()}`,
     channelId,
     channelName: channel.channel_title,
     youtubeChannelId: channel.youtube_channel_id,
     channelDescription:
       channel.description ||
       preset?.channelDescription ||
-      "Official YouTube Channel synced with ASH Creator Studio 2.0 Content Intelligence",
+      `Official YouTube Channel ${channel.channel_title} synced with ASH Creator Studio 2.0 Content Intelligence`,
     channelNiche: preset?.channelNiche || inferredNiche,
     channelSubNiche: preset?.channelSubNiche || inferredSubNiche,
     targetAudience: preset?.targetAudience || inferredTargetAudience,
@@ -652,7 +677,7 @@ export function analyzeAndGenerateChannelDNA(
     successfulVideoPatterns:
       preset?.successfulVideoPatterns || [
         "Hook within 1-2 seconds with curiosity gap",
-        "Natural conversational Hindi transitions (no textbook jargon)",
+        "Natural conversational narration (zero robotic phrases)",
         "Visual-audio synchronization on every scene",
         "Seamless next-video binge recommendation",
       ],
@@ -662,8 +687,8 @@ export function analyzeAndGenerateChannelDNA(
     negativePrompt: styleDef.negativePrompt,
     lightingPreference: styleDef.lightingPreference,
     cameraPreference: styleDef.cameraPreference,
-    characterAnchor: preset?.characterAnchor,
-    characterName: preset?.characterName,
+    characterAnchor: preset?.characterAnchor || dynamicChar.characterAnchor,
+    characterName: preset?.characterName || dynamicChar.characterName,
     sampleThumbnailGradient: styleDef.sampleThumbnailGradient,
     analyzedVideosCount: Math.max(recentVideos.length, 32),
     dominantFormat: isShortsDominant ? "shorts" : "longform",

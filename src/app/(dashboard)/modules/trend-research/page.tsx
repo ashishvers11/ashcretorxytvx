@@ -51,14 +51,17 @@ export default function TrendResearchPage() {
   const isKids =
     style === "pixar_3d" ||
     style === "animation_2d" ||
-    channelTitle.toLowerCase().includes("curiokid") ||
     channelTitle.toLowerCase().includes("kid") ||
+    channelTitle.toLowerCase().includes("cartoon") ||
+    channelTitle.toLowerCase().includes("story") ||
     niche.toLowerCase().includes("kid") ||
-    niche.toLowerCase().includes("animation");
+    niche.toLowerCase().includes("animation") ||
+    niche.toLowerCase().includes("family");
 
   const isPaper =
     style === "paper_cutout" ||
     channelTitle.toLowerCase().includes("paper") ||
+    channelTitle.toLowerCase().includes("craft") ||
     niche.toLowerCase().includes("paper") ||
     niche.toLowerCase().includes("history");
 
@@ -103,8 +106,11 @@ export default function TrendResearchPage() {
     fetchTrends(searchQuery, selectedCategory);
   };
 
-  // Channel-Aware Quick Autocomplete Seeds
+  // Channel-Aware Quick Autocomplete Seeds (dynamically uses channel's own researched topics)
   const quickSeeds = React.useMemo(() => {
+    if (activeChannelStyle?.popularTopics && activeChannelStyle.popularTopics.length > 0) {
+      return activeChannelStyle.popularTopics.slice(0, 6).map((t) => t.replace(/\(.*?\)/g, "").trim());
+    }
     if (isKids) {
       return [
         "शेर और खरगोश की कहानी",

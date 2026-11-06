@@ -1,3 +1,8 @@
+// ==============================================================================
+// ASH CREATOR STUDIO 2.0 — CONNECTED CHANNEL & STYLE DNA SECTION
+// Displays the active channel's isolated metrics and Style DNA profile
+// ==============================================================================
+
 "use client";
 
 import * as React from "react";
@@ -10,6 +15,10 @@ import {
   BarChart,
   Shield,
   Zap,
+  Dna,
+  Layers,
+  Sparkles,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -23,13 +32,24 @@ interface ChannelSectionProps {
 }
 
 export function ChannelSection({ onConnectClick }: ChannelSectionProps) {
-  const { channel, disconnectChannel } = useAuth();
+  const {
+    channel,
+    channels,
+    activeChannelStyle,
+    setActiveChannel,
+    disconnectChannel,
+  } = useAuth();
   const [isDisconnecting, setIsDisconnecting] = React.useState(false);
+  const [showSwitchMenu, setShowSwitchMenu] = React.useState(false);
 
   const handleDisconnect = async () => {
-    if (confirm("Are you sure you want to disconnect this YouTube channel from ASH Creator Studio?")) {
+    if (
+      confirm(
+        `Are you sure you want to disconnect ${channel?.channel_title} from ASH Creator Studio?`
+      )
+    ) {
       setIsDisconnecting(true);
-      await disconnectChannel();
+      await disconnectChannel(channel?.id);
       setIsDisconnecting(false);
     }
   };
@@ -41,8 +61,9 @@ export function ChannelSection({ onConnectClick }: ChannelSectionProps) {
           <CardTitle className="text-base sm:text-lg flex items-center gap-2">
             <span>Connected Channel</span>
             {channel ? (
-              <Badge variant="success" className="text-[10px]">
-                Active Link
+              <Badge variant="success" className="text-[10px] gap-1 font-bold">
+                <CheckCircle2 className="h-3 w-3" />
+                <span>Isolated DNA Active</span>
               </Badge>
             ) : (
               <Badge variant="warning" className="text-[10px]">
@@ -52,82 +73,187 @@ export function ChannelSection({ onConnectClick }: ChannelSectionProps) {
           </CardTitle>
           <CardDescription>
             {channel
-              ? "Your primary YouTube account synced with ASH growth modules"
-              : "Link your YouTube channel to activate metric tracking and automated audits"}
+              ? `Channel intelligence profile isolated for ${channel.channel_title}`
+              : "Link your YouTube channel to activate metric tracking, style analysis & script generation"}
           </CardDescription>
         </div>
 
-        {channel && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDisconnect}
-            isLoading={isDisconnecting}
-            className="text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
-          >
-            <Unlink className="h-3.5 w-3.5 mr-1" />
-            Disconnect
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {channel && channels.length > 1 && (
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSwitchMenu(!showSwitchMenu)}
+                className="text-xs gap-1.5"
+              >
+                <Layers className="h-3.5 w-3.5 text-brand-500" />
+                <span>Switch Channel ({channels.length})</span>
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+
+              {showSwitchMenu && (
+                <div className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-2 shadow-xl z-50">
+                  <div className="text-[10px] font-bold text-slate-400 uppercase px-2 py-1">
+                    Select Active Channel
+                  </div>
+                  {channels.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveChannel(c.id);
+                        setShowSwitchMenu(false);
+                      }}
+                      className={`w-full flex items-center justify-between p-2 rounded-lg text-left text-xs font-semibold ${
+                        channel.id === c.id
+                          ? "bg-brand-500/10 text-brand-600 dark:text-brand-400"
+                          : "hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                      }`}
+                    >
+                      <span className="truncate">{c.channel_title}</span>
+                      {channel.id === c.id && <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {channel && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onConnectClick}
+              className="text-xs gap-1.5"
+            >
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Add Channel</span>
+            </Button>
+          )}
+
+          {channel && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDisconnect}
+              isLoading={isDisconnecting}
+              className="text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+            >
+              <Unlink className="h-3.5 w-3.5 mr-1" />
+              Disconnect
+            </Button>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent>
         {channel ? (
-          /* Connected State */
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-xl border border-slate-200/80 dark:border-navy-800/80 bg-slate-50/70 dark:bg-navy-950/60 p-4">
-            <div className="flex items-center gap-3.5">
-              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl overflow-hidden shadow-md ring-2 ring-red-500/20">
-                {channel.thumbnail_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={channel.thumbnail_url}
-                    alt={channel.channel_title}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-red-600 text-white">
-                    <Youtube className="h-6 w-6" />
-                  </div>
-                )}
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                    {channel.channel_title}
-                  </h4>
-                  <span className="rounded bg-brand-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-brand-600 dark:text-brand-400">
-                    Primary
-                  </span>
+          <div className="space-y-4">
+            {/* Primary Channel Identity Banner */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-xl border border-slate-200/80 dark:border-navy-800/80 bg-slate-50/70 dark:bg-navy-950/60 p-4">
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl overflow-hidden shadow-md ring-2 ring-red-500/20">
+                  {channel.thumbnail_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={channel.thumbnail_url}
+                      alt={channel.channel_title}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-red-600 text-white">
+                      <Youtube className="h-7 w-7" />
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {channel.custom_url ? `@${channel.custom_url}` : "Custom handle not set"} • ID:{" "}
-                  <code className="text-[11px] font-mono text-slate-600 dark:text-slate-300">
-                    {channel.youtube_channel_id}
-                  </code>
-                </p>
-                <p className="text-[11px] text-slate-400">
-                  Connected on {formatDate(channel.connected_at)}
-                </p>
+                <div className="space-y-0.5 min-w-0 truncate">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                      {channel.channel_title}
+                    </h4>
+                    <span className="rounded bg-brand-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-brand-600 dark:text-brand-400 shrink-0">
+                      Primary
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    {channel.custom_url ? `@${channel.custom_url}` : "Custom handle not set"} • ID:{" "}
+                    <code className="text-[11px] font-mono text-slate-600 dark:text-slate-300">
+                      {channel.youtube_channel_id}
+                    </code>
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Connected on {formatDate(channel.connected_at)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end shrink-0">
+                <Link href="/modules/script-writer">
+                  <Button size="sm" className="gap-1.5 text-xs bg-brand-600 hover:bg-brand-700">
+                    <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                    <span>Create AI Script</span>
+                  </Button>
+                </Link>
+                <a
+                  href={`https://youtube.com/channel/${channel.youtube_channel_id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                >
+                  <span>View on YouTube</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
-              <Link href="/modules/channel-analytics">
-                <Button size="sm" className="gap-1.5 text-xs bg-brand-500 hover:bg-brand-600">
-                  <BarChart className="h-3.5 w-3.5" />
-                  <span>Analytics Dashboard</span>
-                </Button>
-              </Link>
-              <a
-                href={`https://youtube.com/channel/${channel.youtube_channel_id}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-              >
-                <span>View on YouTube</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
+            {/* CHANNEL STYLE DNA PROFILE CARD */}
+            {activeChannelStyle && (
+              <div className="rounded-xl border border-brand-500/20 bg-brand-500/5 dark:bg-brand-950/20 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-brand-700 dark:text-brand-300 flex items-center gap-1.5 uppercase tracking-wider">
+                    <Dna className="h-4 w-4 text-brand-500" />
+                    <span>Channel Style DNA (Auto-Researched)</span>
+                  </span>
+                  <Link
+                    href="/modules/style-lab"
+                    className="text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:underline"
+                  >
+                    Customize in Style Lab →
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-navy-800">
+                    <div className="text-[10px] text-slate-400 font-semibold">Visual Animation Style</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white mt-0.5 truncate">
+                      {activeChannelStyle.visualStyleLabel}
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-navy-800">
+                    <div className="text-[10px] text-slate-400 font-semibold">Pacing & Speed</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white mt-0.5">
+                      {activeChannelStyle.dominantPacingWpm} WPM ({activeChannelStyle.videoDuration})
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-navy-800">
+                    <div className="text-[10px] text-slate-400 font-semibold">Target Audience</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white mt-0.5 truncate">
+                      {activeChannelStyle.audienceAgeGroup}
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-navy-800">
+                    <div className="text-[10px] text-slate-400 font-semibold">Voiceover & Language</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white mt-0.5 truncate">
+                      {activeChannelStyle.primaryLanguage} ({activeChannelStyle.voiceoverStyle.split(" ")[0]})
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           /* Empty State */

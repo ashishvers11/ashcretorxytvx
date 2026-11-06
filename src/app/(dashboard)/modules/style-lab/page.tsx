@@ -20,15 +20,19 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
+import { useAuth } from "@/components/providers/auth-provider";
 import { TRENDING_AI_STYLES, AIVideoStyle } from "@/lib/ai/video-prompt-engine";
+import { Dna, CheckCircle, Lock } from "lucide-react";
 
 const LOCAL_STORAGE_CUSTOM_STYLES = "ash_custom_styles";
 
 export default function AIStyleLabPage() {
+  const { channel, activeChannelStyle, updateActiveChannelStyle } = useAuth();
   const [trendingStyles] = React.useState<AIVideoStyle[]>(TRENDING_AI_STYLES);
   const [customStyles, setCustomStyles] = React.useState<AIVideoStyle[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
+  const [toastMessage, setToastMessage] = React.useState<string | null>(null);
 
   // Custom Style Form State
   const [newStyleName, setNewStyleName] = React.useState("");
@@ -126,6 +130,61 @@ export default function AIStyleLabPage() {
           </Link>
         </div>
       </div>
+
+      {/* Active Channel Style DNA Dashboard */}
+      {activeChannelStyle && (
+        <div className="rounded-2xl border border-brand-500/30 bg-brand-500/5 dark:bg-brand-950/20 p-5 space-y-3 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Dna className="h-5 w-5 text-brand-500" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                Active Channel Style DNA: {channel?.channel_title}
+              </h3>
+            </div>
+            <Badge variant="success" className="text-[10px] font-bold">
+              Isolated & Locked
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            <div className="p-3 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-navy-800">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                Visual Animation Style
+              </span>
+              <p className="font-bold text-slate-900 dark:text-white mt-0.5 truncate">
+                {activeChannelStyle.visualStyleLabel}
+              </p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-navy-800">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                Target Audience
+              </span>
+              <p className="font-bold text-slate-900 dark:text-white mt-0.5 truncate">
+                {activeChannelStyle.audienceAgeGroup}
+              </p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-navy-800">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                Pacing & Language
+              </span>
+              <p className="font-bold text-slate-900 dark:text-white mt-0.5 truncate">
+                {activeChannelStyle.dominantPacingWpm} WPM • {activeChannelStyle.primaryLanguage}
+              </p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-navy-800">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                Storytelling Pattern
+              </span>
+              <p className="font-bold text-slate-900 dark:text-white mt-0.5 truncate">
+                Curiosity Hook → Misconception → Payoff
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Custom Styles Section (if any created) */}
       {customStyles.length > 0 && (

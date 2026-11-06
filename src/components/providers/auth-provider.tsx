@@ -4,12 +4,21 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { User } from "@supabase/supabase-js";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { Profile, UserSettings, Channel } from "@/lib/supabase/types";
+import { ChannelStyleProfile } from "@/types/channel-intelligence";
+import {
+  analyzeAndGenerateChannelDNA,
+  getChannelStyleProfile,
+  saveChannelStyleProfile,
+} from "@/lib/ai/channel-intelligence";
 
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   settings: UserSettings | null;
-  channel: Channel | null;
+  channel: Channel | null; // active channel (backward compatible)
+  activeChannel: Channel | null;
+  channels: Channel[]; // all connected channels for multi-channel support
+  activeChannelStyle: ChannelStyleProfile | null;
   isLoading: boolean;
   isConfigured: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
@@ -18,6 +27,8 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: string | null }>;
   updateSettings: (updates: Partial<UserSettings>) => Promise<{ error: string | null }>;
+  setActiveChannel: (channelId: string) => void;
+  updateActiveChannelStyle: (updates: Partial<ChannelStyleProfile>) => void;
   connectChannel: (channelData: {
     youtube_channel_id: string;
     channel_title: string;
@@ -27,8 +38,8 @@ interface AuthContextType {
     video_count?: number;
     view_count?: number;
     description?: string;
-  }) => Promise<{ error: string | null }>;
-  disconnectChannel: () => Promise<{ error: string | null }>;
+  }) => Promise<{ error: string | null; channel?: Channel }>;
+  disconnectChannel: (channelId?: string) => Promise<{ error: string | null }>;
   refreshState: () => Promise<void>;
 }
 
@@ -38,12 +49,16 @@ const LOCAL_STORAGE_KEY_USER = "ash_demo_user";
 const LOCAL_STORAGE_KEY_PROFILE = "ash_demo_profile";
 const LOCAL_STORAGE_KEY_SETTINGS = "ash_demo_settings";
 const LOCAL_STORAGE_KEY_CHANNEL = "ash_demo_channel";
+const LOCAL_STORAGE_KEY_CHANNELS = "ash_demo_channels_list";
+const LOCAL_STORAGE_KEY_ACTIVE_CHANNEL_ID = "ash_demo_active_channel_id";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [settings, setSettings] = useState<UserSettings | null>(null);
+  const [channels, setChannels] = useState<Channel[]>([]);
   const [channel, setChannel] = useState<Channel | null>(null);
+  const [activeChannelStyle, setActiveChannelStyle] = useState<ChannelStyleProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const isConfigured = isSupabaseConfigured();
 
@@ -92,18 +107,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSettings(sett as UserSettings);
       }
 
-      // Fetch Primary Channel
-      const { data: chan } = await supabase
+      // Fetch All Channels for multi-channel isolation
+      const { data: allChans } = await supabase
         .from("channels")
         .select("*")
         .eq("user_id", userId)
-        .eq("is_primary", true)
-        .single();
+        .order("is_primary", { ascending: false });
 
-      if (chan) {
-        setChannel(chan as Channel);
+      if (allChans && allChans.length > 0) {
+        setChannels(allChans as Channel[]);
+        const primary = allChans.find((c: any) => c.is_primary) || allChans[0];
+        setChannel(primary as Channel);
+        const dna = getChannelStyleProfile(primary.id) || analyzeAndGenerateChannelDNA(primary as Channel);
+        setActiveChannelStyle(dna);
       } else {
+        setChannels([]);
         setChannel(null);
+        setActiveChannelStyle(null);
       }
     } catch (err) {
       console.error("Error loading Supabase user data:", err);
@@ -215,22 +235,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               localStorage.setItem(LOCAL_STORAGE_KEY_SETTINGS, JSON.stringify(defaultSettings));
             }
 
-            if (savedChannel) {
+            // Load Channels list for multi-channel isolation
+            let loadedChannels: Channel[] = [];
+            const savedChannelsList = localStorage.getItem(LOCAL_STORAGE_KEY_CHANNELS);
+            if (savedChannelsList) {
+              try {
+                loadedChannels = JSON.parse(savedChannelsList);
+              } catch {
+                loadedChannels = [];
+              }
+            } else if (savedChannel) {
               try {
                 const parsed = JSON.parse(savedChannel);
-                // Clear the legacy auto-connected mock channel so creators connect their own channel
-                if (parsed?.id === "chan-ashishfn") {
-                  localStorage.removeItem(LOCAL_STORAGE_KEY_CHANNEL);
-                  setChannel(null);
+                if (parsed?.id !== "chan-ashishfn") {
+                  loadedChannels = [parsed];
                 } else {
-                  setChannel(parsed);
+                  localStorage.removeItem(LOCAL_STORAGE_KEY_CHANNEL);
                 }
               } catch {
-                localStorage.removeItem(LOCAL_STORAGE_KEY_CHANNEL);
-                setChannel(null);
+                loadedChannels = [];
               }
+            }
+
+            setChannels(loadedChannels);
+
+            // Active channel selection
+            const savedActiveId = localStorage.getItem(LOCAL_STORAGE_KEY_ACTIVE_CHANNEL_ID);
+            const active = loadedChannels.find((c) => c.id === savedActiveId) || loadedChannels[0] || null;
+            setChannel(active);
+            if (active) {
+              const dna = getChannelStyleProfile(active.id) || analyzeAndGenerateChannelDNA(active);
+              setActiveChannelStyle(dna);
             } else {
-              setChannel(null);
+              setActiveChannelStyle(null);
             }
           }
         } catch (err) {
@@ -427,6 +464,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: null };
   };
 
+  const setActiveChannel = useCallback(
+    (channelId: string) => {
+      const found = channels.find((c) => c.id === channelId || c.youtube_channel_id === channelId);
+      if (found) {
+        setChannel(found);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(LOCAL_STORAGE_KEY_ACTIVE_CHANNEL_ID, found.id);
+          localStorage.setItem(LOCAL_STORAGE_KEY_CHANNEL, JSON.stringify(found));
+        }
+        const dna = getChannelStyleProfile(found.id) || analyzeAndGenerateChannelDNA(found);
+        setActiveChannelStyle(dna);
+      }
+    },
+    [channels]
+  );
+
+  const updateActiveChannelStyle = useCallback(
+    (updates: Partial<ChannelStyleProfile>) => {
+      if (!channel) return;
+      setActiveChannelStyle((prev) => {
+        if (!prev) return null;
+        const updated = {
+          ...prev,
+          ...updates,
+          isCustomized: true,
+          lastResearchedAt: new Date().toISOString(),
+        };
+        saveChannelStyleProfile(updated);
+        return updated;
+      });
+    },
+    [channel]
+  );
+
   const connectChannel = async (channelData: {
     youtube_channel_id: string;
     channel_title: string;
@@ -436,7 +507,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     video_count?: number;
     view_count?: number;
     description?: string;
-  }): Promise<{ error: string | null }> => {
+  }): Promise<{ error: string | null; channel?: Channel }> => {
     if (!user) return { error: "User not authenticated" };
 
     const newChannel: Channel = {
@@ -447,10 +518,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       custom_url: channelData.custom_url || null,
       description: channelData.description || "Connected YouTube Channel",
       thumbnail_url: channelData.thumbnail_url || "",
-      subscriber_count: channelData.subscriber_count ?? 2,
+      subscriber_count: channelData.subscriber_count ?? 0,
       video_count: channelData.video_count ?? 0,
       view_count: channelData.view_count ?? 0,
-      is_primary: true,
+      is_primary: channels.length === 0,
       is_connected: true,
       uploads_playlist_id: null,
       published_at: null,
@@ -464,26 +535,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const supabase = createClient();
       const { error } = await supabase.from("channels").upsert(newChannel as any);
       if (error) return { error: error.message };
-    } else {
-      localStorage.setItem(LOCAL_STORAGE_KEY_CHANNEL, JSON.stringify(newChannel));
     }
 
+    // Append to channels list (avoid duplicate youtube_channel_id)
+    const updatedChannels = [
+      ...channels.filter((c) => c.youtube_channel_id !== newChannel.youtube_channel_id),
+      newChannel,
+    ];
+    setChannels(updatedChannels);
     setChannel(newChannel);
-    return { error: null };
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem(LOCAL_STORAGE_KEY_CHANNELS, JSON.stringify(updatedChannels));
+      localStorage.setItem(LOCAL_STORAGE_KEY_CHANNEL, JSON.stringify(newChannel));
+      localStorage.setItem(LOCAL_STORAGE_KEY_ACTIVE_CHANNEL_ID, newChannel.id);
+    }
+
+    // Automatically analyze and generate isolated Channel Style DNA
+    const dna = analyzeAndGenerateChannelDNA(newChannel);
+    setActiveChannelStyle(dna);
+
+    return { error: null, channel: newChannel };
   };
 
-  const disconnectChannel = async (): Promise<{ error: string | null }> => {
-    if (!channel) return { error: "No channel connected" };
+  const disconnectChannel = async (channelId?: string): Promise<{ error: string | null }> => {
+    const targetId = channelId || channel?.id;
+    if (!targetId) return { error: "No channel connected" };
 
     if (isConfigured) {
       const supabase = createClient();
-      const { error } = await supabase.from("channels").delete().eq("id", channel.id);
+      const { error } = await supabase.from("channels").delete().eq("id", targetId);
       if (error) return { error: error.message };
-    } else {
-      localStorage.removeItem(LOCAL_STORAGE_KEY_CHANNEL);
     }
 
-    setChannel(null);
+    const updatedChannels = channels.filter((c) => c.id !== targetId);
+    setChannels(updatedChannels);
+
+    const nextActive = updatedChannels[0] || null;
+    setChannel(nextActive);
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem(LOCAL_STORAGE_KEY_CHANNELS, JSON.stringify(updatedChannels));
+      if (nextActive) {
+        localStorage.setItem(LOCAL_STORAGE_KEY_CHANNEL, JSON.stringify(nextActive));
+        localStorage.setItem(LOCAL_STORAGE_KEY_ACTIVE_CHANNEL_ID, nextActive.id);
+      } else {
+        localStorage.removeItem(LOCAL_STORAGE_KEY_CHANNEL);
+        localStorage.removeItem(LOCAL_STORAGE_KEY_ACTIVE_CHANNEL_ID);
+      }
+    }
+
+    if (nextActive) {
+      const dna = getChannelStyleProfile(nextActive.id) || analyzeAndGenerateChannelDNA(nextActive);
+      setActiveChannelStyle(dna);
+    } else {
+      setActiveChannelStyle(null);
+    }
+
     return { error: null };
   };
 
@@ -500,6 +608,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile,
         settings,
         channel,
+        activeChannel: channel,
+        channels,
+        activeChannelStyle,
         isLoading,
         isConfigured,
         signIn,
@@ -508,6 +619,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         resetPassword,
         updateProfile,
         updateSettings,
+        setActiveChannel,
+        updateActiveChannelStyle,
         connectChannel,
         disconnectChannel,
         refreshState,

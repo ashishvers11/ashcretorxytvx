@@ -164,7 +164,7 @@ async function resolveChannel(channelUrl: string | null) {
       console.warn("Could not fetch YouTube about page:", aboutErr);
     }
 
-    // Special exact resolution for @ashishfn if matched
+    // Special exact resolution for presets
     if (cleanHandle.toLowerCase() === "ashishfn") {
       channelTitle = "ASHISH FN";
       youtubeChannelId = "UCq_9aJ9FOog48qCfPikSKdg";
@@ -175,6 +175,24 @@ async function resolveChannel(channelUrl: string | null) {
       if (!videoCount) videoCount = 6;
       if (!viewCount) viewCount = 4202;
       description = "Education & Science Facts channel exploring daily mysteries, curious questions, and scientific truths.";
+    } else if (cleanHandle.toLowerCase() === "curiouspaper") {
+      channelTitle = "The Paper Chronicle";
+      youtubeChannelId = "UC_paper_cutout_demo_chan";
+      thumbnailUrl = "https://api.dicebear.com/7.x/bottts/svg?seed=curiouspaper";
+      handle = "@curiouspaper";
+      subscriberCount = 84200;
+      videoCount = 42;
+      viewCount = 14200000;
+      description = "History & Lost Civilizations through layered paper cut-out stop-motion craft documentaries.";
+    } else if (cleanHandle.toLowerCase() === "zenfacts") {
+      channelTitle = "Microscopic Zen";
+      youtubeChannelId = "UC_asmr_zen_demo_chan";
+      thumbnailUrl = "https://api.dicebear.com/7.x/bottts/svg?seed=zenfacts";
+      handle = "@zenfacts";
+      subscriberCount = 215000;
+      videoCount = 68;
+      viewCount = 38500000;
+      description = "Sensory Science, Macro Fluid Dynamics & Hypnotic ASMR Physics.";
     }
 
     return NextResponse.json({

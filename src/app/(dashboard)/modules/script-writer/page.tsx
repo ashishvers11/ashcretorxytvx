@@ -1,3 +1,9 @@
+// ==============================================================================
+// ASH CREATOR STUDIO 2.0 — HUMAN-CENTERED AI VIDEO SCRIPT & PRODUCTION STUDIO
+// Multi-Channel Intelligence: Locked to Active Channel Style DNA
+// Fact Verification Engine, Quality Scoring (0-100), Regeneration Controls & 10 Copy Buttons
+// ==============================================================================
+
 "use client";
 
 import * as React from "react";
@@ -14,815 +20,1094 @@ import {
   ExternalLink,
   Layers,
   Palette,
-  User,
   Sliders,
   Volume2,
   Video,
   FileText,
   PlusCircle,
   Camera,
-  Play,
   RotateCcw,
+  ShieldCheck,
+  AlertTriangle,
+  HelpCircle,
+  Dna,
+  Zap,
+  ArrowRight,
+  TrendingUp,
+  Award,
+  Globe,
+  Share2,
+  Lock,
 } from "lucide-react";
+import { useAuth } from "@/components/providers/auth-provider";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  TRENDING_AI_STYLES,
-  DEFAULT_CHARACTERS,
-  AIVideoStyle,
-  ConsistentCharacter,
-  GeneratedVideoPackage,
-  generateScenePackage,
-  recommendStyleForTopic,
-} from "@/lib/ai/video-prompt-engine";
+  HumanizedVideoPackage,
+  ScriptRegenerationAction,
+  VisualAnimationType,
+  ScriptApprovalStatus,
+} from "@/types/channel-intelligence";
+import {
+  generateHumanScriptPackage,
+  regenerateScriptWithAction,
+} from "@/lib/ai/human-script-engine";
+import {
+  getAvailableVisualStyles,
+  VISUAL_STYLE_DEFINITIONS,
+  PRESET_CHANNEL_PROFILES,
+} from "@/lib/ai/channel-intelligence";
+
+export default function ScriptWriterPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="flex h-96 w-full items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
+        </div>
+      }
+    >
+      <ScriptWriterContent />
+    </React.Suspense>
+  );
+}
 
 function ScriptWriterContent() {
   const searchParams = useSearchParams();
   const titleFromUrl = searchParams.get("title");
-  const styleFromUrl = searchParams.get("style");
+
+  const { channel, activeChannelStyle, updateActiveChannelStyle } = useAuth();
 
   // Form State
-  const [title, setTitle] = React.useState(
+  const [topic, setTopic] = React.useState(
     titleFromUrl || "लौंग असल में फूल है या फल? (The Science Behind Cloves)"
   );
-
   const [format, setFormat] = React.useState<"shorts" | "longform">("shorts");
-  const [durationSeconds, setDurationSeconds] = React.useState<number>(60);
+  const [durationSeconds, setDurationSeconds] = React.useState<number>(55);
 
-  // Styles State (combining trending + saved custom styles)
-  const [allStyles, setAllStyles] = React.useState<AIVideoStyle[]>(TRENDING_AI_STYLES);
-  const [selectedStyleId, setSelectedStyleId] = React.useState<string>(styleFromUrl || "stickman_doodle");
+  // Manual Visual Style Override (for this video only, without altering channel DNA)
+  const [isOverrideEnabled, setIsOverrideEnabled] = React.useState<boolean>(false);
+  const [overrideStyleType, setOverrideStyleType] = React.useState<VisualAnimationType>("stickman_doodle");
 
-  // Character Consistency State
-  const [characterEnabled, setCharacterEnabled] = React.useState<boolean>(true);
-  const [selectedCharId, setSelectedCharId] = React.useState<string>("ashish_stickman");
-  const [customCharText, setCustomCharText] = React.useState<string>("");
-
-  // Generator & Output State
+  // Output Package State
   const [isGenerating, setIsGenerating] = React.useState<boolean>(false);
   const [generationStep, setGenerationStep] = React.useState<string>("");
-  const [videoPackage, setVideoPackage] = React.useState<GeneratedVideoPackage | null>(null);
+  const [videoPackage, setVideoPackage] = React.useState<HumanizedVideoPackage | null>(null);
 
-  // Active view tab: "prompts" (Scene-by-scene AI video prompts) or "script" (Full voiceover script)
-  const [activeTab, setActiveTab] = React.useState<"prompts" | "script">("prompts");
-  const [copiedSceneIndex, setCopiedSceneIndex] = React.useState<number | null>(null);
-  const [copiedAllPrompts, setCopiedAllPrompts] = React.useState<boolean>(false);
-  const [copiedScript, setCopiedScript] = React.useState<boolean>(false);
-  const [saved, setSaved] = React.useState<boolean>(false);
+  // Active view tabs: "prompts" | "hindi_script" | "english_script" | "facts" | "quality"
+  const [activeTab, setActiveTab] = React.useState<
+    "prompts" | "hindi_script" | "english_script" | "facts" | "quality" | "seo"
+  >("prompts");
 
-  // Load custom styles from localStorage
-  React.useEffect(() => {
-    try {
-      const stored = localStorage.getItem("ash_custom_styles");
-      if (stored) {
-        const custom: AIVideoStyle[] = JSON.parse(stored);
-        setAllStyles([...TRENDING_AI_STYLES, ...custom]);
+  // Toast / Copy feedback state
+  const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
+
+  const availableStyles = React.useMemo(() => getAvailableVisualStyles(), []);
+
+  // Compute active effective style profile
+  const effectiveChannelStyle = React.useMemo(() => {
+    if (activeChannelStyle) {
+      if (isOverrideEnabled) {
+        const overrideDef = VISUAL_STYLE_DEFINITIONS[overrideStyleType];
+        return {
+          ...activeChannelStyle,
+          visualAnimationStyle: overrideStyleType,
+          visualStyleLabel: overrideDef.label,
+          visualPromptModifier: overrideDef.promptModifier,
+          negativePrompt: overrideDef.negativePrompt,
+          lightingPreference: overrideDef.lightingPreference,
+          cameraPreference: overrideDef.cameraPreference,
+        };
       }
-    } catch (e) {}
-  }, []);
-
-  // Auto-switch to stickman character anchor if stickman style is chosen
-  React.useEffect(() => {
-    if (selectedStyleId === "stickman_doodle") {
-      setSelectedCharId("ashish_stickman");
+      return activeChannelStyle;
     }
-  }, [selectedStyleId]);
 
-  // Compute recommended style for active title
-  const recommendedStyle = React.useMemo(() => recommendStyleForTopic(title), [title]);
+    // Fallback if no channel is connected yet (use standard clean stickman or custom)
+    const basePreset = PRESET_CHANNEL_PROFILES["UCq_9aJ9FOog48qCfPikSKdg"];
+    const baseDef = VISUAL_STYLE_DEFINITIONS[overrideStyleType || "stickman_doodle"];
+    return {
+      profileId: "demo-profile-fallback",
+      channelId: "chan-demo-temp",
+      channelName: "ASH Creator Studio",
+      youtubeChannelId: "UC_temp",
+      channelDescription: "Curious science and fact breakdowns",
+      channelNiche: "Education & Science",
+      channelSubNiche: "Everyday Mysteries",
+      targetAudience: "Curious Hindi & English learners",
+      audienceAgeGroup: "18–28 Curious Minds",
+      primaryLanguage: "Hindi" as const,
+      contentFormat: "YouTube Shorts (9:16)" as const,
+      videoDuration: "45–60s fast-paced shorts",
+      visualAnimationStyle: overrideStyleType || "stickman_doodle",
+      visualStyleLabel: baseDef.label,
+      editingStyle: "Snappy 1.5–2s cuts with comic sound effects",
+      voiceoverStyle: "Energetic conversational narrator",
+      storytellingStyle: "Curiosity Question -> Misconception -> Scientific Truth -> Payoff",
+      hookStyle: "Bold counter-intuitive question",
+      averageVideoLength: 52,
+      popularTopics: ["लौंग का सच", "धरती 5 सेकंड रुक जाए तो"],
+      successfulVideoPatterns: ["1-2s Curiosity Hook", "Natural Conversational Phrasing"],
+      competitorChannels: ["FactTechz", "Science Fiction Hindi"],
+      contentRestrictions: ["No generic textbook definitions", "Must be verified"],
+      visualPromptModifier: baseDef.promptModifier,
+      negativePrompt: baseDef.negativePrompt,
+      lightingPreference: baseDef.lightingPreference,
+      cameraPreference: baseDef.cameraPreference,
+      sampleThumbnailGradient: baseDef.sampleThumbnailGradient,
+      analyzedVideosCount: 30,
+      dominantFormat: "shorts" as const,
+      dominantPacingWpm: 140,
+      lastResearchedAt: new Date().toISOString(),
+      isCustomized: false,
+    };
+  }, [activeChannelStyle, isOverrideEnabled, overrideStyleType]);
 
-  const activeStyle = allStyles.find((s) => s.id === selectedStyleId) || allStyles[0];
-  const activeCharacter = DEFAULT_CHARACTERS.find((c) => c.id === selectedCharId) || {
-    id: "custom",
-    name: "Custom Character",
-    description: customCharText || "Custom protagonist",
-    anchorPrompt: customCharText || "Consistent Protagonist: South Asian science investigator",
-    avatarSeed: "custom",
-  };
-
-  // Generate package on initial load or title change from URL
+  // Generate Script Function
   const runGeneration = React.useCallback(
-    (
-      targetTitle: string,
-      targetFormat: "shorts" | "longform",
-      targetDuration: number,
-      styleObj: AIVideoStyle
-    ) => {
+    (targetTopic: string) => {
       setIsGenerating(true);
-      setGenerationStep("Analyzing curiosity hook & narrative pacing...");
+      setGenerationStep("1/4 Loading channel Style DNA & research patterns...");
 
       setTimeout(() => {
-        setGenerationStep(`Applying visual style: ${styleObj.name}...`);
-      }, 400);
+        setGenerationStep(`2/4 Crafting human-like storytelling in style: ${effectiveChannelStyle.visualStyleLabel}...`);
+      }, 350);
 
       setTimeout(() => {
-        setGenerationStep(
-          characterEnabled
-            ? `Locking consistent character: ${activeCharacter.name}...`
-            : "Composing scene camera motion & lighting..."
-        );
-      }, 800);
+        setGenerationStep("3/4 Running Fact Verification Engine against verified science sources...");
+      }, 700);
 
       setTimeout(() => {
-        setGenerationStep("Formatting Midjourney, Runway Gen-3 & Kling prompts...");
-      }, 1200);
+        setGenerationStep("4/4 Generating scene prompts for Runway Gen-3, Midjourney & Kling...");
+      }, 1050);
 
       setTimeout(() => {
-        const pkg = generateScenePackage({
-          title: targetTitle,
-          format: targetFormat,
-          durationSeconds: targetDuration,
-          style: styleObj,
-          characterEnabled,
-          character: characterEnabled ? activeCharacter : undefined,
-          language: "hindi",
+        const pkg = generateHumanScriptPackage({
+          topic: targetTopic,
+          channelStyle: effectiveChannelStyle,
+          format,
+          durationSeconds,
+          customStyleOverride: isOverrideEnabled ? effectiveChannelStyle : undefined,
         });
 
         setVideoPackage(pkg);
         setIsGenerating(false);
         setGenerationStep("");
-      }, 1500);
+      }, 1400);
     },
-    [characterEnabled, activeCharacter]
+    [effectiveChannelStyle, format, durationSeconds, isOverrideEnabled]
   );
 
-  // Initial load
+  // Initial load or topic change from URL
   React.useEffect(() => {
-    runGeneration(title, format, durationSeconds, activeStyle);
+    runGeneration(topic);
   }, []);
 
-  // Sync when titleFromUrl changes
   React.useEffect(() => {
-    if (titleFromUrl && titleFromUrl !== title) {
-      setTitle(titleFromUrl);
-      const rec = recommendStyleForTopic(titleFromUrl);
-      setSelectedStyleId(rec.id);
-      runGeneration(titleFromUrl, format, durationSeconds, rec);
+    if (titleFromUrl && titleFromUrl !== topic) {
+      setTopic(titleFromUrl);
+      runGeneration(titleFromUrl);
     }
   }, [titleFromUrl]);
 
-  // Copy helpers
-  const handleCopyScenePrompt = (index: number, text: string) => {
+  // Copy helper with toast
+  const triggerCopy = (text: string, label: string, key: string) => {
     navigator.clipboard.writeText(text);
-    setCopiedSceneIndex(index);
-    setTimeout(() => setCopiedSceneIndex(null), 2000);
+    setCopiedKey(key);
+    setToastMessage(`${label} copied to clipboard!`);
+    setTimeout(() => {
+      setCopiedKey(null);
+      setToastMessage(null);
+    }, 2500);
   };
 
-  const handleCopyAllPrompts = () => {
+  // Regeneration Handler
+  const handleRegenerateAction = (action: ScriptRegenerationAction, actionLabel: string) => {
     if (!videoPackage) return;
-    const all = videoPackage.scenes
-      .map(
-        (s) =>
-          `SCENE ${s.sceneNumber} [${s.timeRange}] (${s.stageName})\n` +
-          `CAMERA: ${s.cameraDirection}\n` +
-          `MIDJOURNEY / KLING PROMPT:\n${s.midjourneyPrompt}\n\n` +
-          `RUNWAY MOTION PROMPT:\n${s.runwayMotionPrompt}\n\n` +
-          `VOICEOVER DIALOG:\n${s.dialogVoiceover}\n` +
-          `ON-SCREEN TEXT: ${s.onScreenText}\n` +
-          `SFX CUE: ${s.sfxCue}\n` +
-          `--------------------------------------------------`
-      )
-      .join("\n\n");
-
-    navigator.clipboard.writeText(all);
-    setCopiedAllPrompts(true);
-    setTimeout(() => setCopiedAllPrompts(false), 2000);
+    const updated = regenerateScriptWithAction(videoPackage, action);
+    setVideoPackage(updated);
+    setToastMessage(`Script regenerated: ${actionLabel}!`);
+    setTimeout(() => setToastMessage(null), 2500);
   };
 
-  const handleCopyScriptOnly = () => {
+  // Approval status handler
+  const handleApprovalChange = (status: ScriptApprovalStatus) => {
     if (!videoPackage) return;
-    navigator.clipboard.writeText(videoPackage.fullVoiceoverScript);
-    setCopiedScript(true);
-    setTimeout(() => setCopiedScript(false), 2000);
+    setVideoPackage({ ...videoPackage, approvalStatus: status });
+    setToastMessage(`Script status updated to: ${status.replace(/_/g, " ").toUpperCase()}`);
+    setTimeout(() => setToastMessage(null), 2000);
   };
-
-  const handleDownloadTxt = () => {
-    if (!videoPackage) return;
-    const full =
-      `==================================================\n` +
-      `ASH CREATOR STUDIO — AI VIDEO PRODUCTION SHEET\n` +
-      `TITLE: ${videoPackage.title}\n` +
-      `FORMAT: ${videoPackage.format.toUpperCase()} (${videoPackage.aspectRatio})\n` +
-      `TARGET DURATION: ${videoPackage.durationSeconds} Seconds\n` +
-      `VISUAL STYLE: ${videoPackage.selectedStyle.name}\n` +
-      `CHARACTER CONSISTENCY: ${characterEnabled ? activeCharacter.name : "Disabled"}\n` +
-      `TOTAL SCENES: ${videoPackage.totalScenes}\n` +
-      `TOTAL WORDS: ${videoPackage.totalWords} (~${videoPackage.estimatedSpeakingMinutes} mins speaking)\n` +
-      `==================================================\n\n` +
-      videoPackage.scenes
-        .map(
-          (s) =>
-            `### SCENE ${s.sceneNumber}: [${s.timeRange}] - ${s.stageName}\n` +
-            `CAMERA DIRECTION: ${s.cameraDirection}\n\n` +
-            `[AI VIDEO GENERATOR PROMPT (Midjourney / Kling)]:\n` +
-            `${s.midjourneyPrompt}\n\n` +
-            `[RUNWAY / LUMA MOTION PROMPT]:\n` +
-            `${s.runwayMotionPrompt}\n\n` +
-            `[VOICEOVER DIALOG]:\n"${s.dialogVoiceover}"\n\n` +
-            `[ON-SCREEN TEXT]: "${s.onScreenText}"\n` +
-            `[SFX CUE]: ${s.sfxCue}\n` +
-            `--------------------------------------------------`
-        )
-        .join("\n\n");
-
-    const blob = new Blob([full], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${title.slice(0, 30).replace(/[^a-zA-Z0-9_\u0900-\u097F]/g, "_")}_AI_Video_Prompts.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleSave = () => {
-    if (!videoPackage) return;
-    localStorage.setItem("ash_saved_video_package", JSON.stringify(videoPackage));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
-  const quickPresets = [
-    "लौंग असल में फूल है या फल? (The Science Behind Cloves)",
-    "अगर धरती 5 सेकंड के लिए घूमना बंद कर दे तो क्या होगा?",
-    "हवाई जहाज का रंग हमेशा सफेद ही क्यों होता है?",
-    "मोबाइल की बैटरी को 80% पर ही क्यों रोक देना चाहिए?",
-    "क्या पौधे सच में दर्द महसूस करते हैं? Science Truth",
-  ];
 
   return (
-    <div className="space-y-6 sm:space-y-8 pb-10 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-              AI Video & Script Studio
-            </h2>
-            <Badge variant="brand">Scene-by-Scene AI Prompts</Badge>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Generate synchronized Hindi voiceovers + Midjourney / Runway Gen-3 / Kling visual prompts with consistent character
-          </p>
+    <div className="space-y-6 pb-16">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-3 text-xs font-bold shadow-2xl animate-in slide-in-from-bottom-3 duration-200">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400 dark:text-emerald-600" />
+          <span>{toastMessage}</span>
         </div>
+      )}
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleDownloadTxt} className="gap-1.5 text-xs">
-            <Download className="h-3.5 w-3.5" />
-            <span>Export Scene Sheet</span>
-          </Button>
+      {/* 1. CHANNEL STYLE DNA STATUS BANNER (Multi-Channel Isolation) */}
+      <div className="rounded-2xl border border-slate-200/90 dark:border-navy-800 bg-white/95 dark:bg-navy-900/90 p-4 sm:p-5 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500 ring-2 ring-brand-500/20">
+              <Dna className="h-6 w-6" />
+            </div>
 
-          <Button variant="outline" size="sm" onClick={handleCopyAllPrompts} className="gap-1.5 text-xs">
-            {copiedAllPrompts ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-            <span>{copiedAllPrompts ? "Copied All Prompts!" : "Copy All Prompts"}</span>
-          </Button>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Channel Intelligence Profile
+                </span>
+                <Badge variant="success" className="text-[10px] gap-1 font-bold">
+                  <Lock className="h-3 w-3" />
+                  <span>Channel Isolated</span>
+                </Badge>
+                {channel && (
+                  <Badge variant="outline" className="text-[10px] font-semibold text-red-500 border-red-500/20 bg-red-500/5">
+                    @{channel.custom_url || "channel"}
+                  </Badge>
+                )}
+              </div>
 
-          <Button size="sm" onClick={handleSave} className="gap-1.5 text-xs bg-brand-500 hover:bg-brand-600 font-bold">
-            <Save className="h-3.5 w-3.5" />
-            <span>{saved ? "Saved!" : "Save Package"}</span>
-          </Button>
-        </div>
-      </div>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-0.5">
+                {effectiveChannelStyle.channelName} — {effectiveChannelStyle.visualStyleLabel}
+              </h2>
 
-      {/* Quick Topic Presets */}
-      <Card className="border-slate-200/80 dark:border-navy-800 p-4 space-y-2 bg-white dark:bg-navy-900">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-          ⚡ Quick Educational Topic Presets (Click to Load):
-        </span>
-        <div className="flex flex-wrap gap-2 pt-1">
-          {quickPresets.map((preset) => (
-            <button
-              key={preset}
-              onClick={() => {
-                setTitle(preset);
-                const rec = recommendStyleForTopic(preset);
-                setSelectedStyleId(rec.id);
-                runGeneration(preset, format, durationSeconds, rec);
-              }}
-              className={`px-3 py-1 text-xs rounded-lg border text-left transition-all ${
-                title === preset
-                  ? "bg-brand-500/10 border-brand-500 text-brand-600 dark:text-brand-400 font-semibold shadow-xs"
-                  : "border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300"
-              }`}
-            >
-              {preset}
-            </button>
-          ))}
-        </div>
-      </Card>
-
-      {/* Video Settings Configuration Bar */}
-      <Card className="border-slate-200/80 dark:border-navy-800 p-5 space-y-5 bg-white dark:bg-navy-900">
-        {/* Title Input */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center justify-between">
-            <span>Video Topic or Question:</span>
-            <span className="text-[11px] text-brand-500 font-semibold">
-              Channel: @ashishfn (Science & Curiosities)
-            </span>
-          </label>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. लौंग असल में फूल है या फल? या कोई भी विज्ञान का सवाल..."
-              className="text-sm font-semibold flex-1"
-            />
-            <Button
-              onClick={() => runGeneration(title, format, durationSeconds, activeStyle)}
-              isLoading={isGenerating}
-              className="gap-2 shrink-0 bg-brand-500 hover:bg-brand-600 font-bold px-6"
-            >
-              <Sparkles className="h-4 w-4" />
-              <span>⚡ Generate Script & AI Prompts</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* 1. Format & Custom Duration Controls */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100 dark:border-navy-800">
-          {/* Format Selector */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-slate-600 dark:text-slate-400 flex items-center justify-between">
-              <span>Video Format & Aspect Ratio:</span>
-              <span className="text-[11px] font-mono text-brand-500">
-                {format === "shorts" ? "9:16 Vertical (Shorts / Reels)" : "16:9 Landscape (YouTube Video)"}
-              </span>
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setFormat("shorts");
-                  setDurationSeconds(60);
-                }}
-                className={`p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all ${
-                  format === "shorts"
-                    ? "border-brand-500 bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold shadow-xs"
-                    : "border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300"
-                }`}
-              >
-                <div className="h-7 w-5 rounded bg-brand-500 text-white flex items-center justify-center font-bold text-[10px]">
-                  9:16
-                </div>
-                <div>
-                  <div className="text-xs font-bold">YouTube Shorts</div>
-                  <div className="text-[10px] text-slate-400 font-normal">Under 60s Fast Paced</div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setFormat("longform");
-                  setDurationSeconds(300); // 5 mins default
-                }}
-                className={`p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all ${
-                  format === "longform"
-                    ? "border-brand-500 bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold shadow-xs"
-                    : "border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300"
-                }`}
-              >
-                <div className="h-5 w-7 rounded bg-brand-500 text-white flex items-center justify-center font-bold text-[10px]">
-                  16:9
-                </div>
-                <div>
-                  <div className="text-xs font-bold">Long-Form Video</div>
-                  <div className="text-[10px] text-slate-400 font-normal">Deep Explainer (3 - 12m)</div>
-                </div>
-              </button>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+                {effectiveChannelStyle.channelNiche} • {effectiveChannelStyle.storytellingStyle}
+              </p>
             </div>
           </div>
 
-          {/* Custom Duration Selector */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-slate-600 dark:text-slate-400 flex items-center justify-between">
-              <span>Custom Target Duration:</span>
-              <span className="text-[11px] font-bold text-emerald-500">
-                {durationSeconds >= 60 ? `${Math.floor(durationSeconds / 60)}m ${durationSeconds % 60 ? (durationSeconds % 60) + 's' : ''}` : `${durationSeconds}s`}
-              </span>
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {format === "shorts" ? (
-                [15, 30, 45, 60].map((sec) => (
-                  <button
-                    key={sec}
-                    type="button"
-                    onClick={() => setDurationSeconds(sec)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      durationSeconds === sec
-                        ? "bg-brand-500 text-white shadow-xs"
-                        : "bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
-                  >
-                    {sec} Seconds
-                  </button>
-                ))
-              ) : (
-                [
-                  { sec: 180, label: "3 Mins" },
-                  { sec: 300, label: "5 Mins" },
-                  { sec: 480, label: "8 Mins" },
-                  { sec: 600, label: "10 Mins" },
-                  { sec: 720, label: "12 Mins" },
-                ].map((item) => (
-                  <button
-                    key={item.sec}
-                    type="button"
-                    onClick={() => setDurationSeconds(item.sec)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      durationSeconds === item.sec
-                        ? "bg-brand-500 text-white shadow-xs"
-                        : "bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))
+          {/* Manual Style Override Switch */}
+          <div className="flex items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-navy-800">
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-navy-950 p-1.5 rounded-xl border border-slate-200/80 dark:border-navy-800 text-xs">
+              <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-700 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={isOverrideEnabled}
+                  onChange={(e) => setIsOverrideEnabled(e.target.checked)}
+                  className="rounded border-slate-300 text-brand-600 focus:ring-brand-500 h-3.5 w-3.5"
+                />
+                <span className="text-[11px]">Override Style for This Video</span>
+              </label>
+
+              {isOverrideEnabled && (
+                <select
+                  value={overrideStyleType}
+                  onChange={(e) => setOverrideStyleType(e.target.value as VisualAnimationType)}
+                  className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                >
+                  {availableStyles.map((s) => (
+                    <option key={s.type} value={s.type}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
               )}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* 2. Visual Style Selector (6 Trending Styles + Custom Styles) */}
-        <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-navy-800">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold uppercase text-slate-600 dark:text-slate-400 flex items-center gap-2">
-              <Palette className="h-3.5 w-3.5 text-brand-500" />
-              <span>Select AI Visual Style ({allStyles.length} Styles Available):</span>
-            </label>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedStyleId(recommendedStyle.id)}
-                className="text-[11px] text-brand-600 dark:text-brand-400 font-bold hover:underline flex items-center gap-1"
-              >
-                <span>⚡ Use Recommended: {recommendedStyle.name.split(" ")[0]}</span>
-              </button>
-              <Link href="/modules/style-lab" className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                <span>+ Custom Style Lab</span>
-              </Link>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
-            {allStyles.map((s) => {
-              const isSelected = selectedStyleId === s.id;
-              const isRec = recommendedStyle.id === s.id;
-
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setSelectedStyleId(s.id)}
-                  className={`p-2 rounded-xl border text-left flex flex-col justify-between transition-all relative ${
-                    isSelected
-                      ? s.id === "stickman_doodle"
-                        ? "border-amber-500 bg-amber-500/10 ring-2 ring-amber-500/30"
-                        : "border-brand-500 bg-brand-500/10 ring-2 ring-brand-500/20"
-                      : "border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800"
-                  }`}
-                >
-                  {isRec && (
-                    <span className="absolute -top-2 right-2 text-[9px] font-bold bg-amber-500 text-slate-950 px-1.5 py-0.5 rounded-full shadow-xs z-10">
-                      Rec
-                    </span>
-                  )}
-                  {/* Style Preview Photo */}
-                  <div className="relative h-16 sm:h-20 w-full rounded-lg overflow-hidden mb-2 bg-slate-950 border border-slate-200/60 dark:border-navy-700 shadow-xs">
-                    {s.previewImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={s.previewImage}
-                        alt={s.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className={`h-full w-full bg-gradient-to-r ${s.previewGradient}`} />
-                    )}
-                    <span className="absolute bottom-1 left-1 text-[8px] font-bold px-1.5 py-0.5 rounded bg-black/75 text-white backdrop-blur-xs">
-                      {s.badge}
-                    </span>
-                  </div>
-
-                  <div>
-                    <h5 className="text-[11px] font-bold text-slate-900 dark:text-white truncate">
-                      {s.name}
-                    </h5>
-                    <span className="text-[10px] text-slate-400 block truncate">
-                      {s.badge}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 3. Character Consistency Lock Controller */}
-        <div className="pt-2 border-t border-slate-100 dark:border-navy-800 space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={characterEnabled}
-                  onChange={(e) => setCharacterEnabled(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-navy-600 peer-checked:bg-brand-500"></div>
+      {/* 2. TOPIC INPUT & SCRIPT CONTROLS */}
+      <Card className="border-slate-200/80 dark:border-navy-800">
+        <CardContent className="p-4 sm:p-6 space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-end">
+            <div className="lg:col-span-7 space-y-1">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Video Topic / Research Question
               </label>
-              <div>
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5 text-brand-500" />
-                  <span>Lock Character Consistency Across All Scenes</span>
-                </span>
-                <p className="text-[11px] text-slate-400">
-                  Injects an identical protagonist anchor prompt into every scene so AI video models don't morph faces
-                </p>
+              <Input
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="e.g. लौंग असल में फूल है या फल? (The Science Behind Cloves)"
+                disabled={isGenerating}
+              />
+            </div>
+
+            <div className="lg:col-span-2 space-y-1">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Format</label>
+              <select
+                value={format}
+                onChange={(e) => setFormat(e.target.value as any)}
+                disabled={isGenerating}
+                className="w-full h-10 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              >
+                <option value="shorts">YouTube Shorts (9:16)</option>
+                <option value="longform">Long-Form Explainer (16:9)</option>
+              </select>
+            </div>
+
+            <div className="lg:col-span-3 space-y-1">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Target Duration ({durationSeconds}s)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min="30"
+                  max="90"
+                  step="5"
+                  value={durationSeconds}
+                  onChange={(e) => setDurationSeconds(Number(e.target.value))}
+                  disabled={isGenerating}
+                  className="w-full accent-brand-500"
+                />
+                <Button
+                  onClick={() => runGeneration(topic)}
+                  isLoading={isGenerating}
+                  className="shrink-0 gap-1.5"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                  <span>Generate</span>
+                </Button>
               </div>
             </div>
-
-            {characterEnabled && (
-              <Badge variant="brand" className="text-[10px] self-start sm:self-auto">
-                Anchor Active: {activeCharacter.name}
-              </Badge>
-            )}
           </div>
 
-          {characterEnabled && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-1">
-              {DEFAULT_CHARACTERS.map((char) => (
+          {/* Quick curiosity topic suggestions */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-slate-500">
+            <span className="font-semibold text-slate-400">Trending Curiosity Prompts:</span>
+            {[
+              "लौंग असल में फूल है या फल?",
+              "धरती 5 सेकंड के लिए घूमना बंद कर दे तो?",
+              "हवाई जहाज का रंग हमेशा सफेद ही क्यों होता है?",
+              "क्या फोन को 100% चार्ज करना सच में गलत है?",
+            ].map((suggested) => (
+              <button
+                key={suggested}
+                type="button"
+                onClick={() => {
+                  setTopic(suggested);
+                  runGeneration(suggested);
+                }}
+                disabled={isGenerating}
+                className="rounded-lg bg-slate-100 dark:bg-navy-950 px-2.5 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-950/30 dark:hover:text-brand-400 transition-colors"
+              >
+                {suggested}
+              </button>
+            ))}
+          </div>
+
+          {isGenerating && generationStep && (
+            <div className="flex items-center gap-2.5 rounded-xl bg-brand-500/10 border border-brand-500/20 p-3 text-xs font-semibold text-brand-600 dark:text-brand-400 animate-pulse">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-500 border-t-transparent shrink-0" />
+              <span>{generationStep}</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 3. REGENERATION CONTROLS & QUALITY BAR */}
+      {videoPackage && (
+        <div className="space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-3.5 rounded-2xl border border-slate-200/90 dark:border-navy-800 bg-slate-50/60 dark:bg-navy-950/60">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <Sliders className="h-3.5 w-3.5 text-brand-500" />
+                <span>Script Controls:</span>
+              </span>
+
+              {[
+                { action: "make_hook_stronger" as const, label: "⚡ Stronger Hook" },
+                { action: "make_it_more_natural" as const, label: "🗣️ More Natural" },
+                { action: "increase_curiosity" as const, label: "❓ Increase Curiosity" },
+                { action: "simplify_language" as const, label: "💡 Simplify Language" },
+                { action: "correct_factual_errors" as const, label: "✅ Apply Fact Fixes" },
+                { action: "shorten_script" as const, label: "⏱️ Snappier (-15s)" },
+              ].map((btn) => (
                 <button
-                  key={char.id}
+                  key={btn.action}
                   type="button"
-                  onClick={() => setSelectedCharId(char.id)}
-                  className={`p-2.5 rounded-xl border text-left transition-all ${
-                    selectedCharId === char.id
-                      ? "border-brand-500 bg-brand-500/10 text-brand-600 dark:text-brand-400 font-semibold ring-1 ring-brand-500/20 shadow-xs"
-                      : "border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300"
-                  }`}
+                  onClick={() => handleRegenerateAction(btn.action, btn.label)}
+                  className="rounded-lg border border-slate-200/80 dark:border-navy-800 bg-white dark:bg-navy-900 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:border-brand-500 hover:text-brand-600 dark:hover:text-brand-400 transition-all shadow-2xs active:scale-95"
                 >
-                  <div className="text-xs font-bold flex items-center justify-between">
-                    <span className="truncate">{char.name}</span>
-                    {char.id === "ashish_stickman" && (
-                      <span className="text-[9px] text-amber-500 font-bold px-1 rounded bg-amber-500/10 shrink-0 ml-1">
-                        🎯 Signature
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[10px] text-slate-400 line-clamp-1 mt-0.5 font-normal">
-                    {char.description}
-                  </div>
+                  {btn.label}
                 </button>
               ))}
             </div>
-          )}
-        </div>
 
-        {/* Live Generation Progress Indicator */}
-        {isGenerating && (
-          <div className="p-3 rounded-xl bg-brand-500/10 border border-brand-500/30 flex items-center gap-3 text-xs font-bold text-brand-600 dark:text-brand-400 animate-pulse">
-            <Sparkles className="h-4 w-4 animate-spin text-brand-500" />
-            <span>{generationStep || "Generating AI Video Package..."}</span>
-          </div>
-        )}
-      </Card>
-
-      {/* Output Studio Package Cards */}
-      {videoPackage && (
-        <div className="space-y-4">
-          {/* Metrics & Overview Pill */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Card className="p-3 border-slate-200/80 dark:border-navy-800 bg-white dark:bg-navy-900 text-center">
-              <span className="text-[10px] font-bold uppercase text-slate-400">Total Scenes</span>
-              <p className="text-lg font-black text-slate-900 dark:text-white mt-0.5">
-                {videoPackage.totalScenes} Prompts
-              </p>
-            </Card>
-
-            <Card className="p-3 border-slate-200/80 dark:border-navy-800 bg-white dark:bg-navy-900 text-center">
-              <span className="text-[10px] font-bold uppercase text-slate-400">Total Duration</span>
-              <p className="text-lg font-black text-brand-500 mt-0.5">
-                {videoPackage.durationSeconds}s ({videoPackage.aspectRatio})
-              </p>
-            </Card>
-
-            <Card className="p-3 border-slate-200/80 dark:border-navy-800 bg-white dark:bg-navy-900 text-center">
-              <span className="text-[10px] font-bold uppercase text-slate-400">Word Count</span>
-              <p className="text-lg font-black text-slate-900 dark:text-white mt-0.5">
-                {videoPackage.totalWords} Words
-              </p>
-            </Card>
-
-            <Card className="p-3 border-slate-200/80 dark:border-navy-800 bg-white dark:bg-navy-900 text-center">
-              <span className="text-[10px] font-bold uppercase text-slate-400">Visual Style</span>
-              <p className="text-sm font-black text-emerald-500 truncate mt-1">
-                {videoPackage.selectedStyle.name.split(" ")[0]}
-              </p>
-            </Card>
-          </div>
-
-          {/* View Mode Toggle: Scene Prompts vs Voiceover Script */}
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-navy-800 pb-2">
+            {/* Script Approval Workflow */}
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveTab("prompts")}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
-                  activeTab === "prompts"
-                    ? "bg-brand-500 text-white shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
-                }`}
+              <span className="text-xs font-semibold text-slate-500">Status:</span>
+              <select
+                value={videoPackage.approvalStatus}
+                onChange={(e) => handleApprovalChange(e.target.value as ScriptApprovalStatus)}
+                className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
               >
-                <Camera className="h-3.5 w-3.5" />
-                <span>Scene-by-Scene AI Video Prompts ({videoPackage.scenes.length})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab("script")}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
-                  activeTab === "script"
-                    ? "bg-brand-500 text-white shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
-                }`}
-              >
-                <FileText className="h-3.5 w-3.5" />
-                <span>Full Voiceover Script</span>
-              </button>
+                <option value="draft">Draft</option>
+                <option value="researching">Researching</option>
+                <option value="fact_checking">Fact Checking</option>
+                <option value="needs_correction">Needs Correction</option>
+                <option value="approved">Approved</option>
+                <option value="ready_for_production">Ready for Production</option>
+              </select>
             </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={activeTab === "prompts" ? handleCopyAllPrompts : handleCopyScriptOnly}
-              className="gap-1.5 text-xs h-8"
-            >
-              <Copy className="h-3 w-3" />
-              <span>{activeTab === "prompts" ? "Copy All Prompts" : "Copy Script Text"}</span>
-            </Button>
           </div>
 
-          {/* TAB 1: SCENE-BY-SCENE AI VIDEO PROMPTS */}
+          {/* 4. MAIN OUTPUT TABS (Prompts, Scripts, Facts, Quality, SEO) */}
+          <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 dark:border-navy-800 pb-2">
+            {[
+              { id: "prompts", label: "🎬 Scene-by-Scene AI Prompts", count: `${videoPackage.totalScenes} Scenes` },
+              { id: "hindi_script", label: "🇮🇳 Hindi Spoken Script", count: `${videoPackage.totalWordsHindi}w` },
+              { id: "english_script", label: "🇬🇧 English Voiceover", count: `${videoPackage.totalWordsEnglish}w` },
+              {
+                id: "facts",
+                label: "🛡️ Fact Verification Report",
+                count: `${videoPackage.factCheckReport.verifiedCount}/${videoPackage.factCheckReport.totalClaimsChecked} Verified`,
+                isAlert: videoPackage.factCheckReport.overallStatus !== "fully_verified",
+              },
+              {
+                id: "quality",
+                label: "📊 Quality Score (100)",
+                count: `${videoPackage.qualityScore.totalScore}/100`,
+              },
+              { id: "seo", label: "🏷️ SEO & Metadata", count: "Title + Tags" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`py-2 px-3.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all ${
+                  activeTab === tab.id
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`rounded-md px-1.5 py-0.2 text-[10px] font-semibold ${
+                    tab.isAlert
+                      ? "bg-amber-500 text-white"
+                      : activeTab === tab.id
+                      ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
+                      : "bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* 5. TAB CONTENTS */}
+
+          {/* TAB: SCENE BY SCENE PROMPTS */}
           {activeTab === "prompts" && (
             <div className="space-y-4">
-              {videoPackage.scenes.map((scene, idx) => (
-                <Card
-                  key={scene.sceneNumber}
-                  className="border-slate-200/80 dark:border-navy-800 p-5 bg-white dark:bg-navy-900 space-y-4 hover:border-brand-500/40 transition-colors"
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Scene Prompts (Locked to {effectiveChannelStyle.visualStyleLabel})
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Optimized prompts for Runway Gen-3, Midjourney v6, Kling & Luma Dream Machine
+                  </p>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    triggerCopy(
+                      videoPackage.scenes
+                        .map(
+                          (s) =>
+                            `SCENE ${s.sceneNumber} [${s.timeRange}] (${s.stageName})\n` +
+                            `VOICEOVER: ${s.voiceoverHindi}\n` +
+                            `VISUAL: ${s.visualDescription}\n` +
+                            `MIDJOURNEY: ${s.midjourneyPrompt}\n` +
+                            `RUNWAY MOTION: ${s.runwayMotionPrompt}\n`
+                        )
+                        .join("\n---\n\n"),
+                      "All Scene Prompts",
+                      "all_prompts"
+                    )
+                  }
+                  className="text-xs gap-1.5"
                 >
-                  {/* Scene Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-navy-800">
-                    <div className="flex items-center gap-2.5">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-500 text-white font-extrabold text-xs">
-                        {scene.sceneNumber}
-                      </span>
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                        Scene {scene.sceneNumber}: {scene.stageName}
-                      </h4>
-                      <Badge variant="brand" className="text-[10px]">
-                        {scene.timeRange}
-                      </Badge>
-                    </div>
+                  <Copy className="h-3.5 w-3.5" />
+                  <span>{copiedKey === "all_prompts" ? "Copied!" : "Copy All Prompts"}</span>
+                </Button>
+              </div>
 
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-slate-400">
-                        Camera: <strong className="text-slate-700 dark:text-slate-300">{scene.cameraDirection.split(" ")[0]}</strong>
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleCopyScenePrompt(idx, scene.midjourneyPrompt)}
-                        className="text-xs gap-1.5 h-7 px-2.5"
-                      >
-                        {copiedSceneIndex === idx ? (
-                          <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                        <span>{copiedSceneIndex === idx ? "Copied!" : "Copy Prompt"}</span>
-                      </Button>
-                    </div>
-                  </div>
+              <div className="space-y-3">
+                {videoPackage.scenes.map((scene) => (
+                  <Card
+                    key={scene.sceneNumber}
+                    className="border-slate-200/80 dark:border-navy-800 bg-white dark:bg-navy-900"
+                  >
+                    <CardContent className="p-4 sm:p-5 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-navy-800 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-500 text-white text-xs font-bold">
+                            {scene.sceneNumber}
+                          </span>
+                          <span className="text-xs font-bold text-slate-900 dark:text-white">
+                            {scene.stageName}
+                          </span>
+                          <span className="text-[11px] text-slate-400 font-medium">
+                            [{scene.timeRange}]
+                          </span>
+                        </div>
 
-                  {/* AI Video Prompts Grid */}
-                  <div className="space-y-3">
-                    {/* Prompt Box 1: Midjourney / Kling */}
-                    <div className="rounded-xl bg-slate-900 text-slate-100 p-3.5 space-y-1.5 font-mono text-xs border border-slate-800">
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-sans uppercase font-bold">
-                        <span className="text-cyan-400">🎨 Midjourney / Kling Visual Prompt:</span>
-                        <span>{videoPackage.aspectRatio}</span>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-[11px] text-slate-400">
+                            🔊 SFX: {scene.soundEffects}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              triggerCopy(
+                                `SCENE ${scene.sceneNumber}\nVOICEOVER: ${scene.voiceoverHindi}\nMIDJOURNEY: ${scene.midjourneyPrompt}\nRUNWAY: ${scene.runwayMotionPrompt}`,
+                                `Scene ${scene.sceneNumber}`,
+                                `scene_${scene.sceneNumber}`
+                              )
+                            }
+                            className="inline-flex items-center gap-1 rounded bg-slate-100 dark:bg-navy-800 px-2 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:text-brand-600 transition-colors"
+                          >
+                            <Copy className="h-3 w-3" />
+                            <span>
+                              {copiedKey === `scene_${scene.sceneNumber}` ? "Copied!" : "Copy"}
+                            </span>
+                          </button>
+                        </div>
                       </div>
-                      <p className="leading-relaxed select-all text-slate-200">
-                        {scene.midjourneyPrompt}
-                      </p>
-                    </div>
 
-                    {/* Prompt Box 2: Runway Gen-3 / Luma Motion */}
-                    <div className="rounded-xl bg-slate-50 dark:bg-navy-950 p-3 space-y-1 text-xs border border-slate-200/80 dark:border-navy-800">
-                      <div className="text-[10px] uppercase font-bold text-purple-600 dark:text-purple-400 font-sans">
-                        🎬 Runway Gen-3 / Luma Motion Direction:
-                      </div>
-                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-mono text-[11px]">
-                        {scene.runwayMotionPrompt}
-                      </p>
-                    </div>
-
-                    {/* Voiceover Dialog & Visual Cues */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-                      <div className="md:col-span-2 rounded-lg bg-emerald-500/5 dark:bg-emerald-950/15 border border-emerald-500/20 p-3 space-y-1">
-                        <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 block">
-                          🎙️ Voiceover Dialog (Hindi):
-                        </span>
-                        <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white leading-relaxed">
-                          "{scene.dialogVoiceover}"
+                      {/* Voiceover line */}
+                      <div className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-navy-950/60 border border-slate-100 dark:border-navy-850">
+                        <div className="text-[10px] font-bold uppercase text-slate-400">
+                          Spoken Voiceover (Hindi)
+                        </div>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white mt-0.5 leading-relaxed">
+                          "{scene.voiceoverHindi}"
                         </p>
                       </div>
 
-                      <div className="space-y-2">
-                        <div className="rounded-lg bg-amber-500/5 border border-amber-500/20 p-2 text-[11px]">
-                          <span className="font-bold text-amber-600 dark:text-amber-400 block text-[10px] uppercase">
-                            🔤 On-Screen Text:
-                          </span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {scene.onScreenText}
-                          </span>
+                      {/* On-Screen Text & Camera */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <div className="p-2 rounded-lg bg-amber-500/5 border border-amber-500/20 text-amber-700 dark:text-amber-400">
+                          <span className="font-bold">Text Overlay:</span> {scene.onScreenText}
                         </div>
+                        <div className="p-2 rounded-lg bg-blue-500/5 border border-blue-500/20 text-blue-700 dark:text-blue-400">
+                          <span className="font-bold">Camera:</span> {scene.cameraMovement}
+                        </div>
+                      </div>
 
-                        <div className="rounded-lg bg-blue-500/5 border border-blue-500/20 p-2 text-[11px]">
-                          <span className="font-bold text-blue-600 dark:text-blue-400 block text-[10px] uppercase">
-                            🔊 SFX Cue:
-                          </span>
-                          <span className="text-slate-600 dark:text-slate-400">
-                            {scene.sfxCue}
-                          </span>
+                      {/* Prompts for Generators */}
+                      <div className="space-y-1.5 pt-1">
+                        <div className="text-[11px] font-bold text-slate-500 flex items-center justify-between">
+                          <span>AI Video Prompt (Midjourney / Kling / Luma):</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              triggerCopy(
+                                scene.midjourneyPrompt,
+                                "Midjourney Prompt",
+                                `mj_${scene.sceneNumber}`
+                              )
+                            }
+                            className="text-brand-500 hover:underline text-[10px]"
+                          >
+                            {copiedKey === `mj_${scene.sceneNumber}` ? "Copied!" : "Copy MJ Prompt"}
+                          </button>
                         </div>
+                        <pre className="p-2.5 rounded-lg bg-slate-100 dark:bg-navy-950 text-slate-800 dark:text-slate-200 text-xs font-mono whitespace-pre-wrap select-all">
+                          {scene.midjourneyPrompt}
+                        </pre>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: HINDI SCRIPT */}
+          {activeTab === "hindi_script" && (
+            <Card className="border-slate-200/80 dark:border-navy-800">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div>
+                  <CardTitle className="text-base font-bold">Natural Spoken Hindi Voiceover</CardTitle>
+                  <CardDescription>
+                    Paced at {videoPackage.speakingRateWpm} WPM • Spoken duration ~{videoPackage.durationSeconds}s
+                  </CardDescription>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    triggerCopy(videoPackage.fullVoiceoverHindi, "Hindi Voiceover", "hindi_vo")
+                  }
+                  className="gap-1.5 text-xs"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  <span>{copiedKey === "hindi_vo" ? "Copied!" : "Copy Hindi Voiceover"}</span>
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-200/80 dark:border-navy-800 whitespace-pre-wrap text-sm font-medium text-slate-900 dark:text-slate-100 leading-relaxed font-sans select-all">
+                  {videoPackage.fullVoiceoverHindi}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* TAB: ENGLISH SCRIPT */}
+          {activeTab === "english_script" && (
+            <Card className="border-slate-200/80 dark:border-navy-800">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div>
+                  <CardTitle className="text-base font-bold">English Voiceover Script</CardTitle>
+                  <CardDescription>
+                    {videoPackage.totalWordsEnglish} words • Natural human documentary enunciation
+                  </CardDescription>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    triggerCopy(videoPackage.fullVoiceoverEnglish, "English Voiceover", "eng_vo")
+                  }
+                  className="gap-1.5 text-xs"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  <span>{copiedKey === "eng_vo" ? "Copied!" : "Copy English Voiceover"}</span>
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-200/80 dark:border-navy-800 whitespace-pre-wrap text-sm font-medium text-slate-900 dark:text-slate-100 leading-relaxed font-sans select-all">
+                  {videoPackage.fullVoiceoverEnglish}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* TAB: FACT VERIFICATION REPORT */}
+          {activeTab === "facts" && (
+            <div className="space-y-4">
+              {/* Overall Verification Status Banner */}
+              <div
+                className={`p-4 rounded-2xl border flex items-center justify-between gap-4 ${
+                  videoPackage.factCheckReport.overallStatus === "fully_verified"
+                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-800 dark:text-emerald-300"
+                    : "bg-amber-500/10 border-amber-500/20 text-amber-800 dark:text-amber-300"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {videoPackage.factCheckReport.overallStatus === "fully_verified" ? (
+                    <ShieldCheck className="h-8 w-8 text-emerald-500 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="h-8 w-8 text-amber-500 shrink-0" />
+                  )}
+                  <div>
+                    <h4 className="text-sm font-bold capitalize">
+                      Fact Status: {videoPackage.factCheckReport.overallStatus.replace(/_/g, " ")}
+                    </h4>
+                    <p className="text-xs opacity-90">{videoPackage.factCheckReport.summary}</p>
+                  </div>
+                </div>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    triggerCopy(
+                      JSON.stringify(videoPackage.factCheckReport, null, 2),
+                      "Fact Check Report",
+                      "facts_rep"
+                    )
+                  }
+                  className="text-xs gap-1.5"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  <span>{copiedKey === "facts_rep" ? "Copied!" : "Copy Report"}</span>
+                </Button>
+              </div>
+
+              {/* Claims Table */}
+              <Card className="border-slate-200/80 dark:border-navy-800 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-100/80 dark:bg-navy-950/80 border-b border-slate-200 dark:border-navy-800 text-slate-700 dark:text-slate-300 font-bold uppercase text-[10px]">
+                      <tr>
+                        <th className="p-3">Claim in Script</th>
+                        <th className="p-3">Status</th>
+                        <th className="p-3">Verified Source & Institution</th>
+                        <th className="p-3">Source URL</th>
+                        <th className="p-3">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-navy-800 font-medium">
+                      {videoPackage.factCheckReport.claims.map((claim) => (
+                        <tr key={claim.id} className="hover:bg-slate-50/50 dark:hover:bg-navy-950/40">
+                          <td className="p-3 max-w-xs">
+                            <p className="font-semibold text-slate-900 dark:text-white">
+                              {claim.claim}
+                            </p>
+                            <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
+                              Script: "{claim.originalText}"
+                            </p>
+                          </td>
+                          <td className="p-3 whitespace-nowrap">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                claim.status === "verified"
+                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                  : claim.status === "partially_verified"
+                                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                                  : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                              }`}
+                            >
+                              {claim.status === "verified" ? "VERIFIED" : claim.status.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <div className="font-semibold text-slate-800 dark:text-slate-200">
+                              {claim.sourceInstitution}
+                            </div>
+                            <div className="text-[11px] text-slate-400">{claim.sourceTitle}</div>
+                          </td>
+                          <td className="p-3 whitespace-nowrap">
+                            <a
+                              href={claim.sourceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-brand-600 dark:text-brand-400 hover:underline text-[11px] font-semibold"
+                            >
+                              <span>Open Evidence</span>
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </td>
+                          <td className="p-3 whitespace-nowrap">
+                            {claim.correctedText && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleRegenerateAction("correct_factual_errors", "Applied Fact Fix")
+                                }
+                                className="inline-flex items-center gap-1 rounded bg-amber-500/10 border border-amber-500/20 px-2 py-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
+                              >
+                                Apply Fix
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* TAB: SCRIPT QUALITY SCORE */}
+          {activeTab === "quality" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="md:col-span-1 border-slate-200/80 dark:border-navy-800 flex flex-col items-center justify-center p-6 text-center bg-slate-50/50 dark:bg-navy-950/40">
+                  <div className="text-4xl font-extrabold text-brand-600 dark:text-brand-400">
+                    {videoPackage.qualityScore.totalScore}
+                    <span className="text-xl text-slate-400 font-normal">/100</span>
+                  </div>
+                  <div className="mt-2">
+                    <Badge variant="success" className="capitalize text-xs font-bold">
+                      {videoPackage.qualityScore.grade}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2 font-medium">
+                    {videoPackage.qualityScore.verdict}
+                  </p>
+                </Card>
+
+                <Card className="md:col-span-3 border-slate-200/80 dark:border-navy-800 p-5 space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Quality Scoring Breakdown (Phase 9 Standards)
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-navy-800">
+                      <div className="text-[10px] text-slate-400 font-semibold">Hook Strength</div>
+                      <div className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
+                        {videoPackage.qualityScore.hookStrength} / 15
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-navy-800">
+                      <div className="text-[10px] text-slate-400 font-semibold">Storytelling</div>
+                      <div className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
+                        {videoPackage.qualityScore.storytelling} / 15
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-navy-800">
+                      <div className="text-[10px] text-slate-400 font-semibold">Human Language</div>
+                      <div className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
+                        {videoPackage.qualityScore.humanLanguage} / 15
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-navy-800">
+                      <div className="text-[10px] text-slate-400 font-semibold">Factual Accuracy</div>
+                      <div className="text-base font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                        {videoPackage.qualityScore.factualAccuracy} / 20
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-navy-800">
+                      <div className="text-[10px] text-slate-400 font-semibold">Audience Relevance</div>
+                      <div className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
+                        {videoPackage.qualityScore.audienceRelevance} / 10
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-navy-800">
+                      <div className="text-[10px] text-slate-400 font-semibold">Retention Pacing</div>
+                      <div className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
+                        {videoPackage.qualityScore.retentionPotential} / 10
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-navy-800">
+                      <div className="text-[10px] text-slate-400 font-semibold">Originality</div>
+                      <div className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
+                        {videoPackage.qualityScore.originality} / 10
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-navy-800">
+                      <div className="text-[10px] text-slate-400 font-semibold">Style Match</div>
+                      <div className="text-base font-bold text-brand-600 dark:text-brand-400 mt-0.5">
+                        {videoPackage.qualityScore.channelStyleMatch} / 5
                       </div>
                     </div>
                   </div>
                 </Card>
-              ))}
+              </div>
             </div>
           )}
 
-          {/* TAB 2: FULL VOICEOVER SCRIPT */}
-          {activeTab === "script" && (
-            <Card className="p-6 border-slate-200/80 dark:border-navy-800 bg-white dark:bg-navy-900 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                    Synchronized Voiceover Script
-                  </h4>
-                  <p className="text-xs text-slate-400">
-                    Paced at 140 WPM • Ideal for clear engaging Hindi narration
-                  </p>
+          {/* TAB: SEO METADATA */}
+          {activeTab === "seo" && (
+            <Card className="border-slate-200/80 dark:border-navy-800">
+              <CardContent className="p-5 space-y-4">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span>Optimized Video Title</span>
+                    <button
+                      type="button"
+                      onClick={() => triggerCopy(videoPackage.seoTitle, "SEO Title", "seo_title")}
+                      className="text-brand-500 hover:underline"
+                    >
+                      {copiedKey === "seo_title" ? "Copied!" : "Copy Title"}
+                    </button>
+                  </div>
+                  <Input value={videoPackage.seoTitle} readOnly />
                 </div>
-                <Button size="sm" onClick={handleCopyScriptOnly} className="gap-1.5 text-xs">
-                  {copiedScript ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                  <span>{copiedScript ? "Script Copied!" : "Copy Full Script"}</span>
-                </Button>
-              </div>
 
-              <textarea
-                rows={16}
-                readOnly
-                value={videoPackage.fullVoiceoverScript}
-                className="w-full rounded-xl border border-slate-300 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 p-4 text-xs sm:text-sm text-slate-900 dark:text-slate-100 font-sans leading-relaxed focus:outline-none"
-              />
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span>Video Description & Chapter Outlines</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        triggerCopy(videoPackage.seoDescription, "Description", "seo_desc")
+                      }
+                      className="text-brand-500 hover:underline"
+                    >
+                      {copiedKey === "seo_desc" ? "Copied!" : "Copy Description"}
+                    </button>
+                  </div>
+                  <textarea
+                    rows={4}
+                    value={videoPackage.seoDescription}
+                    readOnly
+                    className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 p-3 text-xs font-mono text-slate-800 dark:text-slate-200"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span>Rank-Optimized Tags</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        triggerCopy(videoPackage.seoTags.join(", "), "SEO Tags", "seo_tags")
+                      }
+                      className="text-brand-500 hover:underline"
+                    >
+                      {copiedKey === "seo_tags" ? "Copied!" : "Copy Tags"}
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {videoPackage.seoTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-lg bg-slate-100 dark:bg-navy-800 px-2 py-1 text-xs text-slate-700 dark:text-slate-300"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
             </Card>
           )}
 
-          {/* Next Step Action Cards */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-brand-500/10 to-indigo-500/10 border border-brand-500/20">
-            <div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                Prompts Ready? Optimize your metadata next
-              </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Generate high-CTR tags and description in SEO Studio for "{title}".
-              </p>
+          {/* 6. COMPLETE 10 COPY BUTTONS BAR (Phase 6 Requirements) */}
+          <div className="p-4 rounded-2xl border border-slate-200/90 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Copy className="h-4 w-4 text-brand-500" />
+                <span>Production Copy Center (Desktop & Mobile Ready)</span>
+              </span>
+              <span className="text-[10px] text-slate-400">One-click clipboard export</span>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Link href={`/modules/seo-studio?title=${encodeURIComponent(title)}`}>
-                <Button size="sm" className="gap-1.5 text-xs bg-brand-500 hover:bg-brand-600 font-bold">
-                  <span>Generate SEO Tags</span>
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
-              </Link>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  triggerCopy(videoPackage.fullVoiceoverHindi, "Full Hindi Script", "c_full_hi")
+                }
+                className="text-xs justify-start truncate"
+              >
+                <span>{copiedKey === "c_full_hi" ? "Copied!" : "1. Copy Hindi Script"}</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  triggerCopy(videoPackage.fullVoiceoverEnglish, "Full English Script", "c_full_en")
+                }
+                className="text-xs justify-start truncate"
+              >
+                <span>{copiedKey === "c_full_en" ? "Copied!" : "2. Copy English Script"}</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  triggerCopy(
+                    videoPackage.scenes.map((s) => s.midjourneyPrompt).join("\n\n"),
+                    "Scene Prompts",
+                    "c_scenes"
+                  )
+                }
+                className="text-xs justify-start truncate"
+              >
+                <span>{copiedKey === "c_scenes" ? "Copied!" : "3. Copy Scene Prompts"}</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  triggerCopy(
+                    videoPackage.scenes.map((s) => `Scene ${s.sceneNumber}: ${s.onScreenText}`).join("\n"),
+                    "On-Screen Text",
+                    "c_text"
+                  )
+                }
+                className="text-xs justify-start truncate"
+              >
+                <span>{copiedKey === "c_text" ? "Copied!" : "4. Copy On-Screen Text"}</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => triggerCopy(videoPackage.seoTitle, "SEO Title", "c_title")}
+                className="text-xs justify-start truncate"
+              >
+                <span>{copiedKey === "c_title" ? "Copied!" : "5. Copy SEO Title"}</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => triggerCopy(videoPackage.seoDescription, "Description", "c_desc")}
+                className="text-xs justify-start truncate"
+              >
+                <span>{copiedKey === "c_desc" ? "Copied!" : "6. Copy Description"}</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => triggerCopy(videoPackage.seoTags.join(", "), "Tags", "c_tags")}
+                className="text-xs justify-start truncate"
+              >
+                <span>{copiedKey === "c_tags" ? "Copied!" : "7. Copy Tags"}</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  triggerCopy(
+                    JSON.stringify(videoPackage.factCheckReport, null, 2),
+                    "Fact Report",
+                    "c_facts"
+                  )
+                }
+                className="text-xs justify-start truncate"
+              >
+                <span>{copiedKey === "c_facts" ? "Copied!" : "8. Copy Fact Report"}</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  triggerCopy(
+                    videoPackage.researchSources.map((s) => `${s.title}: ${s.url}`).join("\n"),
+                    "Research Sources",
+                    "c_sources"
+                  )
+                }
+                className="text-xs justify-start truncate"
+              >
+                <span>{copiedKey === "c_sources" ? "Copied!" : "9. Copy Sources"}</span>
+              </Button>
+
+              {/* Master Copy All Button */}
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  const masterExport =
+                    `=== ASH CREATOR STUDIO 2.0 PRODUCTION PACKAGE ===\n` +
+                    `CHANNEL: ${videoPackage.channelName} (${effectiveChannelStyle.visualStyleLabel})\n` +
+                    `TITLE: ${videoPackage.title}\n` +
+                    `STATUS: ${videoPackage.approvalStatus.toUpperCase()}\n` +
+                    `QUALITY SCORE: ${videoPackage.qualityScore.totalScore}/100\n\n` +
+                    `--- HINDI VOICEOVER ---\n${videoPackage.fullVoiceoverHindi}\n\n` +
+                    `--- ENGLISH VOICEOVER ---\n${videoPackage.fullVoiceoverEnglish}\n\n` +
+                    `--- SCENE PROMPTS ---\n` +
+                    videoPackage.scenes
+                      .map(
+                        (s) =>
+                          `SCENE ${s.sceneNumber} [${s.timeRange}] (${s.stageName})\n` +
+                          `MIDJOURNEY: ${s.midjourneyPrompt}\n` +
+                          `RUNWAY: ${s.runwayMotionPrompt}\n` +
+                          `SFX: ${s.soundEffects}\n`
+                      )
+                      .join("\n") +
+                    `\n\n--- SEO METADATA ---\nTITLE: ${videoPackage.seoTitle}\nTAGS: ${videoPackage.seoTags.join(", ")}`;
+
+                  triggerCopy(masterExport, "Complete Video Production Package", "c_all");
+                }}
+                className="text-xs justify-start truncate bg-brand-600 hover:bg-brand-700 text-white font-bold"
+              >
+                <Sparkles className="h-3.5 w-3.5 mr-1 text-amber-300" />
+                <span>{copiedKey === "c_all" ? "Copied All!" : "10. Copy All Package"}</span>
+              </Button>
             </div>
           </div>
         </div>
       )}
     </div>
-  );
-}
-
-export default function ScriptWriterPage() {
-  return (
-    <React.Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading AI Video Studio...</div>}>
-      <ScriptWriterContent />
-    </React.Suspense>
   );
 }

@@ -36,7 +36,7 @@ interface TrendItem {
 }
 
 export default function TrendResearchPage() {
-  const { channel, activeChannelStyle } = useAuth();
+  const { channel, activeChannelStyle, isLoading: authLoading } = useAuth();
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
@@ -48,27 +48,44 @@ export default function TrendResearchPage() {
   const niche = activeChannelStyle?.channelNiche || "";
   const style = (activeChannelStyle?.visualAnimationStyle || "") as string;
 
+  const isPaper =
+    style === "paper_cutout" ||
+    (!style &&
+      (channelTitle.toLowerCase().includes("paper") ||
+        channelTitle.toLowerCase().includes("craft") ||
+        niche.toLowerCase().includes("paper") ||
+        niche.toLowerCase().includes("history")));
+
   const isKids =
     style === "pixar_3d" ||
     style === "animation_2d" ||
-    channelTitle.toLowerCase().includes("kid") ||
-    channelTitle.toLowerCase().includes("cartoon") ||
-    channelTitle.toLowerCase().includes("story") ||
-    niche.toLowerCase().includes("kid") ||
-    niche.toLowerCase().includes("animation") ||
-    niche.toLowerCase().includes("family");
-
-  const isPaper =
-    style === "paper_cutout" ||
-    channelTitle.toLowerCase().includes("paper") ||
-    channelTitle.toLowerCase().includes("craft") ||
-    niche.toLowerCase().includes("paper") ||
-    niche.toLowerCase().includes("history");
+    (!style &&
+      (channelTitle.toLowerCase().includes("kid") ||
+        channelTitle.toLowerCase().includes("cartoon") ||
+        channelTitle.toLowerCase().includes("story") ||
+        niche.toLowerCase().includes("kid") ||
+        niche.toLowerCase().includes("animation") ||
+        niche.toLowerCase().includes("family")));
 
   const isAsmr =
     style === "asmr_satisfying" ||
-    channelTitle.toLowerCase().includes("asmr") ||
-    niche.toLowerCase().includes("asmr");
+    (!style &&
+      (channelTitle.toLowerCase().includes("asmr") ||
+        channelTitle.toLowerCase().includes("satisfying") ||
+        niche.toLowerCase().includes("asmr")));
+
+  const isStickman =
+    style === "stickman_doodle" ||
+    (!style &&
+      (channelTitle.toLowerCase().includes("stickman") ||
+        channelTitle.toLowerCase().includes("doodle")));
+
+  const isNoir =
+    style === "noir_mystery" ||
+    (!style &&
+      (channelTitle.toLowerCase().includes("mystery") ||
+        channelTitle.toLowerCase().includes("horror") ||
+        niche.toLowerCase().includes("mystery")));
 
   // Fetch live YouTube trends with channel intelligence parameters
   const fetchTrends = React.useCallback(
@@ -98,8 +115,9 @@ export default function TrendResearchPage() {
   );
 
   React.useEffect(() => {
-    fetchTrends("", selectedCategory);
-  }, [fetchTrends, selectedCategory, channel?.id, activeChannelStyle?.profileId]);
+    if (authLoading) return;
+    fetchTrends(searchQuery, selectedCategory);
+  }, [fetchTrends, authLoading, selectedCategory, channel?.id, activeChannelStyle?.visualAnimationStyle, activeChannelStyle?.channelNiche]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,16 +129,6 @@ export default function TrendResearchPage() {
     if (activeChannelStyle?.popularTopics && activeChannelStyle.popularTopics.length > 0) {
       return activeChannelStyle.popularTopics.slice(0, 6).map((t) => t.replace(/\(.*?\)/g, "").trim());
     }
-    if (isKids) {
-      return [
-        "शेर और खरगोश की कहानी",
-        "डायनासोर कैसे गायब हुए",
-        "चींटी की ताकत का रहस्य",
-        "आसमान नीला क्यों होता है",
-        "चाँद दिन में क्यों दिखता है",
-        "इंद्रधनुष के जादुई 7 रंग",
-      ];
-    }
     if (isPaper) {
       return [
         "द ग्रेट लाइब्रेरी ऑफ अलेक्जेंड्रिया",
@@ -129,6 +137,16 @@ export default function TrendResearchPage() {
         "सिंधु घाटी सभ्यता का सच",
         "ताजमहल के 22 बंद कमरे",
         "पिरामिड बनाने वालों की डायरी",
+      ];
+    }
+    if (isKids) {
+      return [
+        "शेर और खरगोश की कहानी",
+        "डायनासोर कैसे गायब हुए",
+        "चींटी की ताकत का रहस्य",
+        "आसमान नीला क्यों होता है",
+        "चाँद दिन में क्यों दिखता है",
+        "इंद्रधनुष के जादुई 7 रंग",
       ];
     }
     if (isAsmr) {
@@ -141,6 +159,26 @@ export default function TrendResearchPage() {
         "Hypnotic Kinetic Loops",
       ];
     }
+    if (isStickman) {
+      return [
+        "हम काम को कल पर क्यों टालते हैं",
+        "स्कूल पैसे का सच क्यों नहीं सिखाते",
+        "सोशल मीडिया एल्गोरिदम का जाल",
+        "उम्र के साथ समय तेज क्यों बीतता है",
+        "80/20 नियम से सुपर सफलता",
+        "5 सेकंड में ओवरथिंकिंग बंद",
+      ];
+    }
+    if (isNoir) {
+      return [
+        "डायटलोव पास पर 9 पर्वतारोहियों की मौत",
+        "मैरी सेलेस्टे जहाज का रहस्य",
+        "एरिया 51 की डीक्लासिफाइड फाइलें",
+        "अमेलिया इयरहार्ट का गायब विमान",
+        "बरमूडा ट्रायंगल का सच",
+        "वॉयेनिच पांडुलिपि का रहस्य",
+      ];
+    }
     return [
       "लौंग फूल है या फल",
       "Science Facts Hindi",
@@ -149,7 +187,7 @@ export default function TrendResearchPage() {
       "धरती 5 सेकंड रुक जाए तो",
       "Daily Life Curiosities",
     ];
-  }, [isKids, isPaper, isAsmr]);
+  }, [activeChannelStyle, isKids, isPaper, isAsmr, isStickman, isNoir]);
 
   // Categories adapt to channel
   const categories = React.useMemo(() => {
@@ -422,7 +460,7 @@ export default function TrendResearchPage() {
             {/* Actions: Direct link to AI Video Studio */}
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-navy-800 flex items-center justify-between gap-2">
               <Link
-                href={`/modules/script-writer?title=${encodeURIComponent(item.keyword)}&style=${recommendStyleForTopic(item.keyword).id}`}
+                href={`/modules/script-writer?title=${encodeURIComponent(item.keyword)}&style=${(activeChannelStyle?.visualAnimationStyle as string) || recommendStyleForTopic(item.keyword).id}`}
                 className="flex-1"
               >
                 <Button size="sm" className="w-full gap-1.5 text-xs bg-brand-500 hover:bg-brand-600 font-bold">

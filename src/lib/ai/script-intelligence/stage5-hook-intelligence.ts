@@ -77,6 +77,182 @@ export function generateAndEvaluateHooks(
         text: "Look at any airport tarmac: that gleaming white coat is essentially a high-tech thermal shield protecting passengers and aluminum skins.",
       });
     }
+  } else if (lower.includes("dinosaur") || lower.includes("डायनासोर") || lower.includes("extinction") || lower.includes("विलुप्त")) {
+    if (isHindi) {
+      rawCandidates.push({
+        hookType: "Question Hook",
+        text: "क्या 10 किलोमीटर चौड़ा सिर्फ एक उल्कापिंड पृथ्वी से करोड़ों साल राज करने वाले विशाल डायनासोरों को मिटा सकता था?",
+      });
+      rawCandidates.push({
+        hookType: "Misconception Correction",
+        text: "फिल्मों में दिखाया जाता है कि डायनासोर आग के गोलों से तुरंत जल मरे, लेकिन असली हत्यारा 2 साल लंबा सूरज का अंधकार था।",
+      });
+      rawCandidates.push({
+        hookType: "Curiosity Hook",
+        text: "आखिर 6.6 करोड़ साल पहले ऐसा क्या हुआ कि 75% जीव मिट गए, लेकिन पक्षियों के पूर्वज जीवित बच निकले?",
+      });
+      rawCandidates.push({
+        hookType: "Contrast Hook",
+        text: "पृथ्वी पर 16 करोड़ साल तक विशाल टी-रेक्स का राज रहा, लेकिन एक दोपहर की टक्कर ने उनका नामोनिशान मिटा दिया।",
+      });
+      rawCandidates.push({
+        hookType: "Visual Discovery",
+        text: "दुनिया भर की चट्टानों में दबी इस पतली काली परत को देखिए—यह डायनासोरों के आखिरी दिन का अचूक वैज्ञानिक सबूत है।",
+      });
+    } else {
+      rawCandidates.push({
+        hookType: "Question Hook",
+        text: "Could a single 10-kilometer asteroid truly wipe out millions of years of dinosaur dominance in a single blow?",
+      });
+      rawCandidates.push({
+        hookType: "Misconception Correction",
+        text: "Movies show dinosaurs burning up instantly, but the real global killer was a two-year impact winter that choked out the sun.",
+      });
+      rawCandidates.push({
+        hookType: "Curiosity Hook",
+        text: "How did three-quarters of all life perish 66 million years ago while the ancestors of modern birds survived?",
+      });
+      rawCandidates.push({
+        hookType: "Contrast Hook",
+        text: "Dinosaurs ruled the planet for 160 million years—yet an impact lasting seconds erased them forever.",
+      });
+      rawCandidates.push({
+        hookType: "Visual Discovery",
+        text: "Hidden inside rock strata across the globe is a razor-thin layer of iridium dust: the fingerprint of the asteroid that ended the dinosaurs.",
+      });
+    }
+  } else if (lower.includes("flower") && lower.includes("fruit") || lower.includes("फूल") && lower.includes("फल")) {
+    if (isHindi) {
+      rawCandidates.push({
+        hookType: "Question Hook",
+        text: "क्या आपने कभी सोचा है कि पेड़ पर खिलने वाला एक नाजुक फूल एक मीठे और रसीले फल में कैसे बदल जाता है?",
+      });
+      rawCandidates.push({
+        hookType: "Misconception Correction",
+        text: "ज्यादातर लोग सोचते हैं कि फल टहनियों से उगते हैं, लेकिन असल में हर फल एक खिले हुए फूल का पका हुआ अंडाशय होता है।",
+      });
+      rawCandidates.push({
+        hookType: "Curiosity Hook",
+        text: "फूल की पंखुड़ियां गिरते ही पौधे के अंदर ऐसा कौन सा रासायनिक बदलाव होता है जो फल बनाना शुरू कर देता है?",
+      });
+      rawCandidates.push({
+        hookType: "Unexpected Fact",
+        text: "हर फल असल में कुदरत का वह सुरक्षा कवच है जिसे पौधे ने अपने नन्हे बीजों को सुरक्षित रखने के लिए तैयार किया है।",
+      });
+      rawCandidates.push({
+        hookType: "Visual Discovery",
+        text: "इस प्रक्रिया को गौर से देखिए: जैसे ही परागकण निषेचित होते हैं, फूल की पंखुड़ियां गिर जाती हैं और अंडाशय फल बन जाता है।",
+      });
+    } else {
+      rawCandidates.push({
+        hookType: "Question Hook",
+        text: "Have you ever stopped to wonder how a delicate blooming flower transforms into a sweet, fleshy fruit?",
+      });
+      rawCandidates.push({
+        hookType: "Misconception Correction",
+        text: "Most people assume fruits grow independently, but botanically every fruit is the ripened, swollen ovary of a flower.",
+      });
+      rawCandidates.push({
+        hookType: "Curiosity Hook",
+        text: "What biological switch flips inside a flower the exact moment a pollinator deposits pollen on its stigma?",
+      });
+      rawCandidates.push({
+        hookType: "Unexpected Fact",
+        text: "Every fruit you have ever tasted was genetically engineered by nature to protect and transport plant seeds.",
+      });
+      rawCandidates.push({
+        hookType: "Visual Discovery",
+        text: "Watch this botanical transition: the instant fertilization completes, petals wither and the ovary expands into edible fruit flesh.",
+      });
+    }
+  } else if (lower.includes("time") && (lower.includes("faster") || lower.includes("older") || lower.includes("age")) || lower.includes("समय") && (lower.includes("तेज") || lower.includes("उम्र"))) {
+    if (isHindi) {
+      rawCandidates.push({
+        hookType: "Question Hook",
+        text: "क्या आपको भी लगता है कि बचपन में साल कभी खत्म नहीं होते थे, लेकिन अब पूरा साल पलक झपकते ही बीत जाता है?",
+      });
+      rawCandidates.push({
+        hookType: "Misconception Correction",
+        text: "समय तेज बीतने का अहसास केवल आपका वहम नहीं है, बल्कि हमारे दिमाग के न्यूरोलॉजिकल बदलावों का वैज्ञानिक सच है।",
+      });
+      rawCandidates.push({
+        hookType: "Curiosity Hook",
+        text: "आखिर क्यों उम्र बढ़ने के साथ हमारा दिमाग समय की रफ्तार को पहले से कहीं ज्यादा तेज महसूस करने लगता है?",
+      });
+      rawCandidates.push({
+        hookType: "Contrast Hook",
+        text: "10 साल के बच्चे के लिए एक साल उसकी कुल जिंदगी का 10% होता है, लेकिन 50 साल के वयस्क के लिए वही साल सिर्फ 2% होता है!",
+      });
+      rawCandidates.push({
+        hookType: "Visual Discovery",
+        text: "बचपन की एक लंबी दोपहर की यादों की तुलना आज के पूरे महीने से करके देखिए: दिमाग का मेमोरी पैटर्न सब कुछ साफ कर देता है।",
+      });
+    } else {
+      rawCandidates.push({
+        hookType: "Question Hook",
+        text: "Why did summers feel endless during childhood, while entire years now seem to vanish in the blink of an eye?",
+      });
+      rawCandidates.push({
+        hookType: "Misconception Correction",
+        text: "The feeling that time is speeding up isn't just nostalgia—it is a measurable neurological shift in how your brain processes reality.",
+      });
+      rawCandidates.push({
+        hookType: "Curiosity Hook",
+        text: "What happens inside the human brain as we age that fundamentally alters our subjective perception of time?",
+      });
+      rawCandidates.push({
+        hookType: "Contrast Hook",
+        text: "To a 10-year-old child, one year is 10% of their existence; to a 50-year-old, that exact same year is just 2% of lived memory.",
+      });
+      rawCandidates.push({
+        hookType: "Visual Discovery",
+        text: "Look at how your brain handles novelty: fresh childhood experiences create dense mental bookmarks, while adult routine compresses time.",
+      });
+    }
+  } else if (lower.includes("venus flytrap") || lower.includes("flytrap") || lower.includes("कीटभक्षी") || lower.includes("वीनस")) {
+    if (isHindi) {
+      rawCandidates.push({
+        hookType: "Question Hook",
+        text: "बिना दिमाग, बिना आंख और बिना मांसपेशियों वाला एक पौधा बिजली की तेजी से चालाक कीड़ों का शिकार कैसे कर लेता है?",
+      });
+      rawCandidates.push({
+        hookType: "Misconception Correction",
+        text: "ज्यादातर लोगों को लगता है कि वीनस फ्लाईट्रैप हर छूने वाली चीज पर बंद हो जाता है, लेकिन यह पौधा असल में शिकार की गिनती करता है!",
+      });
+      rawCandidates.push({
+        hookType: "Curiosity Hook",
+        text: "आखिर क्यों वीनस फ्लाईट्रैप के पत्तों को 20 सेकंड के अंदर दो बार छूने पर ही उसका जबड़ा 100 मिलीसेकंड में बंद होता है?",
+      });
+      rawCandidates.push({
+        hookType: "Unexpected Fact",
+        text: "अगर पत्ती के बाल को सिर्फ एक बार छुआ जाए तो कुछ नहीं होता—पौधा सिर्फ दूसरी बार छूने पर ही बिजली की तरंग छोड़ता है!",
+      });
+      rawCandidates.push({
+        hookType: "Visual Discovery",
+        text: "पत्ती के अंदर मौजूद इन 3 छोटे ट्रिगर बालों को देखिए: यह कुदरत का सबसे सटीक मैकेनिकल और इलेक्ट्रिकल जाल है।",
+      });
+    } else {
+      rawCandidates.push({
+        hookType: "Question Hook",
+        text: "How can a plant with no brain, no eyes, and zero muscle tissue snap shut fast enough to trap a lightning-quick fly?",
+      });
+      rawCandidates.push({
+        hookType: "Misconception Correction",
+        text: "Many assume the Venus flytrap snaps shut on anything that touches it, but this plant actually counts electrical pulses!",
+      });
+      rawCandidates.push({
+        hookType: "Curiosity Hook",
+        text: "Why does a Venus flytrap require exactly two mechanical hair deflections within twenty seconds before springing its trap?",
+      });
+      rawCandidates.push({
+        hookType: "Unexpected Fact",
+        text: "A single touch activates a silent biochemical timer; if no second touch occurs within twenty seconds, the trap refuses to waste its energy.",
+      });
+      rawCandidates.push({
+        hookType: "Visual Discovery",
+        text: "Look closely at the surface of the green leaf: three microscopic trigger hairs act as an electrical tripwire for unsuspecting prey.",
+      });
+    }
   } else if (lower.includes("clove") || lower.includes("लौंग")) {
     if (isHindi) {
       rawCandidates.push({
@@ -166,7 +342,7 @@ export function generateAndEvaluateHooks(
       });
     }
   } else {
-    // Dynamic universal generator
+    // Dynamic universal generator with zero sliced strings and pristine grammar
     if (isHindi) {
       rawCandidates.push({
         hookType: "Question Hook",
@@ -178,7 +354,7 @@ export function generateAndEvaluateHooks(
       });
       rawCandidates.push({
         hookType: "Unexpected Fact",
-        text: `${topicBrief.mainSubject} के बारे में सबसे दिलचस्प बात यह है कि ${topicBrief.interestingDiscovery.slice(0, 80)}...`,
+        text: `${topicBrief.interestingDiscovery}`,
       });
       rawCandidates.push({
         hookType: "Visual Discovery",
@@ -186,7 +362,7 @@ export function generateAndEvaluateHooks(
       });
       rawCandidates.push({
         hookType: "Curiosity Hook",
-        text: `आखिर क्यों ${topicBrief.centralQuestion.replace(/^Why\s+/i, "")}? आइए समझते हैं इसका सटीक कारण।`,
+        text: `${topicBrief.centralQuestion}`,
       });
     } else {
       rawCandidates.push({
@@ -199,7 +375,7 @@ export function generateAndEvaluateHooks(
       });
       rawCandidates.push({
         hookType: "Unexpected Fact",
-        text: `The most surprising truth about ${topicBrief.mainSubject} is that ${topicBrief.interestingDiscovery.slice(0, 80)}...`,
+        text: `${topicBrief.interestingDiscovery}`,
       });
       rawCandidates.push({
         hookType: "Visual Discovery",
@@ -207,7 +383,7 @@ export function generateAndEvaluateHooks(
       });
       rawCandidates.push({
         hookType: "Curiosity Hook",
-        text: `Why does ${topicBrief.centralQuestion}? Let's examine the verified evidence.`,
+        text: `${topicBrief.centralQuestion}`,
       });
     }
   }

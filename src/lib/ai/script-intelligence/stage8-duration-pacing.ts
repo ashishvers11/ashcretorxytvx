@@ -53,40 +53,64 @@ export function calibratePacingAndTimestamps(
   // 2. Calculate pure speech duration without pauses
   const pureSpeechSeconds = totalSpokenWords / pacingRates.wordsPerSecond;
   const pauseAllowanceSeconds = Math.max(1.5, pureSpeechSeconds * pacingRates.pauseRatio);
-  const rawCalculatedDuration = Math.round(pureSpeechSeconds + pauseAllowanceSeconds);
 
-  // 3. Proportional redistribution to match target runtime within tolerance
-  // Distribute targetDurationSeconds across sections based on word weight
+  // 3. Balanced proportional distribution using exact word weights
+  const totalSafeWords = Math.max(1, totalSpokenWords);
+  const minDurationPerSection = 3;
+  const numSections = sections.length;
+  const availableFloatingSeconds = Math.max(0, targetDurationSeconds - numSections * minDurationPerSection);
+
+  // Calculate fractional seconds per section
+  const sectionDurations = sectionWordCounts.map((wc) => {
+    const proportionalSeconds = (wc / totalSafeWords) * availableFloatingSeconds;
+    return minDurationPerSection + proportionalSeconds;
+  });
+
+  // Round durations while preserving exact total
+  let allocatedIntegerDurations = sectionDurations.map((d) => Math.max(minDurationPerSection, Math.round(d)));
+  let currentSum = allocatedIntegerDurations.reduce((a, b) => a + b, 0);
+  let difference = targetDurationSeconds - currentSum;
+
+  // Distribute any remainder to sections with largest speech weight
+  if (difference !== 0 && numSections > 0) {
+    const sortedIndices = sectionWordCounts
+      .map((wc, idx) => ({ wc, idx }))
+      .sort((a, b) => b.wc - a.wc)
+      .map((item) => item.idx);
+
+    let step = difference > 0 ? 1 : -1;
+    let ptr = 0;
+    while (difference !== 0 && ptr < numSections * 3) {
+      const targetIdx = sortedIndices[ptr % numSections];
+      if (allocatedIntegerDurations[targetIdx] + step >= minDurationPerSection) {
+        allocatedIntegerDurations[targetIdx] += step;
+        difference -= step;
+      }
+      ptr++;
+    }
+  }
+
+  // 4. Assemble calibrated sections with guaranteed non-overlapping timestamps
   const calibratedSections: ProductionScriptSection[] = [];
   let currentStart = 0;
 
   sections.forEach((sec, idx) => {
-    const weight = sectionWordCounts[idx] / Math.max(1, totalSpokenWords);
-    // Allocate proportional seconds, ensuring at least 3 seconds per scene
-    let allocatedDuration = Math.max(3, Math.round(targetDurationSeconds * weight));
-
-    // For the last section, snap exactly to targetDurationSeconds so final timestamp matches 100%!
-    if (idx === sections.length - 1) {
-      allocatedDuration = Math.max(3, targetDurationSeconds - currentStart);
-    }
-
-    const endSeconds = currentStart + allocatedDuration;
+    const dur = allocatedIntegerDurations[idx];
+    const endSeconds = currentStart + dur;
 
     calibratedSections.push({
       ...sec,
       startSeconds: currentStart,
       endSeconds,
-      durationSeconds: allocatedDuration,
+      durationSeconds: dur,
     });
 
     currentStart = endSeconds;
   });
 
-  const finalDuration = calibratedSections[calibratedSections.length - 1].endSeconds;
+  const finalDuration = calibratedSections.length > 0 ? calibratedSections[calibratedSections.length - 1].endSeconds : targetDurationSeconds;
   const durationVarianceSeconds = Math.abs(finalDuration - targetDurationSeconds);
-  const toleranceLimit = targetDurationSeconds <= 60 ? 2 : 5;
-  const withinTolerance = durationVarianceSeconds <= toleranceLimit;
-
+  const withinTolerance = durationVarianceSeconds <= 2;
   const actualWpm = Math.round((totalSpokenWords / Math.max(1, finalDuration)) * 60);
 
   const metrics: PacingMetrics = {

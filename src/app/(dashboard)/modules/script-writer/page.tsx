@@ -42,6 +42,7 @@ import {
   HelpCircle,
   RefreshCw,
   Search,
+  User,
 } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -50,9 +51,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   SupportedVideoStyleId,
+  SupportedVideoStyleDef,
+  CharacterProfile,
   ALL_SUPPORTED_VIDEO_STYLES,
   CompleteVideoIntelligencePackage,
   generateCompleteVideoPackage,
+  processUserVoiceoverIntoScenes,
   getStyleById,
   formatCopyScript,
   formatCopyVoiceover,
@@ -129,7 +133,7 @@ function VideoIntelligenceStudioContent() {
     if (style === "noir_mystery" || title.includes("horror")) {
       return "डायटलोव पास पर 9 पर्वतारोहियों की रहस्यमयी मौत का सच";
     }
-    return "लौंग असल में फूल है या फल? (The Science Behind Cloves)";
+    return "Commercial Airplane Paint Physics (Why Are Most Airplanes White?)";
   }, [titleFromUrl, activeChannelStyle, channel]);
 
   const [topic, setTopic] = React.useState(defaultTopicForChannel);
@@ -137,9 +141,28 @@ function VideoIntelligenceStudioContent() {
   const [scriptLanguage, setScriptLanguage] = React.useState<ScriptLanguage>("Hindi");
   const [durationSeconds, setDurationSeconds] = React.useState<number>(55);
 
+  // PRD Section 6.2: Two Input Modes (Mode A: AI Generated, Mode B: Use My Own Script)
+  const [productionMode, setProductionMode] = React.useState<"MODE_A_AI" | "MODE_B_USER">("MODE_A_AI");
+  const [userVoiceoverText, setUserVoiceoverText] = React.useState<string>(
+    "क्या आपने कभी सोचा है कि दुनिया के ज्यादातर हवाई जहाज सफेद ही क्यों होते हैं? इसके पीछे 3 सबसे बड़े वैज्ञानिक कारण हैं। पहला कारण है सूरज की धूप और गर्मी का परावर्तन। सफेद रंग 99% सोलर रेडिएशन को रिफ्लेक्ट कर देता है जिससे केबिन ठंडा रहता है। दूसरा कारण है सुरक्षा और मेंटेनेंस। सफेद बॉडी पर किसी भी तरह का क्रैक या ऑयल लीक दूर से ही दिख जाता है। और तीसरा कारण है पक्षियों से सुरक्षा। आसमान में पक्षी सफेद रंग को आसानी से पहचान कर टकराने से बचते हैं।"
+  );
+
+  // PRD Section 6.6: Character Consistency Engine Profile
+  const [characterProfile, setCharacterProfile] = React.useState<CharacterProfile>({
+    id: "char-1",
+    name: "Leo",
+    role: "Curious Host & Explorer",
+    visualDescription: "Young animated 3D boy, tousled dark hair, sparkling curious amber eyes, expressive smile",
+    clothingDescription: "Teal aviator bomber jacket, khaki explorer shorts, red canvas sneakers",
+    distinctiveFeatures: "Vintage round brass aviator goggles resting on his forehead",
+    referencePrompt: "young 3D Pixar-style explorer boy, brass goggles on forehead, teal aviator jacket",
+    isActive: false,
+  });
+  const [showCharacterPanel, setShowCharacterPanel] = React.useState<boolean>(false);
+
   // Selected Style State (Default based on active channel DNA or URL)
   const [selectedStyleId, setSelectedStyleId] = React.useState<SupportedVideoStyleId>(
-    styleFromUrl || (activeChannelStyle?.visualAnimationStyle as SupportedVideoStyleId) || "stickman_doodle"
+    styleFromUrl || (activeChannelStyle?.visualAnimationStyle as SupportedVideoStyleId) || "paper_cutout"
   );
 
   React.useEffect(() => {
@@ -262,16 +285,75 @@ function VideoIntelligenceStudioContent() {
           selectedStyleId: styleId,
           format: contentFormat === "youtube_shorts" ? "shorts" : "longform",
           durationSeconds,
+          characterProfile,
         });
 
         setScriptPkg(v2Result);
         setPkg(v1Result);
         setIsGenerating(false);
         setGenerationStep("");
+
+        // Store active project in localStorage for Dashboard Content Workflow
+        try {
+          localStorage.setItem(
+            "ash_active_project",
+            JSON.stringify({
+              title: targetTopic,
+              stage: "Video Scenes Ready",
+              style: v1Result.selectedStyle.name,
+              updatedAt: "Just now",
+            })
+          );
+        } catch {
+          // ignore
+        }
       }, 2200);
     },
-    [contentFormat, scriptLanguage, durationSeconds, channel, activeChannelStyle]
+    [contentFormat, scriptLanguage, durationSeconds, channel, activeChannelStyle, characterProfile]
   );
+
+  // PRD Section 6.2 Mode B: Custom Voiceover Processor
+  const runCustomVoiceoverGeneration = React.useCallback(() => {
+    if (!userVoiceoverText.trim()) return;
+    setIsGenerating(true);
+    setGenerationStep("Mode B: Preserving 100% of your voiceover & dividing into 1:1 scenes...");
+
+    setTimeout(() => {
+      setGenerationStep("Mode B: Synthesizing Midjourney & Runway prompts with character consistency...");
+    }, 600);
+
+    setTimeout(() => {
+      const v1Result = processUserVoiceoverIntoScenes({
+        rawVoiceover: userVoiceoverText,
+        projectTitle: topic || "Custom Voiceover Project",
+        selectedStyleId,
+        channelName: channel?.channel_title || "",
+        channelNiche: activeChannelStyle?.channelNiche || "",
+        format: contentFormat === "youtube_shorts" ? "shorts" : "longform",
+        characterProfile,
+      });
+
+      setPkg(v1Result);
+      setIsGenerating(false);
+      setGenerationStep("");
+      setActiveTab("scenes");
+
+      // Save to localStorage
+      try {
+        localStorage.setItem(
+          "ash_active_project",
+          JSON.stringify({
+            title: topic || "Custom Voiceover Project",
+            stage: "Video Scenes Ready",
+            style: v1Result.selectedStyle.name,
+            updatedAt: "Just now",
+          })
+        );
+      } catch {
+        // ignore
+      }
+    }, 1200);
+  }, [userVoiceoverText, topic, selectedStyleId, channel, activeChannelStyle, contentFormat, characterProfile]);
 
   // Initial load auto-run
   React.useEffect(() => {
@@ -372,88 +454,177 @@ function VideoIntelligenceStudioContent() {
         </div>
       </div>
 
-      {/* 2. TOPIC INPUT & PART B CORE USER CONTROLS */}
-      <Card className="border-slate-200/80 dark:border-navy-800">
-        <CardContent className="p-3.5 sm:p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-end">
-            <div className="md:col-span-5 space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                Topic / Central Learning Subject
-              </label>
-              <Input
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g. Why are most passenger airplanes white?"
-                disabled={isGenerating}
-                className="text-xs sm:text-sm font-semibold"
-              />
-            </div>
+      {/* 2. MODE SELECTOR (PRD Section 6.2: Mode A vs Mode B) */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-2 rounded-2xl border border-slate-200/90 dark:border-navy-800 bg-white/95 dark:bg-navy-900/90 shadow-xs">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-navy-950 border border-slate-200/60 dark:border-navy-800">
+          <button
+            type="button"
+            onClick={() => setProductionMode("MODE_A_AI")}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              productionMode === "MODE_A_AI"
+                ? "bg-brand-500 text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>Mode A: AI Generated Script</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setProductionMode("MODE_B_USER")}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              productionMode === "MODE_B_USER"
+                ? "bg-brand-500 text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <Mic className="h-3.5 w-3.5" />
+            <span>Mode B: Use My Own Voiceover Script</span>
+          </button>
+        </div>
 
-            <div className="md:col-span-3 space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Content Format (Part B)</label>
-              <select
-                value={contentFormat}
-                onChange={(e) => setContentFormat(e.target.value as ScriptContentFormat)}
-                disabled={isGenerating}
-                className="w-full h-10 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              >
-                <option value="youtube_shorts">YouTube Shorts (9:16)</option>
-                <option value="longform_youtube">Long-Form YouTube (16:9)</option>
-                <option value="educational_video">Educational Video</option>
-                <option value="science_explainer">Science Explainer</option>
-                <option value="history_documentary">History Documentary</option>
-                <option value="interesting_facts">Interesting Facts</option>
-                <option value="storytelling">Storytelling</option>
-                <option value="tutorial">Tutorial</option>
-                <option value="product_explanation">Product Explanation</option>
-                <option value="custom_format">Custom Format</option>
-              </select>
-            </div>
+        <span className="text-[11px] text-slate-500 dark:text-slate-400 px-2 font-medium">
+          {productionMode === "MODE_A_AI"
+            ? "10-Stage Research & Human Scriptwriting Pipeline"
+            : "100% Word Preservation • 1:1 Voiceover Scene Alignment"}
+        </span>
+      </div>
 
-            <div className="md:col-span-2 space-y-1">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Language</label>
-              <select
-                value={scriptLanguage}
-                onChange={(e) => setScriptLanguage(e.target.value as ScriptLanguage)}
-                disabled={isGenerating}
-                className="w-full h-10 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              >
-                <option value="Hindi">Hindi (Conversational Spoken)</option>
-                <option value="English">English (Articulate Presenter)</option>
-                <option value="Hinglish">Hinglish (Urban Casual)</option>
-              </select>
+      {/* MODE B: USER VOICEOVER SCRIPT INPUT (PRD Section 6.2) */}
+      {productionMode === "MODE_B_USER" && (
+        <Card className="border-brand-500/40 bg-brand-50/20 dark:bg-brand-950/20 p-4 sm:p-5 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Mic className="h-4 w-4 text-brand-500" />
+                <span>Paste Your Voiceover Script</span>
+                <Badge variant="success" className="text-[10px] font-bold">
+                  Zero Word Alteration Guarantee
+                </Badge>
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Paste your voiceover in Hindi, English or Hinglish. Every sentence becomes a dedicated visual scene with 1:1 matching camera movement, sound cues and AI prompts.
+              </p>
             </div>
-
-            <div className="md:col-span-2 space-y-1">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                <span>Duration</span>
-                <span className="text-brand-600 dark:text-brand-400 font-mono">{durationSeconds}s</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="range"
-                  min="30"
-                  max="90"
-                  step="5"
-                  value={durationSeconds}
-                  onChange={(e) => setDurationSeconds(Number(e.target.value))}
-                  disabled={isGenerating}
-                  className="w-full accent-brand-500"
-                />
-                <Button
-                  onClick={() => runGeneration(topic, selectedStyleId)}
-                  isLoading={isGenerating}
-                  className="shrink-0 gap-1.5 px-4 bg-brand-500 hover:bg-brand-600 font-bold text-xs shadow-xs"
-                >
-                  <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                  <span>Generate</span>
-                </Button>
-              </div>
+            <div className="flex items-center gap-3 text-xs font-semibold self-start sm:self-auto bg-white dark:bg-navy-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700">
+              <span className="text-slate-500">Words: <strong className="text-slate-900 dark:text-white font-mono">{userVoiceoverText.split(/\s+/).filter(Boolean).length}</strong></span>
+              <span className="text-slate-300 dark:text-slate-700">|</span>
+              <span className="text-slate-500">Paced Duration: <strong className="text-brand-600 dark:text-brand-400 font-mono">~{Math.max(15, Math.round(userVoiceoverText.split(/\s+/).filter(Boolean).length / 2.3))}s</strong></span>
             </div>
           </div>
 
-          {/* 3. VISUAL STYLE CARDS (13 STYLES) */}
-          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-navy-800">
+          <textarea
+            value={userVoiceoverText}
+            onChange={(e) => setUserVoiceoverText(e.target.value)}
+            rows={5}
+            placeholder="Paste your spoken voiceover script here... (e.g. हवाई जहाज सफेद क्यों होते हैं? इसके 3 बड़े कारण हैं...)"
+            className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3.5 text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 leading-relaxed font-normal"
+          />
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+              💡 Tip: The engine analyzes each sentence beat (. ! ? ।) and automatically synchronizes 1:1 image and video prompts.
+            </span>
+            <Button
+              onClick={runCustomVoiceoverGeneration}
+              disabled={!userVoiceoverText.trim() || isGenerating}
+              className="gap-2 px-5 bg-brand-500 hover:bg-brand-600 font-bold text-xs text-white shadow-xs shrink-0 self-start sm:self-auto"
+            >
+              <Film className="h-4 w-4" />
+              <span>Generate 1:1 Video Production Scenes</span>
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {/* 2. TOPIC INPUT & PART B CORE USER CONTROLS (MODE A) */}
+      {productionMode === "MODE_A_AI" && (
+        <Card className="border-slate-200/80 dark:border-navy-800">
+          <CardContent className="p-3.5 sm:p-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-end">
+              <div className="md:col-span-5 space-y-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Topic / Central Learning Subject
+                </label>
+                <Input
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="e.g. Why are most passenger airplanes white?"
+                  disabled={isGenerating}
+                  className="text-xs sm:text-sm font-semibold"
+                />
+              </div>
+
+              <div className="md:col-span-3 space-y-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Content Format (Part B)</label>
+                <select
+                  value={contentFormat}
+                  onChange={(e) => setContentFormat(e.target.value as ScriptContentFormat)}
+                  disabled={isGenerating}
+                  className="w-full h-10 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  <option value="youtube_shorts">YouTube Shorts (9:16)</option>
+                  <option value="longform_youtube">Long-Form YouTube (16:9)</option>
+                  <option value="educational_video">Educational Video</option>
+                  <option value="science_explainer">Science Explainer</option>
+                  <option value="history_documentary">History Documentary</option>
+                  <option value="interesting_facts">Interesting Facts</option>
+                  <option value="storytelling">Storytelling</option>
+                  <option value="tutorial">Tutorial</option>
+                  <option value="product_explanation">Product Explanation</option>
+                  <option value="custom_format">Custom Format</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2 space-y-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Language</label>
+                <select
+                  value={scriptLanguage}
+                  onChange={(e) => setScriptLanguage(e.target.value as ScriptLanguage)}
+                  disabled={isGenerating}
+                  className="w-full h-10 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  <option value="Hindi">Hindi (Conversational Spoken)</option>
+                  <option value="English">English (Articulate Presenter)</option>
+                  <option value="Hinglish">Hinglish (Urban Casual)</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2 space-y-1">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <span>Duration</span>
+                  <span className="text-brand-600 dark:text-brand-400 font-mono">{durationSeconds}s</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min="30"
+                    max="90"
+                    step="5"
+                    value={durationSeconds}
+                    onChange={(e) => setDurationSeconds(Number(e.target.value))}
+                    disabled={isGenerating}
+                    className="w-full accent-brand-500"
+                  />
+                  <Button
+                    onClick={() => runGeneration(topic, selectedStyleId)}
+                    isLoading={isGenerating}
+                    className="shrink-0 gap-1.5 px-4 bg-brand-500 hover:bg-brand-600 font-bold text-xs shadow-xs"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                    <span>Generate</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 3. VISUAL STYLE CARDS (PRD Section 6.4: 10 Styles) */}
+      <Card className="border-slate-200/80 dark:border-navy-800">
+        <CardContent className="p-3.5 sm:p-5 space-y-3">
+          <div className="space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-1.5">
               <label className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center gap-2">
                 <Palette className="h-3.5 w-3.5 text-brand-500" />
@@ -541,6 +712,111 @@ function VideoIntelligenceStudioContent() {
             </div>
           </div>
         </CardContent>
+      </Card>
+
+      {/* 3. CHARACTER CONSISTENCY ENGINE (PRD Section 6.6) */}
+      <Card className="border-slate-200/90 dark:border-navy-800 bg-white/95 dark:bg-navy-900/90 p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+              <User className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Character Consistency Engine
+                </h4>
+                <Badge
+                  variant={characterProfile.isActive ? "success" : "outline"}
+                  className="text-[10px] font-bold"
+                >
+                  {characterProfile.isActive ? "Consistency Locked 🔒" : "Optional Character"}
+                </Badge>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Automatically injects character facial features, proportions, and clothing into every scene prompt.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 self-start sm:self-auto">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-200">
+              <input
+                type="checkbox"
+                checked={characterProfile.isActive}
+                onChange={(e) => {
+                  const updated = { ...characterProfile, isActive: e.target.checked };
+                  setCharacterProfile(updated);
+                  if (productionMode === "MODE_B_USER" && userVoiceoverText.trim()) {
+                    // trigger refresh
+                    const v1 = processUserVoiceoverIntoScenes({
+                      rawVoiceover: userVoiceoverText,
+                      projectTitle: topic || "Custom Voiceover",
+                      selectedStyleId,
+                      characterProfile: updated,
+                    });
+                    setPkg(v1);
+                  } else {
+                    runGeneration(topic, selectedStyleId);
+                  }
+                }}
+                className="h-4 w-4 rounded accent-brand-500"
+              />
+              <span>Lock Character Across All Scenes</span>
+            </label>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCharacterPanel(!showCharacterPanel)}
+              className="text-xs h-8 px-2.5"
+            >
+              {showCharacterPanel ? "Hide Details" : "Edit Character DNA"}
+            </Button>
+          </div>
+        </div>
+
+        {showCharacterPanel && (
+          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-navy-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-slate-400">Character Name</label>
+              <Input
+                value={characterProfile.name}
+                onChange={(e) => setCharacterProfile({ ...characterProfile, name: e.target.value })}
+                placeholder="e.g. Leo / Professor"
+                className="text-xs h-8 mt-1 font-semibold"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-slate-400">Role & Face Details</label>
+              <Input
+                value={characterProfile.visualDescription}
+                onChange={(e) => setCharacterProfile({ ...characterProfile, visualDescription: e.target.value })}
+                placeholder="e.g. 3D animated boy, dark messy hair, amber eyes"
+                className="text-xs h-8 mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-slate-400">Clothing & Costume</label>
+              <Input
+                value={characterProfile.clothingDescription}
+                onChange={(e) => setCharacterProfile({ ...characterProfile, clothingDescription: e.target.value })}
+                placeholder="e.g. Teal aviator bomber jacket, khaki shorts"
+                className="text-xs h-8 mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-slate-400">Distinctive Item</label>
+              <Input
+                value={characterProfile.distinctiveFeatures}
+                onChange={(e) => setCharacterProfile({ ...characterProfile, distinctiveFeatures: e.target.value })}
+                placeholder="e.g. Vintage round brass goggles on forehead"
+                className="text-xs h-8 mt-1"
+              />
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* GENERATION PROGRESS INDICATOR */}
@@ -717,6 +993,30 @@ function VideoIntelligenceStudioContent() {
                 <CheckCircle2 className="h-3 w-3 shrink-0" />
                 <span className="truncate">{copiedKey === "btn_all" ? "Copied All!" : "10. Copy All-in-One"}</span>
               </Button>
+            </div>
+
+            {/* PRD SECTION 6.7: WORKFLOW HANDOFF ACTIONS */}
+            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-navy-800 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                <span>Next Workflow Milestones:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/modules/seo-studio?title=${encodeURIComponent(topic)}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 text-xs font-bold hover:bg-cyan-500/20 transition-colors shadow-xs"
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  <span>Send to SEO Studio →</span>
+                </Link>
+                <Link
+                  href={`/modules/thumbnail-studio?title=${encodeURIComponent(topic)}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-pink-500/30 bg-pink-500/10 text-pink-600 dark:text-pink-400 text-xs font-bold hover:bg-pink-500/20 transition-colors shadow-xs"
+                >
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  <span>Send to Thumbnail Studio →</span>
+                </Link>
+              </div>
             </div>
           </Card>
 

@@ -1,20 +1,30 @@
 // ==============================================================================
 // ASH CREATOR STUDIO 2.0 — COMPLETE VIDEO INTELLIGENCE ENGINE TYPES
 // Content Director, Video Researcher, Audio Director & Performance Analyst
+// Multi-Channel Isolation, 1:1 Voiceover Matching, Character Consistency & 10 Styles
 // ==============================================================================
 
 export type SupportedVideoStyleId =
+  | "cinematic_documentary"
+  | "photorealistic_macro"
+  | "3d_realistic_animation"
+  | "premium_3d_educational"
+  | "paper_cutout"
+  | "miniature_world"
+  | "hyperrealistic_science"
+  | "historical_reconstruction"
+  | "asmr_satisfying"
+  | "channel_style"
+  // Legacy styles
   | "stickman_doodle"
   | "animation_2d"
   | "pixar_3d"
-  | "paper_cutout"
   | "stop_motion"
   | "realistic_cinematic"
   | "documentary"
   | "whiteboard_explainer"
   | "ai_animation"
   | "gaming"
-  | "asmr_satisfying"
   | "motion_graphics"
   | "mixed_media";
 
@@ -29,16 +39,30 @@ export interface SupportedVideoStyleDef {
   cameraPreference: string;
   colorPalette: string;
   previewImage?: string;
+  keyKeywords?: string;
 }
 
-// Phase 2: 15 Core Attributes per Scene
+// PRD Section 6.6: Character Consistency Engine Profile
+export interface CharacterProfile {
+  id: string;
+  name: string;
+  role: string;
+  visualDescription: string; // Face, hair, body, proportions, age
+  clothingDescription: string; // Clothing, costume, accessories
+  distinctiveFeatures: string; // Glasses, distinctive items, props
+  referencePrompt: string; // Master prompt snippet injected into all scene prompts
+  referenceImageUrl?: string;
+  isActive: boolean;
+}
+
+// Phase 2: 15 Core Attributes per Scene (PRD Section 6.5)
 export interface ProductionSceneItem {
   sceneNumber: number; // 1
   stageName?: string; // Story beat name (e.g. "Viral Hook", "Curiosity Reveal")
   startTime: string; // 2 (e.g. "0:00")
   endTime: string; // 3 (e.g. "0:08")
   durationSeconds: number; // 4
-  voiceover: string; // 5 (Conversational, natural)
+  voiceover: string; // 5 (Conversational, natural, NEVER altered in Mode B)
   visualDescription: string; // 6 (Scientifically & visually 1:1 matching the voiceover)
   aiVideoPrompt: string; // 7 (Ready for Runway Gen-3 / Kling 1.5 / Luma)
   aiImagePrompt: string; // (Ready for Midjourney v6.1 / Flux.1)
@@ -50,6 +74,7 @@ export interface ProductionSceneItem {
   bgmInstructions: string; // 13 (Music mood & ducking level)
   transition: string; // 14 (Hard cut, whip pan, match cut, zoom dissolve)
   onScreenText: string; // 15 (Kinetic typography & subtitle overlay)
+  characterTag?: string; // Consistency tag if character appears
 }
 
 // Phase 3: Smart Sound Effect Engine
@@ -172,7 +197,7 @@ export interface FinalVideoQualityScore {
   scoringBreakdownNotes: string[];
 }
 
-// Phase 9: Complete Video Production Package
+// Phase 9: Complete Video Production Package (PRD Section 6)
 export interface CompleteVideoIntelligencePackage {
   id: string;
   channelId: string;
@@ -184,8 +209,15 @@ export interface CompleteVideoIntelligencePackage {
   durationSeconds: number;
   aspectRatio: "9:16" | "16:9";
 
+  // Mode A / Mode B
+  mode?: "AI_GENERATED" | "USER_VOICEOVER";
+  rawVoiceoverFull?: string;
+
   // Phase 1: Video Style Intelligence
   selectedStyle: SupportedVideoStyleDef;
+
+  // PRD 6.6: Character Consistency
+  activeCharacter?: CharacterProfile;
 
   // Phase 2: Scenes (15 points per scene)
   scenes: ProductionSceneItem[];

@@ -83,7 +83,11 @@ export function Header({ onMenuClick }: HeaderProps) {
     if (pathname === "/dashboard") return "Mission Control";
     if (pathname === "/profile") return "Creator Profile";
     if (pathname === "/settings") return "Account & Security";
-    if (pathname === "/modules/script-writer") return "AI Video Studio";
+    if (pathname === "/modules/script-writer") return "Video Production";
+    if (pathname === "/modules/trend-research") return "Trend Research";
+    if (pathname === "/modules/channel-audit") return "Channel Audit";
+    if (pathname === "/modules/seo-studio") return "SEO Studio";
+    if (pathname === "/modules/thumbnail-studio") return "Thumbnail Studio";
     if (pathname === "/modules/style-lab") return "AI Style Lab";
     if (pathname.startsWith("/modules/")) {
       const slug = pathname.replace("/modules/", "").replace(/-/g, " ");

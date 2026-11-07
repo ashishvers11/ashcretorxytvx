@@ -31,7 +31,7 @@ function SeoStudioContent() {
   const channelHandle = channel?.custom_url ? `@${channel.custom_url}` : channelBrand;
 
   const [titleInput, setTitleInput] = React.useState(
-    titleFromUrl || (activeChannelStyle?.popularTopics?.[0] || "लौंग असल में फूल है या फल? (The Science Behind Cloves)")
+    titleFromUrl || (activeChannelStyle?.popularTopics?.[0] || "Why Are Most Airplanes Painted White? (Aviation Science)")
   );
 
   const [descriptionInput, setDescriptionInput] = React.useState(
@@ -332,6 +332,27 @@ function SeoStudioContent() {
             </span>
           ))}
         </div>
+      </Card>
+
+      {/* PRD Section 7 -> 8 Workflow Handoff */}
+      <Card className="border-pink-500/30 bg-pink-50/20 dark:bg-pink-950/20 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-pink-500" />
+            <span>SEO Packaging Completed</span>
+          </h4>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Metadata ready. Next step: Generate high-CTR thumbnail concepts and test on the mobile feed simulator.
+          </p>
+        </div>
+
+        <Link
+          href={`/modules/thumbnail-studio?title=${encodeURIComponent(titleInput)}`}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-xs transition-colors shrink-0"
+        >
+          <span>Continue to Thumbnail Studio</span>
+          <ExternalLink className="h-3.5 w-3.5" />
+        </Link>
       </Card>
     </div>
   );

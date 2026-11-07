@@ -1,21 +1,19 @@
 import {
   LayoutDashboard,
   FileSearch,
-  BarChart3,
-  Video,
   Flame,
-  Lightbulb,
-  Users2,
-  PenTool,
+  Film,
   Search,
   Image as ImageIcon,
-  Palette,
-  Film,
-  Calendar,
   UserCircle,
+  BarChart3,
+  Video,
+  Users2,
+  Calendar,
+  Sparkles,
+  Palette,
   Settings,
   LucideIcon,
-  Sparkles,
 } from "lucide-react";
 
 export interface NavItem {
@@ -32,16 +30,17 @@ export interface NavSection {
   items: NavItem[];
 }
 
+// Strictly aligned with ASH Creator Studio PRD Section 2 & Section 17.2
 export const NAVIGATION_SECTIONS: NavSection[] = [
   {
-    title: "OVERVIEW",
+    title: "CORE WORKFLOW",
     items: [
       {
         name: "Dashboard",
         href: "/dashboard",
         icon: LayoutDashboard,
         isComingSoon: false,
-        description: "Primary mission control for your YouTube growth and channels",
+        description: "Central workspace: channel overview, trend radar & content workflow",
       },
       {
         name: "Channel Audit",
@@ -51,76 +50,21 @@ export const NAVIGATION_SECTIONS: NavSection[] = [
         badge: "Audit AI",
         description: "50-point automated SEO, packaging and metadata health audit",
       },
-    ],
-  },
-  {
-    title: "ANALYTICS",
-    items: [
-      {
-        name: "Channel Analytics",
-        href: "/modules/channel-analytics",
-        icon: BarChart3,
-        isComingSoon: false,
-        badge: "Live API",
-        description: "Official 7d, 28d & 90d YouTube Analytics API with watch time and retention",
-      },
-      {
-        name: "Video Analyzer",
-        href: "/modules/video-analyzer",
-        icon: Video,
-        isComingSoon: false,
-        badge: "AI",
-        description: "Per-video diagnostic engine detecting drop-offs and CTR anomalies",
-      },
-    ],
-  },
-  {
-    title: "RESEARCH",
-    items: [
       {
         name: "Trend Research",
         href: "/modules/trend-research",
         icon: Flame,
         isComingSoon: false,
         badge: "Live YT",
-        description: "Real-time YouTube search trend breakout radar with visual style recommendations",
+        description: "Breakout search trends & topic discovery with direct script handoff",
       },
       {
-        name: "Video Ideas",
-        href: "/modules/video-ideas",
-        icon: Lightbulb,
-        isComingSoon: false,
-        badge: "Curiosity",
-        description: "AI brainstorm engine trained on high-retention Education & Science formats",
-      },
-      {
-        name: "Competitor Research",
-        href: "/modules/competitor-research",
-        icon: Users2,
-        isComingSoon: false,
-        badge: "Outliers",
-        description: "Track top Education & Science creators and reverse-engineer 10x hits",
-      },
-    ],
-  },
-  {
-    title: "AI VIDEO STUDIO",
-    items: [
-      {
-        name: "AI Video & Script Studio",
+        name: "Video Production",
         href: "/modules/script-writer",
         icon: Film,
         isComingSoon: false,
-        badge: "AI Prompts",
-        description: "Generate full scripts + scene-by-scene AI video prompts with character consistency & styles",
-      },
-      {
-        name: "AI Style Lab",
-        href: "/modules/style-lab",
-        icon: Palette,
-        isComingSoon: false,
-        badge: "6 Trending",
-        description: "Browse 6 market-trending visual styles and create/save custom video style prompts",
+        badge: "AI Studio",
+        description: "Scriptwriting (Mode A/B), 10-style scene planning & character consistency",
       },
       {
         name: "SEO Studio",
@@ -128,15 +72,59 @@ export const NAVIGATION_SECTIONS: NavSection[] = [
         icon: Search,
         isComingSoon: false,
         badge: "Rank 1",
-        description: "High-ranking Hindi & English title formulas, timestamps, and tag optimization",
+        description: "High-CTR title formulas, structured descriptions & tag optimization",
       },
       {
         name: "Thumbnail Studio",
         href: "/modules/thumbnail-studio",
         icon: ImageIcon,
         isComingSoon: false,
-        badge: "Simulator",
-        description: "Visual contrast preview and mobile feed simulator for high CTR",
+        badge: "High CTR",
+        description: "AI thumbnail concepts, visual prompt generator & mobile feed simulator",
+      },
+      {
+        name: "Profile",
+        href: "/profile",
+        icon: UserCircle,
+        isComingSoon: false,
+        description: "Creator persona, channel DNA, and YouTube integration settings",
+      },
+    ],
+  },
+  {
+    title: "CREATOR LABS & TOOLS",
+    items: [
+      {
+        name: "AI Style Lab",
+        href: "/modules/style-lab",
+        icon: Palette,
+        isComingSoon: false,
+        badge: "10 Styles",
+        description: "Visual styles library, custom prompt modifiers & style DNA editor",
+      },
+      {
+        name: "Channel Analytics",
+        href: "/modules/channel-analytics",
+        icon: BarChart3,
+        isComingSoon: false,
+        badge: "Live API",
+        description: "Official 7d, 28d & 90d YouTube Analytics API performance",
+      },
+      {
+        name: "Video Analyzer",
+        href: "/modules/video-analyzer",
+        icon: Video,
+        isComingSoon: false,
+        badge: "AI",
+        description: "Per-video diagnostic engine detecting drop-offs and retention anomalies",
+      },
+      {
+        name: "Competitor Research",
+        href: "/modules/competitor-research",
+        icon: Users2,
+        isComingSoon: false,
+        badge: "Outliers",
+        description: "Track top niche creators and reverse-engineer viral outlier videos",
       },
       {
         name: "Content Calendar",
@@ -144,26 +132,15 @@ export const NAVIGATION_SECTIONS: NavSection[] = [
         icon: Calendar,
         isComingSoon: false,
         badge: "Schedule",
-        description: "Visual publishing cadence planner for Shorts and Long-form videos",
-      },
-    ],
-  },
-  {
-    title: "SETTINGS",
-    items: [
-      {
-        name: "Profile",
-        href: "/profile",
-        icon: UserCircle,
-        isComingSoon: false,
-        description: "Manage your creator identity, Education niche specialization, and localization",
+        description: "Visual publishing cadence planner for Shorts and Long-form",
       },
       {
-        name: "Account Settings",
-        href: "/settings",
-        icon: Settings,
+        name: "AI Assistant",
+        href: "/modules/creator-ai-assistant",
+        icon: Sparkles,
         isComingSoon: false,
-        description: "Google OAuth credentials, theme preferences, and connected channel management",
+        badge: "Copilot",
+        description: "Conversational YouTube growth strategist and channel copilot",
       },
     ],
   },

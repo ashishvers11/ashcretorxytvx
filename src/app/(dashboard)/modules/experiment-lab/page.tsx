@@ -15,17 +15,54 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/components/providers/auth-provider";
 
 export default function ExperimentLabPage() {
+  const { channel, activeChannelStyle } = useAuth();
+  const defaultTopic = activeChannelStyle?.popularTopics?.[0] || "द ग्रेट लाइब्रेरी ऑफ अलेक्जेंड्रिया कैसे जली?";
+  const defaultClean = defaultTopic.replace(/[?()]/g, "").trim();
+
   const [activeTab, setActiveTab] = React.useState<"active" | "create">("active");
 
-  const [titleA, setTitleA] = React.useState("लौंग क्या होता है? (Facts about Clove)");
-  const [titleB, setTitleB] = React.useState("लौंग असल में फूल है या फल? (99% लोग गलत जवाब देते हैं)");
+  const [titleA, setTitleA] = React.useState(`${defaultClean} (Descriptive Fact)`);
+  const [titleB, setTitleB] = React.useState(`${defaultClean} के पीछे का बड़ा रहस्य (99% लोग नहीं जानते)`);
 
   const [ctrA, setCtrA] = React.useState(5.4);
   const [ctrB, setCtrB] = React.useState(9.2);
 
-  const uplift = Math.round(((ctrB - ctrA) / ctrA) * 100);
+  const storageKey = `ash_experiment_${channel?.id || "default"}`;
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.titleA) setTitleA(parsed.titleA);
+        if (parsed.titleB) setTitleB(parsed.titleB);
+        if (parsed.ctrA) setCtrA(parsed.ctrA);
+        if (parsed.ctrB) setCtrB(parsed.ctrB);
+      }
+    } catch (e) {
+      console.warn("Failed to load experiment:", e);
+    }
+  }, [storageKey]);
+
+  const saveExperiment = (newA: string, newB: string, newCtrA: number, newCtrB: number) => {
+    setTitleA(newA);
+    setTitleB(newB);
+    setCtrA(newCtrA);
+    setCtrB(newCtrB);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({ titleA: newA, titleB: newB, ctrA: newCtrA, ctrB: newCtrB }));
+      } catch (e) {
+        console.warn("Failed to save experiment:", e);
+      }
+    }
+  };
+
+  const uplift = Math.round(((ctrB - ctrA) / Math.max(0.1, ctrA)) * 100);
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-10 max-w-6xl mx-auto">

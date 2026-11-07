@@ -5,9 +5,10 @@
 
 import { NextResponse } from "next/server";
 import { disconnectYouTubeConnection } from "@/lib/youtube/token-manager";
+import { getAuthenticatedUserId } from "@/lib/supabase/server";
 
 export async function POST() {
-  const userId = "demo-creator-uuid";
+  const userId = await getAuthenticatedUserId();
 
   try {
     await disconnectYouTubeConnection(userId);

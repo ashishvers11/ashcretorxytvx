@@ -61,3 +61,18 @@ export function createServerClientHelper() {
 }
 
 export { createServerClientHelper as createServerClient };
+
+/**
+ * Extracts the authenticated user ID from active session cookies,
+ * or safely falls back to demo-creator-uuid if session is not active.
+ */
+export async function getAuthenticatedUserId(): Promise<string> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user?.id) return user.id;
+  } catch {}
+  return "demo-creator-uuid";
+}

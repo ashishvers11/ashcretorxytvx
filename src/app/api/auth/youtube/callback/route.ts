@@ -8,6 +8,7 @@ import { exchangeCodeForTokens, fetchGoogleUserInfo } from "@/lib/youtube/oauth"
 import { fetchAuthorizedChannel } from "@/lib/youtube/data-api";
 import { saveYouTubeConnection } from "@/lib/youtube/token-manager";
 import { runYouTubeSync } from "@/lib/youtube/sync-engine";
+import { getAuthenticatedUserId } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -34,7 +35,7 @@ export async function GET(request: Request) {
 
   // 2. Demo simulation fallback for development testing
   if (isDemo || (!code && process.env.NODE_ENV === "development")) {
-    const defaultUserId = "demo-creator-uuid";
+    const defaultUserId = await getAuthenticatedUserId();
     const demoChannelId = "chan-creator-demo";
 
     await saveYouTubeConnection(defaultUserId, demoChannelId, {
@@ -69,7 +70,7 @@ export async function GET(request: Request) {
     // 5. Fetch authorized YouTube Channel details
     const channelData = await fetchAuthorizedChannel(tokens.access_token);
 
-    const defaultUserId = "demo-creator-uuid";
+    const defaultUserId = await getAuthenticatedUserId();
 
     // 6. Save connection securely (never expose tokens to frontend!)
     const connection = await saveYouTubeConnection(defaultUserId, null, {

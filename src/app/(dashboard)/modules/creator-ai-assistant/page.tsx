@@ -26,32 +26,64 @@ interface Message {
 }
 
 export default function CreatorAiAssistantPage() {
-  const { channel, profile } = useAuth();
+  const { channel, profile, activeChannelStyle } = useAuth();
   const channelTitle = channel?.channel_title || "Connected Channel";
+  const niche = activeChannelStyle?.channelNiche || "Content Creation";
+  const styleLabel = activeChannelStyle?.visualStyleLabel || "Original Style";
   const handle = channel?.custom_url
     ? `@${channel.custom_url}`
     : channel?.channel_title
     ? `@${channel.channel_title.toLowerCase().replace(/\s+/g, "")}`
     : "@channel";
 
+  const storageKey = `ash_assistant_messages_${channel?.id || "default"}`;
+
+  const initialWelcome = `Hello ${profile?.full_name?.split(" ")[0] || "Creator"}! I am your ASH Creator Growth Copilot.\n\nI have researched your connected channel **${channelTitle}** (${handle}) specializing in **${niche}** with the **${styleLabel}** visual format.\n\nHow can I help accelerate your audience velocity today? You can ask me to draft high-CTR hooks, critique your thumbnail concepts, or blueprint your next 30-day upload sprint.`;
+
   const [inputMessage, setInputMessage] = React.useState("");
   const [isTyping, setIsTyping] = React.useState(false);
-
   const [messages, setMessages] = React.useState<Message[]>([
     {
       role: "assistant",
-      content: `Hello ${profile?.full_name?.split(" ")[0] || "Ashish"}! I am your ASH Creator Growth Copilot. I have analyzed your channel **${channelTitle}** (${handle}) in the Education, Science Facts & Curious Mysteries niche.\n\nHow can I help accelerate your channel today? You can ask me to draft curiosity hooks, critique video packaging, or blueprint your next 30-day upload sprint.`,
+      content: initialWelcome,
       time: "Just now",
     },
   ]);
 
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
+  // Load from localStorage on mount
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load chat history:", e);
+    }
+  }, [storageKey]);
+
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  const handleSend = (userText?: string) => {
+  const saveMessages = (msgs: Message[]) => {
+    setMessages(msgs);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(msgs));
+      } catch (e) {
+        console.warn("Failed to persist chat:", e);
+      }
+    }
+  };
+
+  const handleSend = async (userText?: string) => {
     const text = (userText || inputMessage).trim();
     if (!text) return;
 
@@ -61,40 +93,61 @@ export default function CreatorAiAssistantPage() {
       time: "Just now",
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const newHistory = [...messages, userMsg];
+    saveMessages(newHistory);
     setInputMessage("");
     setIsTyping(true);
 
-    // Simulated contextual AI response based on query
-    setTimeout(() => {
-      let aiReply = "";
+    try {
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text,
+          channelTitle,
+          channelNiche: niche,
+          visualStyle: styleLabel,
+          targetAudience: activeChannelStyle?.targetAudience || "YouTube Audience",
+          history: newHistory.slice(-6),
+        }),
+      });
 
-      const lower = text.toLowerCase();
-      if (lower.includes("30-day") || lower.includes("growth plan")) {
-        aiReply = `### 30-Day Growth Blueprint for **${channelTitle}** (Education & Science Facts):\n\n1. **Week 1 (Curiosity Packaging):**\n   - Update your channel bio with 5 high-volume search terms (*Hindi Science Facts, Daily Curiosities, Biology Truth, Mysteries Explained*).\n   - Pin a themed playlist (*"Daily Life Curiosities"*).\n\n2. **Week 2 (Shorts-to-Long-form Funnel):**\n   - Release 3 high-retention 60s curiosity Shorts (*"लौंग असल में क्या है?", "हवाई जहाज सफेद क्यों होता है?"*) directing viewers to your full breakdowns.\n\n3. **Week 3 (Micro-Payoff Scripting):**\n   - Use our AI Script Studio to ensure every video has a 15-second opening hook, 3 visual B-Roll beats, and zero filler.\n\n4. **Week 4 (End Screen Binge Loop):**\n   - At the end of every video, never say goodbye — hook the viewer directly into your next science mystery!`;
-      } else if (lower.includes("title") || lower.includes("ideas") || lower.includes("topic")) {
-        aiReply = `### 5 High-CTR Science & Curiosity Concepts for **${handle}**:\n\n1. *"लौंग असल में फूल है या फल? (The Truth About Cloves)"*\n   - **Predicted CTR:** 15.4% • Daily Curiosity Mystery\n\n2. *"अगर धरती सिर्फ 5 सेकंड के लिए घूमना बंद कर दे तो क्या होगा?"*\n   - **Predicted CTR:** 18.2% • Viral Physics What-If\n\n3. *"हवाई जहाज का रंग हमेशा सफेद ही क्यों होता है?"*\n   - **Predicted CTR:** 13.6% • Aviation Thermal Science\n\n4. *"मोबाइल की बैटरी को 80% पर ही क्यों रोक देना चाहिए?"*\n   - **Predicted CTR:** 14.8% • Battery Chemistry Practical\n\n5. *"क्या पौधे सच में दर्द महसूस करते हैं? Science Experiment"*\n   - **Predicted CTR:** 16.9% • Botanical Biology Wonder`;
-      } else if (lower.includes("drop") || lower.includes("retention") || lower.includes("30 seconds")) {
-        aiReply = `### How to Fix 30-Second Audience Drop-off on Science Channels:\n\n- **Rule 1: Eliminate Slow Animated Intros.** Never show a 5-second logo animation. Deliver the mystery hook in the first 3 seconds.\n- **Rule 2: Challenge a Common Misconception.** Start with *"99% लोग सोचते हैं कि X सच है, लेकिन विज्ञान कुछ और ही कहता है..."*\n- **Rule 3: Visual B-Roll Every 3-4 Seconds.** In science videos, use macro footage, animations, and bold text callouts to keep viewers glued.\n- **Rule 4: Withhold the Ultimate Payoff.** Promise the surprising scientific conclusion at the end of Beat 3.`;
-      } else {
-        aiReply = `Great question for **${channelTitle}**! In the YouTube Education & Science algorithm, viral reach is driven by 3 pillars:\n\n1. **Relatable Curiosity Hook:** Frame your topic around something viewers touch or see every day (like cloves, airplanes, or batteries).\n2. **Visual Pacing:** Explain complex science in simple Hindi/English with clear visual diagrams and B-roll cues.\n3. **Seamless Outro:** Avoid saying "Thanks for watching!" — tease the next mystery to multiply watch time sessions!`;
-      }
+      const data = await res.json();
+      const replyContent =
+        data?.reply ||
+        "I am analyzing your channel strategy. Please ask any specific question about your scripts, packaging, or retention!";
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: aiReply,
-          time: "Just now",
-        },
-      ]);
+      const assistantMsg: Message = {
+        role: "assistant",
+        content: replyContent,
+        time: "Just now",
+      };
+
+      saveMessages([...newHistory, assistantMsg]);
+    } catch (err) {
+      console.error("AI Assistant request failed:", err);
+      const fallbackMsg: Message = {
+        role: "assistant",
+        content:
+          "I am ready to help grow your channel! You can ask me for title ideas, script critiques, or retention strategies.",
+        time: "Just now",
+      };
+      saveMessages([...newHistory, fallbackMsg]);
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
+  };
+
+  const handleClearChat = () => {
+    if (confirm("Reset chat history?")) {
+      const reset = [{ role: "assistant" as const, content: initialWelcome, time: "Just now" }];
+      saveMessages(reset);
+    }
   };
 
   const samplePrompts = [
-    `Give me a 30-day growth plan for ${channel?.channel_title || "my channel"}`,
-    "Generate 5 high-CTR titles for Science Facts & Curiosities",
+    `Give me a 30-day growth plan for ${channelTitle}`,
+    `Generate 5 high-CTR video concepts for ${styleLabel}`,
     "How do I fix a sharp drop-off in my first 30 seconds?",
     "How to double my CTR on thumbnails?",
   ];
@@ -121,15 +174,7 @@ export default function CreatorAiAssistantPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() =>
-            setMessages([
-              {
-                role: "assistant",
-                content: `Chat session reset. How can I help grow **${channelTitle}** today?`,
-                time: "Just now",
-              },
-            ])
-          }
+          onClick={handleClearChat}
           className="text-xs text-slate-400 hover:text-rose-500 gap-1.5"
         >
           <Trash2 className="h-3.5 w-3.5" />

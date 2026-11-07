@@ -18,15 +18,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export default function ThumbnailStudioPage() {
-  const { channel } = useAuth();
+  const { channel, activeChannelStyle } = useAuth();
   const [deviceMode, setDeviceMode] = React.useState<"mobile" | "desktop">("mobile");
   const [feedTheme, setFeedTheme] = React.useState<"dark" | "light">("dark");
   const [imageUrl, setImageUrl] = React.useState(
     "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800&auto=format&fit=crop&q=80"
   );
-  const [title, setTitle] = React.useState("लौंग असल में फूल है या फल? (The Science Behind Cloves)");
+  const defaultTitle = activeChannelStyle?.popularTopics?.[0] || "द ग्रेट लाइब्रेरी ऑफ अलेक्जेंड्रिया कैसे जली?";
+  const [title, setTitle] = React.useState(defaultTitle);
 
-  const channelTitle = channel?.channel_title || "ASHISH FN";
+  const channelTitle = channel?.channel_title || "Connected Channel";
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-10 max-w-6xl mx-auto">
@@ -146,7 +147,7 @@ export default function ThumbnailStudioPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={channel.thumbnail_url} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  <span>A</span>
+                  <span>{(channelTitle || "C").charAt(0).toUpperCase()}</span>
                 )}
               </div>
 

@@ -18,29 +18,56 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export default function GrowthCoachPage() {
-  const { channel } = useAuth();
-  const channelTitle = channel?.channel_title || "ASHISH FN";
+  const { channel, activeChannelStyle } = useAuth();
+  const channelTitle = channel?.channel_title || "Connected Channel";
+  const styleLabel = activeChannelStyle?.visualStyleLabel || "Original Video Style";
+  const nicheLabel = activeChannelStyle?.channelNiche || "Content Creation";
+  const storageKey = `ash_coach_completed_${channel?.id || "default"}`;
 
   const [completedActions, setCompletedActions] = React.useState<number[]>([1]);
 
+  // Load from localStorage
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setCompletedActions(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load coach actions:", e);
+    }
+  }, [storageKey]);
+
   const toggleAction = (id: number) => {
-    setCompletedActions((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    setCompletedActions((prev) => {
+      const next = prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id];
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(next));
+        } catch (e) {
+          console.warn("Failed to save coach actions:", e);
+        }
+      }
+      return next;
+    });
   };
 
   const sprintGoals = [
     {
       id: 1,
-      title: "Establish 3 Core Video Pillars",
-      detail: "Define your repeating content formats: 1. Setup & Hardware, 2. Ranked Gameplay Highlights, 3. Settings Tutorials.",
+      title: "Establish 3 Signature Video Pillars",
+      detail: `Define repeating content formats tailored to ${nicheLabel}: 1. Core Mysteries & Discoveries, 2. Visual Story Breakdown (${styleLabel}), 3. High-Curiosity Shorts.`,
       reward: "+15% Channel Authority",
     },
     {
       id: 2,
-      title: "Publish 2 High-Contrast Shorts Every Week",
-      detail: "Shorts act as a top-of-funnel discoverability engine. Link the related long-form video in the Shorts description.",
-      reward: "+300 Monthly Views",
+      title: "Publish 2 High-Retention Shorts Weekly",
+      detail: `Use your signature ${styleLabel} aesthetic as a top-of-funnel discoverability engine. Link the full breakdown in comments.`,
+      reward: "+500 Monthly Views",
     },
     {
       id: 3,
@@ -51,7 +78,7 @@ export default function GrowthCoachPage() {
     {
       id: 4,
       title: "Keep First 30s Retention Above 65%",
-      detail: "Cut fluff intros. Start speaking directly on the promise made in your title within the first 3 seconds.",
+      detail: "Cut fluff animated intros. Deliver on the promise made in your title within the first 3 seconds.",
       reward: "Recommended Feed Velocity",
     },
   ];

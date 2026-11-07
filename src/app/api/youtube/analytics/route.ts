@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { getValidAccessToken } from "@/lib/youtube/token-manager";
 import { fetchOfficialYouTubeAnalytics, getDateRange, ChannelAnalyticsReport } from "@/lib/youtube/analytics-api";
+import { getAuthenticatedUserId } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
   const channelTitle = searchParams.get("channelTitle") || "";
   const style = searchParams.get("style") || "";
 
-  const userId = "demo-creator-uuid";
+  const userId = await getAuthenticatedUserId();
   const { startDate, endDate } = getDateRange(days);
 
   try {

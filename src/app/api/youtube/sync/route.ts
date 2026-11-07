@@ -6,9 +6,10 @@
 import { NextResponse } from "next/server";
 import { getValidAccessToken } from "@/lib/youtube/token-manager";
 import { runYouTubeSync } from "@/lib/youtube/sync-engine";
+import { getAuthenticatedUserId } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
-  const userId = "demo-creator-uuid";
+  const userId = await getAuthenticatedUserId();
 
   try {
     const { days = 28 } = await request.json().catch(() => ({ days: 28 }));

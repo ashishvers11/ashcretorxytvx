@@ -7,9 +7,10 @@
 import { NextResponse } from "next/server";
 import { getValidAccessToken } from "@/lib/youtube/token-manager";
 import { isGoogleOAuthConfigured } from "@/lib/youtube/oauth";
+import { getAuthenticatedUserId } from "@/lib/supabase/server";
 
 export async function GET() {
-  const userId = "demo-creator-uuid";
+  const userId = await getAuthenticatedUserId();
 
   // Check valid access token
   const tokenResult = await getValidAccessToken(userId);

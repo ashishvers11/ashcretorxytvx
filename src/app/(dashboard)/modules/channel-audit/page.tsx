@@ -21,10 +21,28 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export default function ChannelAuditPage() {
-  const { channel, profile } = useAuth();
+  const { channel, profile, activeChannelStyle } = useAuth();
   const [isScanning, setIsScanning] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<"issues" | "strengths" | "actionPlan">("issues");
+  const storageKey = `ash_audit_completed_${channel?.id || "default"}`;
+
   const [completedSteps, setCompletedSteps] = React.useState<number[]>([]);
+
+  // Load from localStorage
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setCompletedSteps(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load audit steps:", e);
+    }
+  }, [storageKey]);
 
   const channelTitle = channel?.channel_title || "Connected Channel";
   const handle = channel?.custom_url
@@ -32,18 +50,29 @@ export default function ChannelAuditPage() {
     : channel?.channel_title
     ? `@${channel.channel_title.toLowerCase().replace(/\s+/g, "")}`
     : "@channel";
+  const styleLabel = activeChannelStyle?.visualStyleLabel || "Signature Visual Aesthetic";
+  const nicheLabel = activeChannelStyle?.channelNiche || "Content Niche";
+  const topTopic = activeChannelStyle?.popularTopics?.[0] || "द ग्रेट लाइब्रेरी ऑफ अलेक्जेंड्रिया कैसे जली?";
 
   const handleRerun = () => {
     setIsScanning(true);
     setTimeout(() => {
       setIsScanning(false);
-    }, 1800);
+    }, 1400);
   };
 
   const toggleStepCompleted = (stepNumber: number) => {
-    setCompletedSteps((prev) =>
-      prev.includes(stepNumber) ? prev.filter((s) => s !== stepNumber) : [...prev, stepNumber]
-    );
+    setCompletedSteps((prev) => {
+      const next = prev.includes(stepNumber) ? prev.filter((s) => s !== stepNumber) : [...prev, stepNumber];
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(next));
+        } catch (e) {
+          console.warn("Failed to persist audit steps:", e);
+        }
+      }
+      return next;
+    });
   };
 
   const auditCategories = [
@@ -53,7 +82,7 @@ export default function ChannelAuditPage() {
       status: "Good",
       color: "text-blue-500",
       barColor: "bg-blue-500",
-      description: "Science keywords in description, Hindi search indexing, and channel tags",
+      description: `Targeted keywords in description, metadata indexing for ${nicheLabel}`,
     },
     {
       name: "Visual Packaging & CTR",
@@ -61,7 +90,7 @@ export default function ChannelAuditPage() {
       status: "Excellent",
       color: "text-emerald-500",
       barColor: "bg-emerald-500",
-      description: "High-contrast visual branding, memorable handle and curiosity appeal",
+      description: `High-contrast ${styleLabel} visual branding and hook appeal`,
     },
     {
       name: "Publishing Cadence",
@@ -69,7 +98,7 @@ export default function ChannelAuditPage() {
       status: "Needs Focus",
       color: "text-amber-500",
       barColor: "bg-amber-500",
-      description: "Weekly upload velocity and Shorts-to-Longform frequency",
+      description: "Weekly upload velocity and Shorts-to-Longform distribution",
     },
     {
       name: "Audience Hook Potential",
@@ -77,7 +106,7 @@ export default function ChannelAuditPage() {
       status: "Strong",
       color: "text-purple-500",
       barColor: "bg-purple-500",
-      description: "Topic clarity in Education & Science Facts niche and curiosity playlist architecture",
+      description: `Premise clarity in ${nicheLabel} and curiosity architecture`,
     },
   ];
 
@@ -87,17 +116,17 @@ export default function ChannelAuditPage() {
       title: "Missing Targeted High-Volume Keywords in Channel Bio",
       impact: "High",
       detail:
-        "Your channel bio does not mention top search queries like 'Hindi Science Facts', 'Daily Life Curiosities', or 'Mysteries Explained'. Adding 3-5 core search terms will increase YouTube suggested feed impressions by up to 34%.",
+        `Your channel bio does not mention top search queries related to ${nicheLabel}. Adding 3-5 core search terms will increase YouTube suggested feed impressions by up to 34%.`,
       action: "Optimize in SEO Studio",
-      href: `/modules/seo-studio?title=${encodeURIComponent("लौंग असल में फूल है या फल? (Science Truth About Cloves)")}`,
+      href: `/modules/seo-studio?title=${encodeURIComponent(topTopic)}`,
     },
     {
       type: "warning",
-      title: "Inconsistent Visual Style Across Video Scenes & Thumbnails",
+      title: "Maintain Strong Visual Style Consistency Across Scenes",
       impact: "High",
       detail:
-        "Top education creators use a consistent visual aesthetic (like Isometric 3D Micro-World or Unreal Engine 5 hyper-realism) and character anchors so viewers instantly recognize your videos in recommendations.",
-      action: "Choose Style in AI Style Lab",
+        `Top creators in your niche lock in a signature aesthetic (${styleLabel}) so viewers instantly recognize your videos in home and suggested recommendations.`,
+      action: "Review Style in AI Style Lab",
       href: "/modules/style-lab",
     },
     {

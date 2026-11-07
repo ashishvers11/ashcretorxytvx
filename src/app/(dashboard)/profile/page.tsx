@@ -4,29 +4,28 @@ import React, { useState } from "react";
 import Link from "next/link";
 import {
   User,
-  Youtube,
   Shield,
   KeyRound,
-  LogOut,
-  Loader2,
-  Calendar,
   Mail,
-  AlertTriangle,
-  ExternalLink,
+  Calendar,
+  LogOut,
+  Youtube,
   Unlink,
+  Loader2,
+  ExternalLink,
   CheckCircle2,
-  Users,
-  Eye,
+  Lock,
+  ArrowRight,
   Video,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth-context";
 import { useYouTubeChannel } from "@/hooks/use-youtube-channel";
 
 export default function ProfilePage() {
-  const { user, loading: authLoading, isConfigured, signOut } = useAuth();
+  const { user, signOut, isConfigured } = useAuth();
   const { channel, connected, loading: channelLoading, disconnectChannel } = useYouTubeChannel();
   const [disconnecting, setDisconnecting] = useState(false);
   const [disconnectMessage, setDisconnectMessage] = useState<string | null>(null);
@@ -36,6 +35,7 @@ export default function ProfilePage() {
       return;
     }
     setDisconnecting(true);
+    setDisconnectMessage(null);
     const success = await disconnectChannel();
     if (success) {
       setDisconnectMessage("YouTube channel successfully disconnected.");
@@ -43,43 +43,46 @@ export default function ProfilePage() {
     setDisconnecting(false);
   };
 
-  if (authLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-400" />
-        <p className="text-xs text-slate-400">Loading user profile...</p>
-      </div>
-    );
-  }
+  const formatMetric = (val: number | null | undefined) => {
+    if (val === null || val === undefined) return "Unavailable";
+    return val.toLocaleString();
+  };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-8">
+    <div className="space-y-6">
+      {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Creator Profile</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+          <User className="h-6 w-6 text-brand-400" />
+          <span>Creator Profile & Linked Accounts</span>
+        </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Manage your authenticated identity, session security, and connected channel settings.
+          Manage your ASH Creator Studio account, authentication identity, and connected YouTube channels.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* User Identity Card (Supabase Account) */}
-        <Card className="p-6 md:col-span-1 text-center flex flex-col justify-between border-slate-800 bg-surface-900/90 shadow-xl">
+        {/* Creator Identity Card */}
+        <Card className="border-slate-800 bg-surface-900/90 shadow-xl p-6 text-center flex flex-col justify-between">
           <div>
-            <div className="h-20 w-20 rounded-full bg-gradient-to-tr from-brand-500 to-indigo-600 flex items-center justify-center text-white mx-auto mb-4 text-2xl font-bold shadow-xl shadow-brand-500/20">
-              <User className="h-10 w-10" />
+            <div className="relative mx-auto h-20 w-20 rounded-full bg-gradient-to-tr from-brand-500 to-indigo-500 p-1 shadow-lg shadow-brand-500/20 mb-4">
+              <div className="h-full w-full rounded-full bg-surface-950 flex items-center justify-center text-white font-bold text-2xl">
+                {user?.email ? user.email.charAt(0).toUpperCase() : "C"}
+              </div>
             </div>
 
-            <h3 className="text-base font-bold text-white break-all">
-              {user?.email || "Creator Account"}
+            <h3 className="font-bold text-base text-white truncate px-2">
+              {user?.email || "Creator Studio User"}
             </h3>
-
-            <p className="text-xs text-slate-400 mt-1 mb-3">
-              {user ? "Verified Supabase Identity" : "Unauthenticated Session"}
+            <p className="text-xs text-slate-400 font-mono mt-0.5">
+              {user ? `Role: Authenticated Creator` : "Role: Unauthenticated Guest"}
             </p>
 
-            <Badge variant={user ? "success" : "warning"} className="text-[11px]">
-              {user ? "Active Session" : "Guest / Local"}
-            </Badge>
+            <div className="flex items-center justify-center gap-2 mt-3">
+              <Badge variant={user ? "success" : "warning"} className="text-[11px]">
+                {user ? "Active Session" : "Guest / Local"}
+              </Badge>
+            </div>
           </div>
 
           <div className="pt-6 border-t border-slate-800/80 mt-6">
@@ -173,7 +176,7 @@ export default function ProfilePage() {
                 </Badge>
               </div>
               <CardDescription className="text-xs text-slate-400">
-                Official Google OAuth 2.0 integration (Read-Only scopes).
+                Official Google OAuth 2.0 integration (Read-Only scopes with PKCE).
               </CardDescription>
             </CardHeader>
 
@@ -244,35 +247,69 @@ export default function ProfilePage() {
                     <div className="p-2.5 rounded-lg border border-slate-800 bg-slate-900/40">
                       <span className="text-[10px] text-slate-400 block">Subscribers</span>
                       <strong className="text-sm text-white font-bold">
-                        {channel.subscriberCount.toLocaleString()}
+                        {formatMetric(channel.subscriberCount)}
                       </strong>
                     </div>
                     <div className="p-2.5 rounded-lg border border-slate-800 bg-slate-900/40">
                       <span className="text-[10px] text-slate-400 block">Total Views</span>
                       <strong className="text-sm text-white font-bold">
-                        {channel.viewCount.toLocaleString()}
+                        {formatMetric(channel.viewCount)}
                       </strong>
                     </div>
                     <div className="p-2.5 rounded-lg border border-slate-800 bg-slate-900/40">
-                      <span className="text-[10px] text-slate-400 block">Total Videos</span>
+                      <span className="text-[10px] text-slate-400 block">Videos</span>
                       <strong className="text-sm text-white font-bold">
-                        {channel.videoCount.toLocaleString()}
+                        {formatMetric(channel.videoCount)}
                       </strong>
                     </div>
                   </div>
+
+                  {channel.recentVideos && channel.recentVideos.length > 0 && (
+                    <div className="pt-2 border-t border-slate-800/80 space-y-2">
+                      <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
+                        <Video className="h-3.5 w-3.5 text-brand-400" />
+                        Recent Uploads ({channel.recentVideos.length}):
+                      </span>
+                      <div className="space-y-1.5">
+                        {channel.recentVideos.slice(0, 3).map((vid) => (
+                          <div
+                            key={vid.videoId}
+                            className="flex items-center justify-between p-2 rounded-lg bg-slate-950/40 border border-slate-800/60 text-[11px]"
+                          >
+                            <span className="truncate max-w-xs text-slate-300 font-medium">{vid.title}</span>
+                            <a
+                              href={vid.videoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-brand-400 hover:text-brand-300 shrink-0 ml-2 flex items-center gap-1"
+                            >
+                              Watch <ExternalLink className="h-2.5 w-2.5" />
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-2 text-[11px] text-slate-500">
+                    Connected: {new Date(channel.connectedAt).toLocaleDateString()}
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2.5 rounded-lg bg-slate-950/40 border border-slate-800 p-3.5">
-                    <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      No YouTube channel is currently linked to your creator profile. Connecting your channel establishes your content DNA and enables tailored trend analysis.
+                <div className="py-4 text-center space-y-3">
+                  <div className="h-10 w-10 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+                    <Lock className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-300 font-medium">No YouTube Channel Connected</p>
+                    <p className="text-[11px] text-slate-500 max-w-sm mx-auto mt-0.5">
+                      Connect your YouTube channel on the Dashboard to sync video metrics, scripts, and channel DNA.
                     </p>
                   </div>
                   <Link href="/dashboard#channel-setup">
-                    <Button variant="primary" size="sm" className="gap-2">
-                      <Youtube className="h-4 w-4" />
-                      <span>Connect YouTube Channel</span>
+                    <Button variant="primary" size="sm" className="gap-1.5 text-xs">
+                      <span>Go to Channel Setup</span>
+                      <ArrowRight className="h-3 w-3" />
                     </Button>
                   </Link>
                 </div>

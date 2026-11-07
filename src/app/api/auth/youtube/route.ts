@@ -5,12 +5,10 @@ import { isGoogleOAuthConfigured, buildGoogleAuthUrl } from "@/lib/youtube";
 
 /**
  * GET /api/auth/youtube
- * Initiates the Google OAuth 2.0 Authorization Code Flow for YouTube read-only access.
+ * Initiates the Google OAuth 2.0 Authorization Code Flow with PKCE for YouTube read-only access.
  * Protected: Requires authenticated ASH Creator Studio Supabase session.
  */
 export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url);
-
   // 1. Authenticate user session
   try {
     const supabase = createServerSupabaseClient();
@@ -41,18 +39,25 @@ export async function GET(request: NextRequest) {
   // 3. Generate secure random CSRF state
   const state = crypto.randomBytes(32).toString("hex");
 
-  // 4. Build authorization URL
-  const authUrl = buildGoogleAuthUrl(state);
+  // 4. Generate RFC 7636 PKCE code verifier and code challenge (S256)
+  const codeVerifier = crypto.randomBytes(32).toString("base64url");
+  const codeChallenge = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
 
-  // 5. Store state in secure HttpOnly cookie
+  // 5. Build authorization URL with state and code_challenge
+  const authUrl = buildGoogleAuthUrl(state, codeChallenge);
+
+  // 6. Store state and code_verifier in secure HttpOnly cookies
   const response = NextResponse.redirect(authUrl);
-  response.cookies.set("yt_oauth_state", state, {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "lax" as const,
     path: "/",
     maxAge: 600, // 10 minutes
-  });
+  };
+
+  response.cookies.set("yt_oauth_state", state, cookieOptions);
+  response.cookies.set("yt_oauth_code_verifier", codeVerifier, cookieOptions);
 
   return response;
 }

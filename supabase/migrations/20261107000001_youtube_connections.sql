@@ -12,9 +12,12 @@ create table if not exists public.youtube_connections (
   description text,
   custom_url text,
   thumbnail_url text,
-  subscriber_count bigint default 0,
-  view_count bigint default 0,
-  video_count integer default 0,
+  subscriber_count bigint,
+  view_count bigint,
+  video_count integer,
+  uploads_playlist_id text,
+  recent_videos jsonb default '[]'::jsonb,
+  analytics_summary jsonb default '{}'::jsonb,
   encrypted_refresh_token text,
   token_iv text,
   token_auth_tag text,
@@ -51,3 +54,7 @@ create policy "Users can delete own youtube connection"
   on public.youtube_connections
   for delete
   using (auth.uid() = user_id);
+
+-- 7. Add index for fast user lookup
+create index if not exists idx_youtube_connections_user_id
+  on public.youtube_connections(user_id);

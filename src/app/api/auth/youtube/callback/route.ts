@@ -5,9 +5,10 @@ import { encryptToken } from "@/lib/security/encryption";
 
 /**
  * GET /api/auth/youtube/callback
- * Google OAuth 2.0 callback endpoint.
- * Validates CSRF state, exchanges authorization code for tokens, retrieves channel info,
- * encrypts refresh token with AES-256-GCM, and persists to Supabase.
+ * Google OAuth 2.0 callback endpoint with PKCE verification.
+ * Validates CSRF state, exchanges authorization code with code_verifier for tokens,
+ * retrieves real channel info, recent uploads and analytics, encrypts refresh token,
+ * and persists to Supabase youtube_connections table.
  */
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -15,10 +16,11 @@ export async function GET(request: NextRequest) {
   const state = requestUrl.searchParams.get("state");
   const errorParam = requestUrl.searchParams.get("error");
 
-  // Create response to allow clearing state cookie
+  // Helper to create redirect response while clearing security cookies
   const createRedirect = (path: string) => {
     const res = NextResponse.redirect(new URL(path, request.url));
     res.cookies.delete("yt_oauth_state");
+    res.cookies.delete("yt_oauth_code_verifier");
     return res;
   };
 
@@ -53,10 +55,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 5. Server-side token exchange
-    const tokens = await exchangeAuthCode(code);
+    // 5. Server-side token exchange with PKCE code_verifier
+    const codeVerifier = request.cookies.get("yt_oauth_code_verifier")?.value;
+    const tokens = await exchangeAuthCode(code, codeVerifier);
 
-    // 6. Fetch authenticated creator's YouTube channel details
+    // 6. Fetch authenticated creator's real YouTube channel details, uploads, and analytics
     const channel = await fetchMyYouTubeChannel(tokens.accessToken);
 
     // 7. Encrypt refresh token using AES-256-GCM (server-only key)
@@ -66,29 +69,62 @@ export async function GET(request: NextRequest) {
     }
 
     // 8. Persist channel connection to Supabase with user_id relationship
-    const { error: dbError } = await (supabase.from("youtube_connections") as any).upsert(
-      {
-        user_id: user.id,
-        channel_id: channel.channelId,
-        title: channel.title,
-        description: channel.description,
-        custom_url: channel.customUrl,
-        thumbnail_url: channel.thumbnailUrl,
-        subscriber_count: channel.subscriberCount,
-        view_count: channel.viewCount,
-        video_count: channel.videoCount,
-        encrypted_refresh_token: encryptedData?.encrypted || null,
-        token_iv: encryptedData?.iv || null,
-        token_auth_tag: encryptedData?.authTag || null,
-        scopes: tokens.scope ? tokens.scope.split(" ") : [],
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id, channel_id" }
-    );
+    const payload: Record<string, any> = {
+      user_id: user.id,
+      channel_id: channel.channelId,
+      title: channel.title,
+      description: channel.description,
+      custom_url: channel.customUrl,
+      thumbnail_url: channel.thumbnailUrl,
+      subscriber_count: channel.subscriberCount,
+      view_count: channel.viewCount,
+      video_count: channel.videoCount,
+      scopes: tokens.scope ? tokens.scope.split(" ") : [],
+      updated_at: new Date().toISOString(),
+    };
+
+    if (encryptedData) {
+      payload.encrypted_refresh_token = encryptedData.encrypted;
+      payload.token_iv = encryptedData.iv;
+      payload.token_auth_tag = encryptedData.authTag;
+    }
+
+    // Include recent videos and analytics summary if schema supports them
+    if (channel.recentVideos && channel.recentVideos.length > 0) {
+      payload.recent_videos = channel.recentVideos;
+    }
+    if (channel.analytics) {
+      payload.analytics_summary = channel.analytics;
+    }
+
+    // Attempt upsert with extended payload; fall back to base payload if columns not yet migrated
+    let dbError: any = null;
+    const upsertRes = await (supabase.from("youtube_connections") as any).upsert(payload, {
+      onConflict: "user_id, channel_id",
+    });
+
+    if (upsertRes.error) {
+      // If error is missing columns (recent_videos or analytics_summary), retry with base fields
+      const errMessage = upsertRes.error.message || "";
+      if (errMessage.includes("column") || errMessage.includes("schema")) {
+        delete payload.recent_videos;
+        delete payload.analytics_summary;
+        const fallbackRes = await (supabase.from("youtube_connections") as any).upsert(payload, {
+          onConflict: "user_id, channel_id",
+        });
+        dbError = fallbackRes.error;
+      } else {
+        dbError = upsertRes.error;
+      }
+    }
 
     if (dbError) {
       console.error("Database error saving YouTube connection:", dbError);
-      return createRedirect("/dashboard?error=database_save_failed");
+      return createRedirect(
+        `/dashboard?error=${encodeURIComponent(
+          "Database error: Please make sure the youtube_connections table migration has been run in Supabase SQL editor."
+        )}`
+      );
     }
 
     return createRedirect("/dashboard?status=youtube_connected");

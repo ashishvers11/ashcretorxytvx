@@ -3,6 +3,27 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/auth-context";
 
+export interface YouTubeVideoItem {
+  videoId: string;
+  title: string;
+  description: string;
+  publishedAt: string;
+  thumbnailUrl: string | null;
+  videoUrl: string;
+}
+
+export interface YouTubeAnalyticsData {
+  isAvailable: boolean;
+  estimatedMinutesWatched?: number | "Unavailable";
+  averageViewDuration?: number | "Unavailable";
+  subscribersGained?: number | "Unavailable";
+  subscribersLost?: number | "Unavailable";
+  views?: number | "Unavailable";
+  likes?: number | "Unavailable";
+  comments?: number | "Unavailable";
+  reason?: string;
+}
+
 export interface ConnectedYouTubeChannel {
   id: string;
   channelId: string;
@@ -10,9 +31,12 @@ export interface ConnectedYouTubeChannel {
   description: string;
   customUrl: string | null;
   thumbnailUrl: string | null;
-  subscriberCount: number;
-  viewCount: number;
-  videoCount: number;
+  subscriberCount: number | null;
+  viewCount: number | null;
+  videoCount: number | null;
+  uploadsPlaylistId: string | null;
+  recentVideos: YouTubeVideoItem[];
+  analytics?: YouTubeAnalyticsData | null;
   connectedAt: string;
   updatedAt: string;
 }

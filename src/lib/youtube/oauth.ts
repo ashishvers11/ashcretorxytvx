@@ -11,8 +11,9 @@ export interface GoogleTokens {
 /**
  * Builds the official Google OAuth 2.0 Authorization URL.
  * Requests offline access and explicit consent to ensure a refresh token is returned.
+ * Supports RFC 7636 PKCE (code_challenge & code_challenge_method=S256).
  */
-export function buildGoogleAuthUrl(state: string): string {
+export function buildGoogleAuthUrl(state: string, codeChallenge?: string): string {
   const { clientId, redirectUri } = getGoogleOAuthEnv();
 
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
@@ -25,14 +26,20 @@ export function buildGoogleAuthUrl(state: string): string {
   url.searchParams.set("include_granted_scopes", "true");
   url.searchParams.set("state", state);
 
+  if (codeChallenge) {
+    url.searchParams.set("code_challenge", codeChallenge);
+    url.searchParams.set("code_challenge_method", "S256");
+  }
+
   return url.toString();
 }
 
 /**
  * Exchanges the Google OAuth authorization code for access and refresh tokens.
  * Server-side exchange — client secret is never exposed to browser.
+ * Supports PKCE code_verifier parameter.
  */
-export async function exchangeAuthCode(code: string): Promise<GoogleTokens> {
+export async function exchangeAuthCode(code: string, codeVerifier?: string): Promise<GoogleTokens> {
   const { clientId, clientSecret, redirectUri } = getGoogleOAuthEnv();
 
   const body = new URLSearchParams({
@@ -42,6 +49,10 @@ export async function exchangeAuthCode(code: string): Promise<GoogleTokens> {
     redirect_uri: redirectUri,
     grant_type: "authorization_code",
   });
+
+  if (codeVerifier) {
+    body.set("code_verifier", codeVerifier);
+  }
 
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -54,7 +65,7 @@ export async function exchangeAuthCode(code: string): Promise<GoogleTokens> {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error_description || data.error || "Failed to exchange authorization code");
+    throw new Error(data.error_description || data.error || "Failed to exchange authorization code with Google");
   }
 
   return {

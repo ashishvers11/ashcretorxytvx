@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const { data: connection, error: dbError } = await (supabase
       .from("youtube_connections") as any)
       .select(
-        "id, channel_id, title, description, custom_url, thumbnail_url, subscriber_count, view_count, video_count, connected_at, updated_at"
+        "id, channel_id, title, description, custom_url, thumbnail_url, subscriber_count, view_count, video_count, uploads_playlist_id, recent_videos, analytics_summary, connected_at, updated_at"
       )
       .eq("user_id", user.id)
       .maybeSingle();
@@ -49,6 +49,9 @@ export async function GET(request: NextRequest) {
         subscriberCount: connection.subscriber_count,
         viewCount: connection.view_count,
         videoCount: connection.video_count,
+        uploadsPlaylistId: connection.uploads_playlist_id || null,
+        recentVideos: Array.isArray(connection.recent_videos) ? connection.recent_videos : [],
+        analytics: connection.analytics_summary || null,
         connectedAt: connection.connected_at,
         updatedAt: connection.updated_at,
       },

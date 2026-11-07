@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Youtube,
@@ -19,6 +18,11 @@ import {
   Eye,
   Video,
   Users,
+  Clock,
+  ThumbsUp,
+  MessageSquare,
+  BarChart3,
+  Calendar,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,6 +52,8 @@ export function ChannelConnectCard() {
         setErrorMessage("YouTube channel connection was cancelled. You can try again whenever you're ready.");
       } else if (error === "invalid_csrf_state") {
         setErrorMessage("Security verification failed (invalid CSRF state). Please initiate the connection again.");
+      } else if (error === "auth_required") {
+        setErrorMessage("Please sign in to ASH Creator Studio first before connecting your YouTube channel.");
       } else {
         setErrorMessage(decodeURIComponent(error));
       }
@@ -62,7 +68,7 @@ export function ChannelConnectCard() {
   const handleStartOAuth = () => {
     setErrorMessage(null);
     setConnecting(true);
-    // Initiates server-side protected Google OAuth flow
+    // Initiates server-side protected Google OAuth flow with PKCE
     window.location.href = "/api/auth/youtube";
   };
 
@@ -95,23 +101,28 @@ export function ChannelConnectCard() {
   // STATE A: CONNECTED STATE
   // =========================================================================
   if (connected && channel) {
+    const formatMetric = (val: number | null | undefined) => {
+      if (val === null || val === undefined) return "Unavailable";
+      return val.toLocaleString();
+    };
+
     return (
       <Card id="channel-setup" className="border-slate-800 bg-surface-900/90 shadow-xl overflow-hidden">
         <CardHeader className="border-b border-slate-800/80 pb-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                <Youtube className="h-5 w-5 text-red-500" />
+              <div className="h-10 w-10 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center shrink-0">
+                <Youtube className="h-5 w-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="text-lg">YouTube Channel Connected</CardTitle>
+                  <CardTitle className="text-lg">Connected YouTube Channel</CardTitle>
                   <Badge variant="success" className="text-[10px]">
-                    Active &amp; Synced
+                    Active & Synced
                   </Badge>
                 </div>
                 <CardDescription className="text-xs text-slate-400 mt-0.5">
-                  Official Google OAuth connection verified with read-only scopes.
+                  Official Google OAuth 2.0 Integration (Read-Only scopes).
                 </CardDescription>
               </div>
             </div>
@@ -121,32 +132,27 @@ export function ChannelConnectCard() {
               size="sm"
               onClick={handleDisconnect}
               disabled={disconnecting}
-              className="text-rose-400 border-rose-500/30 hover:bg-rose-500/10 gap-1.5 self-start sm:self-auto"
+              className="text-rose-400 border-rose-500/30 hover:bg-rose-500/10 text-xs gap-1.5 self-start sm:self-auto"
             >
               {disconnecting ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>Disconnecting...</span>
-                </>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <>
-                  <Unlink className="h-3.5 w-3.5" />
-                  <span>Disconnect Channel</span>
-                </>
+                <Unlink className="h-3.5 w-3.5" />
               )}
+              <span>Disconnect Channel</span>
             </Button>
           </div>
         </CardHeader>
 
         <CardContent className="pt-6 space-y-6">
           {successMessage && (
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 flex items-start gap-2 text-xs text-emerald-300">
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 flex items-center gap-2.5 text-xs text-emerald-300">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
               <span>{successMessage}</span>
             </div>
           )}
 
-          {/* Channel Identity Banner */}
+          {/* Primary Channel Identity Banner */}
           <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               {channel.thumbnailUrl ? (
@@ -202,7 +208,7 @@ export function ChannelConnectCard() {
                 <Users className="h-4 w-4 text-brand-400" />
               </div>
               <div className="text-xl font-bold text-white">
-                {channel.subscriberCount.toLocaleString()}
+                {formatMetric(channel.subscriberCount)}
               </div>
               <span className="text-[10px] text-slate-500">Public channel metric</span>
             </div>
@@ -213,7 +219,7 @@ export function ChannelConnectCard() {
                 <Eye className="h-4 w-4 text-amber-400" />
               </div>
               <div className="text-xl font-bold text-white">
-                {channel.viewCount.toLocaleString()}
+                {formatMetric(channel.viewCount)}
               </div>
               <span className="text-[10px] text-slate-500">Public lifetime metric</span>
             </div>
@@ -224,10 +230,122 @@ export function ChannelConnectCard() {
                 <Video className="h-4 w-4 text-indigo-400" />
               </div>
               <div className="text-xl font-bold text-white">
-                {channel.videoCount.toLocaleString()}
+                {formatMetric(channel.videoCount)}
               </div>
               <span className="text-[10px] text-slate-500">Public lifetime metric</span>
             </div>
+          </div>
+
+          {/* Recent Uploaded Videos Section */}
+          {channel.recentVideos && channel.recentVideos.length > 0 && (
+            <div className="space-y-3 pt-2 border-t border-slate-800/80">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                  <Video className="h-4 w-4 text-brand-400" />
+                  <span>Recent Uploaded Videos ({channel.recentVideos.length})</span>
+                </h4>
+                <span className="text-[11px] text-slate-500">Verified from YouTube Data API v3</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {channel.recentVideos.map((video) => (
+                  <a
+                    key={video.videoId}
+                    href={video.videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group rounded-xl border border-slate-800 bg-slate-950/60 p-3 hover:border-brand-500/40 hover:bg-slate-900/60 transition-all flex flex-col justify-between"
+                  >
+                    <div>
+                      {video.thumbnailUrl && (
+                        <div className="relative aspect-video w-full rounded-lg overflow-hidden mb-2 bg-slate-900">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={video.thumbnailUrl}
+                            alt={video.title}
+                            className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                        </div>
+                      )}
+                      <h5 className="text-xs font-medium text-slate-200 line-clamp-2 group-hover:text-brand-300 transition-colors">
+                        {video.title}
+                      </h5>
+                    </div>
+
+                    <div className="mt-2.5 pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] text-slate-400">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(video.publishedAt).toLocaleDateString()}
+                      </span>
+                      <span className="flex items-center gap-1 text-brand-400">
+                        Watch <ExternalLink className="h-2.5 w-2.5" />
+                      </span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* YouTube Analytics Section */}
+          <div className="space-y-3 pt-2 border-t border-slate-800/80">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-emerald-400" />
+                <span>Authorized Channel Analytics (Last 30 Days)</span>
+              </h4>
+              <Badge variant={channel.analytics?.isAvailable ? "success" : "secondary"} className="text-[10px]">
+                {channel.analytics?.isAvailable ? "Live Report" : "Report Unavailable"}
+              </Badge>
+            </div>
+
+            {channel.analytics?.isAvailable ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="p-3 rounded-lg border border-slate-800 bg-slate-900/40">
+                  <span className="text-[10px] text-slate-400 block mb-1">30d Views</span>
+                  <strong className="text-sm text-white font-bold">
+                    {typeof channel.analytics.views === "number"
+                      ? channel.analytics.views.toLocaleString()
+                      : channel.analytics.views || "Unavailable"}
+                  </strong>
+                </div>
+
+                <div className="p-3 rounded-lg border border-slate-800 bg-slate-900/40">
+                  <span className="text-[10px] text-slate-400 block mb-1">Watch Time (Mins)</span>
+                  <strong className="text-sm text-white font-bold">
+                    {typeof channel.analytics.estimatedMinutesWatched === "number"
+                      ? Math.round(channel.analytics.estimatedMinutesWatched).toLocaleString()
+                      : channel.analytics.estimatedMinutesWatched || "Unavailable"}
+                  </strong>
+                </div>
+
+                <div className="p-3 rounded-lg border border-slate-800 bg-slate-900/40">
+                  <span className="text-[10px] text-slate-400 block mb-1">Avg Duration</span>
+                  <strong className="text-sm text-white font-bold">
+                    {typeof channel.analytics.averageViewDuration === "number"
+                      ? `${Math.round(channel.analytics.averageViewDuration)}s`
+                      : channel.analytics.averageViewDuration || "Unavailable"}
+                  </strong>
+                </div>
+
+                <div className="p-3 rounded-lg border border-slate-800 bg-slate-900/40">
+                  <span className="text-[10px] text-slate-400 block mb-1">Subscribers Gained</span>
+                  <strong className="text-sm text-white font-bold">
+                    {typeof channel.analytics.subscribersGained === "number"
+                      ? `+${channel.analytics.subscribersGained.toLocaleString()}`
+                      : channel.analytics.subscribersGained || "Unavailable"}
+                  </strong>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3.5 rounded-lg border border-slate-800 bg-slate-950/40 text-xs text-slate-400 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-slate-500 shrink-0" />
+                <span>
+                  {channel.analytics?.reason ||
+                    "YouTube Analytics API is not enabled in your Google Cloud Console project or channel is too new."}
+                </span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -253,7 +371,7 @@ export function ChannelConnectCard() {
                 </Badge>
               </div>
               <CardDescription className="text-xs text-slate-400 mt-0.5">
-                Connect your YouTube channel using official Google OAuth 2.0.
+                Connect your YouTube channel using official Google OAuth 2.0 with PKCE.
               </CardDescription>
             </div>
           </div>

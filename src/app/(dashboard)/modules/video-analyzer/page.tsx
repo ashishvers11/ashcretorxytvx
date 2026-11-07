@@ -16,48 +16,53 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/components/providers/auth-provider";
 
 export default function VideoAnalyzerPage() {
-  const [videoTitle, setVideoTitle] = React.useState("लौंग असल में फूल है या फल? (The Science Behind Cloves)");
+  const { channel, activeChannelStyle } = useAuth();
+  const defaultTopic = activeChannelStyle?.popularTopics?.[0] || "द ग्रेट लाइब्रेरी ऑफ अलेक्जेंड्रिया कैसे जली?";
+  const [videoTitle, setVideoTitle] = React.useState(defaultTopic);
   const [videoDuration, setVideoDuration] = React.useState("05:30");
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);
+
+  const cleanTitle = videoTitle.replace(/[?()]/g, "").trim();
 
   const handleAnalyze = (e: React.FormEvent) => {
     e.preventDefault();
     setIsAnalyzing(true);
     setTimeout(() => {
       setIsAnalyzing(false);
-    }, 1200);
+    }, 900);
   };
 
   const markers = [
     {
       time: "0:25",
       title: "Initial Curiosity Hook Window",
-      retention: "74%",
+      retention: "76%",
       status: "good",
-      detail: "Clean visual question kept audience drop-off under 26%. Benchmark for science facts is 35%.",
+      detail: `Strong visual hook introducing "${cleanTitle}" kept initial drop-off under 24%. Niche retention benchmark is 35%.`,
     },
     {
-      time: "2:40",
-      title: "Pacing Plateau",
-      retention: "54%",
+      time: "2:10",
+      title: "Foundation & Context Beat",
+      retention: "58%",
       status: "warning",
-      detail: "Long inventory management segment caused 8% drop. Shorten or add background sound design.",
+      detail: "Dense informational explanation caused a 7% dip. Add dynamic b-roll cutaways, motion graphics, or sound transitions.",
     },
     {
-      time: "5:15",
-      title: "Highlight Battle Spike",
-      retention: "61%",
+      time: "4:05",
+      title: "Core Discovery & Payoff Spike",
+      retention: "67%",
       status: "excellent",
-      detail: "Viewers rewound to rewatch 1v3 clutch battle. Excellent retention retention trigger.",
+      detail: `Viewers rewound to rewatch the primary revelation about "${cleanTitle}". Highest retention engagement trigger.`,
     },
     {
-      time: "8:20",
-      title: "Outro Drop-off",
-      retention: "38%",
+      time: "5:10",
+      title: "Outro Drop-off Window",
+      retention: "42%",
       status: "warning",
-      detail: "Audience dropped when verbal outro cues started. Transition faster to End Screen cards.",
+      detail: "Audience dropped when verbal outro cues started. Transition faster directly into End Screen cards.",
     },
   ];
 

@@ -14,6 +14,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/components/providers/auth-provider";
 
 interface VideoTask {
   id: string;
@@ -24,27 +25,34 @@ interface VideoTask {
 }
 
 export default function VideoPlannerPage() {
+  const { channel, activeChannelStyle } = useAuth();
+  const storageKey = `ash_video_tasks_${channel?.id || "default"}`;
+
+  const defaultTopic1 = activeChannelStyle?.popularTopics?.[0] || "द ग्रेट लाइब्रेरी ऑफ अलेक्जेंड्रिया कैसे जली?";
+  const defaultTopic2 = activeChannelStyle?.popularTopics?.[1] || "रोम की 9वीं सेना रहस्यमयी तरीके से कहाँ गायब हो गई?";
+  const defaultTopic3 = activeChannelStyle?.popularTopics?.[2] || "वाइकिंग्स बादलों में सूर्य की दिशा कैसे पहचानते थे?";
+
   const [tasks, setTasks] = React.useState<VideoTask[]>([
     {
       id: "1",
-      title: "लौंग असल में फूल है या फल? (The Science Behind Cloves)",
+      title: defaultTopic1,
       stage: "editing",
       targetDate: "This Friday",
       type: "Explainer",
     },
     {
       id: "2",
-      title: "हवाई जहाज का रंग हमेशा सफेद ही क्यों होता है?",
+      title: defaultTopic2,
       stage: "scripting",
       targetDate: "Next Tuesday",
       type: "Curiosity",
     },
     {
       id: "3",
-      title: "अगर धरती 5 सेकंड के लिए घूमना बंद कर दे तो क्या होगा?",
+      title: defaultTopic3,
       stage: "filming",
       targetDate: "Next Sunday",
-      type: "What If?",
+      type: "Investigation",
     },
     {
       id: "4",
@@ -64,6 +72,33 @@ export default function VideoPlannerPage() {
 
   const [newTitle, setNewTitle] = React.useState("");
 
+  // Load from localStorage
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setTasks(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load tasks from storage:", e);
+    }
+  }, [storageKey]);
+
+  const saveTasks = (updated: VideoTask[]) => {
+    setTasks(updated);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(updated));
+      } catch (e) {
+        console.warn("Failed to persist tasks to storage:", e);
+      }
+    }
+  };
+
   const stages = [
     { id: "backlog", title: "Idea Backlog", color: "border-slate-300 dark:border-navy-700" },
     { id: "scripting", title: "Scripting & Hooks", color: "border-blue-500/30" },
@@ -74,39 +109,40 @@ export default function VideoPlannerPage() {
 
   const moveTask = (taskId: string, direction: "next" | "prev") => {
     const order: VideoTask["stage"][] = ["backlog", "scripting", "filming", "editing", "ready"];
-    setTasks((prev) =>
-      prev.map((t) => {
-        if (t.id === taskId) {
-          const currentIndex = order.indexOf(t.stage);
-          const nextIndex = direction === "next" ? currentIndex + 1 : currentIndex - 1;
-          if (nextIndex >= 0 && nextIndex < order.length) {
-            return { ...t, stage: order[nextIndex] };
-          }
+    const updated = tasks.map((t) => {
+      if (t.id === taskId) {
+        const currentIndex = order.indexOf(t.stage);
+        const nextIndex = direction === "next" ? currentIndex + 1 : currentIndex - 1;
+        if (nextIndex >= 0 && nextIndex < order.length) {
+          return { ...t, stage: order[nextIndex] };
         }
-        return t;
-      })
-    );
+      }
+      return t;
+    });
+    saveTasks(updated);
   };
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
-    setTasks([
+    const updated = [
       ...tasks,
       {
         id: String(Date.now()),
         title: newTitle.trim(),
-        stage: "backlog",
+        stage: "backlog" as const,
         targetDate: "Next Week",
-        type: "Long-form",
+        type: "Shorts",
       },
-    ]);
+    ];
+    saveTasks(updated);
     setNewTitle("");
   };
 
   const deleteTask = (taskId: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    const updated = tasks.filter((t) => t.id !== taskId);
+    saveTasks(updated);
   };
 
   return (

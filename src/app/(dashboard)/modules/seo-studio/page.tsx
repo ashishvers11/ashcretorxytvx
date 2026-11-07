@@ -23,42 +23,40 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/components/providers/auth-provider";
 
 function SeoStudioContent() {
-  const { channel } = useAuth();
+  const { channel, activeChannelStyle } = useAuth();
   const searchParams = useSearchParams();
   const titleFromUrl = searchParams.get("title");
 
+  const channelBrand = channel?.channel_title || "Creator Channel";
+  const channelHandle = channel?.custom_url ? `@${channel.custom_url}` : channelBrand;
+
   const [titleInput, setTitleInput] = React.useState(
-    titleFromUrl || "लौंग असल में फूल है या फल? (The Science Behind Cloves)"
+    titleFromUrl || (activeChannelStyle?.popularTopics?.[0] || "लौंग असल में फूल है या फल? (The Science Behind Cloves)")
   );
 
   const [descriptionInput, setDescriptionInput] = React.useState(
-    `लौंग असल में फूल है या फल? क्या आप जानते हैं कि 99% लोग इसका गलत जवाब देते हैं? इस वीडियो में जानिए लौंग (Syzygium aromaticum) का असली वनस्पति सच और इसके अंदर मौजूद Eugenol तेल का चमत्कार!
+    `इस वीडियो में जानिए इसके पीछे का असली सच! क्या आप जानते हैं कि 99% लोग इसका गलत जवाब देते हैं? 
 
 📌 वीडियो के महत्वपूर्ण भाग (TIMESTAMPS):
-0:00 - लौंग असल में क्या है? (The Big Mystery)
-0:15 - फूल, फल या सूखा बीज? (Botanical Facts)
-1:10 - बीट 1: लौंग की शरीर रचना (Anatomy of Clove)
-2:20 - बीट 2: खिलने से पहले ही क्यों तोड़ते हैं?
-3:45 - बीट 3: दांत दर्द में असरदार क्यों? (Eugenol Power)
-4:30 - निष्कर्ष और अगला विज्ञान रहस्य
+0:00 - मुख्य सवाल और हुक (The Big Hook)
+0:15 - प्राथमिक संदर्भ और पृष्ठभूमि (Context)
+1:10 - मुख्य तथ्य और रहस्य (Core Reveal)
+2:20 - वैज्ञानिक और ऐतिहासिक विश्लेषण (Deep Dive)
+3:45 - प्रमुख खोज और निष्कर्ष (Takeaway)
 
-🔔 चैनल को सब्सक्राइब करें और हर हफ्ते नए और रोचक वीडियो देखें!
+🔔 चैनल (${channelHandle}) को सब्सक्राइब करें और हर हफ्ते नए और रोचक वीडियो देखें!
 
 #Shorts #Viral #Facts #Education #Explore`
   );
 
   const [tags, setTags] = React.useState<string[]>([
-    "लौंग फूल है या फल",
-    "clove flower or fruit",
+    "viral facts hindi",
     "curiosity facts",
     "daily life curiosities",
-    "biology facts hindi",
     "interesting facts in hindi",
-    "amazing science facts",
-    "eugenol oil toothache",
-    "botany facts in hindi",
-    "science experiments hindi",
+    "amazing knowledge hindi",
     "educational shorts hindi",
+    ...(channel?.channel_title ? [channel.channel_title.toLowerCase()] : []),
   ]);
 
   const [newTagInput, setNewTagInput] = React.useState("");
@@ -78,35 +76,37 @@ function SeoStudioContent() {
     setIsGenerating(true);
     setTimeout(() => {
       const cleanKeyword = titleText.replace(/[?()]/g, "").trim();
+      const styleLabel = activeChannelStyle?.visualStyleLabel || "educational";
+      const brandTag = channel?.channel_title ? [channel.channel_title.toLowerCase()] : [];
       const newTags = [
         cleanKeyword.toLowerCase(),
         `${cleanKeyword.toLowerCase()} in hindi`,
-        "science facts hindi",
-        "ashish fn",
-        "daily life curiosities",
+        `${cleanKeyword.toLowerCase()} facts`,
+        ...brandTag,
+        `${styleLabel.toLowerCase()} video`,
+        "knowledge breakdown",
+        "viral curiosity",
+        "educational shorts",
         "amazing facts hindi",
-        "scientific truth",
-        "education shorts",
-        "mystery facts",
       ];
       setTags(newTags);
 
       setDescriptionInput(
         `${titleText}
 
-इस वीडियो में जानिए इसके पीछे का असली वैज्ञानिक सच! 99% लोग इसके बारे में पूरी तरह गलत जानकारी रखते हैं। 
+इस वीडियो में जानिए इसके पीछे का असली सच! 99% लोग इसके बारे में पूरी तरह गलत जानकारी रखते हैं। 
 
 📌 TIMESTAMPS:
-0:00 - Opening Hook
-0:15 - The Scientific Context
-1:10 - Core Fact Beat 1
-2:30 - Core Fact Beat 2
-3:45 - Core Fact Beat 3 & Experiment
-4:30 - Seamless Conclusion
+0:00 - Opening Hook & Premise
+0:15 - Background Context
+1:10 - Core Fact Reveal
+2:30 - Deep Scientific & Historical Analysis
+3:45 - Key Discovery & Practical Takeaway
+4:30 - Conclusion
 
-🔔 Subscribe to ${channel?.channel_title || "our channel"} for more great videos!
+🔔 Subscribe to ${channelBrand} (${channel?.custom_url ? `https://youtube.com/@${channel.custom_url}` : "YouTube"}): हर हफ्ते नए ज्ञानवर्धक और रोचक वीडियो!
 
-#Trending #Shorts #Facts #Curiosity #Education`
+#${channelBrand.replace(/[^a-zA-Z0-9]/g, "")} #Trending #Shorts #Facts #Curiosity #Education`
       );
       setIsGenerating(false);
     }, 800);

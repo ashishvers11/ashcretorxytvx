@@ -9,20 +9,28 @@ import {
   Sparkles,
   Flame,
   CheckCircle2,
+  Trash2,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/components/providers/auth-provider";
 
 export default function ContentCalendarPage() {
+  const { channel, activeChannelStyle } = useAuth();
+  const storageKey = `ash_calendar_items_${channel?.id || "default"}`;
+
+  const defaultTopic1 = activeChannelStyle?.popularTopics?.[0] || "द ग्रेट लाइब्रेरी ऑफ अलेक्जेंड्रिया कैसे जली?";
+  const defaultTopic2 = activeChannelStyle?.popularTopics?.[1] || "रोम की 9वीं सेना रहस्यमयी तरीके से कहाँ गायब हो गई?";
+
   const [scheduledItems, setScheduledItems] = React.useState([
     {
       id: "1",
       day: "Friday",
       date: "Nov 7",
       time: "6:30 PM",
-      title: "लौंग असल में फूल है या फल? (The Science Behind Cloves)",
+      title: defaultTopic1,
       type: "Long-form",
       status: "Scheduled",
       isPeakWindow: true,
@@ -32,7 +40,7 @@ export default function ContentCalendarPage() {
       day: "Sunday",
       date: "Nov 9",
       time: "7:00 PM",
-      title: "अगर धरती 5 सेकंड के लिए घूमना बंद कर दे तो क्या होगा?",
+      title: defaultTopic2,
       type: "Shorts",
       status: "Scheduled",
       isPeakWindow: true,
@@ -42,20 +50,10 @@ export default function ContentCalendarPage() {
       day: "Wednesday",
       date: "Nov 12",
       time: "5:00 PM",
-      title: "हवाई जहाज का रंग हमेशा सफेद क्यों होता है? (Aviation Truth)",
+      title: "वाइकिंग्स बादलों में सूर्य की दिशा कैसे पहचानते थे?",
       type: "Long-form",
       status: "Planned",
       isPeakWindow: false,
-    },
-    {
-      id: "4",
-      day: "Friday",
-      date: "Nov 14",
-      time: "6:30 PM",
-      title: "मोबाइल बैटरी को 80% पर ही क्यों रोकना चाहिए? Chemistry Explainer",
-      type: "Long-form",
-      status: "Planned",
-      isPeakWindow: true,
     },
   ]);
 
@@ -64,11 +62,38 @@ export default function ContentCalendarPage() {
   const [newTime, setNewTime] = React.useState("6:30 PM");
   const [newType, setNewType] = React.useState("Long-form");
 
+  // Load from localStorage
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setScheduledItems(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load calendar items from storage:", e);
+    }
+  }, [storageKey]);
+
+  const saveItems = (updated: typeof scheduledItems) => {
+    setScheduledItems(updated);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(updated));
+      } catch (e) {
+        console.warn("Failed to persist calendar items to storage:", e);
+      }
+    }
+  };
+
   const handleSchedule = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
-    setScheduledItems([
+    const updated = [
       ...scheduledItems,
       {
         id: String(Date.now()),
@@ -80,8 +105,14 @@ export default function ContentCalendarPage() {
         status: "Scheduled",
         isPeakWindow: newDay === "Friday" || newDay === "Sunday",
       },
-    ]);
+    ];
+    saveItems(updated);
     setNewTitle("");
+  };
+
+  const handleDeleteItem = (id: string) => {
+    const updated = scheduledItems.filter((item) => item.id !== id);
+    saveItems(updated);
   };
 
   return (
@@ -197,6 +228,15 @@ export default function ContentCalendarPage() {
                   <CheckCircle2 className="h-4 w-4" />
                   <span>{item.status}</span>
                 </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleDeleteItem(item.id)}
+                  className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 h-7 w-7 p-0"
+                  title="Remove from calendar"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </Card>
           ))}

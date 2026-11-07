@@ -34,20 +34,26 @@ import { formatDuration } from "@/lib/youtube/data-api";
 import { ChannelAnalyticsReport } from "@/lib/youtube/analytics-api";
 
 export default function ChannelAnalyticsPage() {
-  const { channel } = useAuth();
+  const { channel, activeChannelStyle } = useAuth();
   const [timeframe, setTimeframe] = React.useState<7 | 28 | 90>(28);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [report, setReport] = React.useState<ChannelAnalyticsReport | null>(null);
   const [syncMessage, setSyncMessage] = React.useState<string | null>(null);
 
-  const channelTitle = channel?.channel_title || "ASHISH FN";
+  const channelTitle = channel?.channel_title || "Connected Channel";
+  const style = activeChannelStyle?.visualAnimationStyle || "";
 
   // Fetch analytics report from our API
   const fetchAnalytics = React.useCallback(async (days: 7 | 28 | 90) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/youtube/analytics?days=${days}`);
+      const params = new URLSearchParams();
+      params.set("days", days.toString());
+      if (channelTitle) params.set("channelTitle", channelTitle);
+      if (style) params.set("style", style);
+
+      const res = await fetch(`/api/youtube/analytics?${params.toString()}`);
       const data = await res.json();
       if (data.success && data.report) {
         setReport(data.report);
@@ -57,7 +63,7 @@ export default function ChannelAnalyticsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [channelTitle, style]);
 
   React.useEffect(() => {
     fetchAnalytics(timeframe);

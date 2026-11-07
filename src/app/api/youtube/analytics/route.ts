@@ -11,6 +11,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const daysParam = parseInt(searchParams.get("days") || "28", 10) as 7 | 28 | 90;
   const days: 7 | 28 | 90 = [7, 28, 90].includes(daysParam) ? daysParam : 28;
+  const channelTitle = searchParams.get("channelTitle") || "";
+  const style = searchParams.get("style") || "";
 
   const userId = "demo-creator-uuid";
   const { startDate, endDate } = getDateRange(days);
@@ -28,7 +30,14 @@ export async function GET(request: Request) {
     }
 
     // High-fidelity verified data report for active connected channel
-    const report: ChannelAnalyticsReport = generateChannelReport(days, startDate, endDate, tokenResult.isAuthorized);
+    const report: ChannelAnalyticsReport = generateChannelReport(
+      days,
+      startDate,
+      endDate,
+      tokenResult.isAuthorized,
+      style,
+      channelTitle
+    );
 
     return NextResponse.json({
       success: true,
@@ -41,7 +50,7 @@ export async function GET(request: Request) {
       {
         success: false,
         error: error?.message || "Failed to load YouTube Analytics.",
-        report: generateChannelReport(days, startDate, endDate, false),
+        report: generateChannelReport(days, startDate, endDate, false, style, channelTitle),
         isAuthorized: false,
       },
       { status: 500 }
@@ -53,7 +62,9 @@ function generateChannelReport(
   days: 7 | 28 | 90,
   startDate: string,
   endDate: string,
-  isAuthorized: boolean
+  isAuthorized: boolean,
+  style: string = "",
+  channelTitle: string = ""
 ): ChannelAnalyticsReport {
   const dailyRows = [];
   const start = new Date(startDate);
@@ -106,10 +117,56 @@ function generateChannelReport(
 
   const avgDurationOverall = totalViews > 0 ? Math.round((totalMinutes * 60) / totalViews) : 0;
 
+  const styleLower = style.toLowerCase();
+
+  let topVideoTitles = [
+    "द ग्रेट लाइब्रेरी ऑफ अलेक्जेंड्रिया कैसे जली? (Paper Cut-Out History)",
+    "रोम की 9वीं सेना रहस्यमयी तरीके से कहाँ गायब हो गई?",
+    "वाइकिंग्स बादलों में सूर्य की दिशा कैसे पहचानते थे?",
+  ];
+
+  if (styleLower.includes("pixar") || styleLower.includes("2d") || styleLower.includes("anim")) {
+    topVideoTitles = [
+      "डायनासोर असल में कैसे गायब हुए? 3D Animation Story for Kids",
+      "आसमान का रंग हमेशा नीला ही क्यों दिखता है? Curious Kids Facts",
+      "चींटी अपने वजन से 50 गुना ज्यादा वजन कैसे उठा लेती है?",
+    ];
+  } else if (styleLower.includes("asmr") || styleLower.includes("satisfy")) {
+    topVideoTitles = [
+      "पिघले हुए बिस्मथ से रेनबो क्रिस्टल कैसे बनते हैं? (Satisfying Macro)",
+      "हाइड्रोलिक प्रेस बनाम 1000 परतों वाला दामस्कस स्टील",
+      "काइनेटिक सैंड को गर्म चाकू से काटने पर क्या होता है?",
+    ];
+  } else if (styleLower.includes("stickman") || styleLower.includes("doodle")) {
+    topVideoTitles = [
+      "हम काम को कल पर क्यों टालते हैं? The Procrastination Loop",
+      "स्कूल हमें पैसे के बारे में सच क्यों नहीं सिखाते?",
+      "सोशल मीडिया एल्गोरिदम दिमाग को कैसे हाइजैक करते हैं?",
+    ];
+  } else if (styleLower.includes("noir") || styleLower.includes("mystery")) {
+    topVideoTitles = [
+      "डायटलोव पास पर 9 पर्वतारोहियों की रहस्यमयी मौत का सच",
+      "मैरी सेलेस्टे जहाज: 10 लोग बिना किसी निशान के कहाँ गायब हो गए?",
+      "एरिया 51 की डीक्लासिफाइड फाइलों में क्या मिला?",
+    ];
+  } else if (styleLower.includes("whiteboard")) {
+    topVideoTitles = [
+      "इम्यून सिस्टम वायरस को कैसे ढूंढकर मारता है? Whiteboard Breakdown",
+      "शेयर मार्केट असल में कैसे काम करता है? (शुरुआती लोगों के लिए)",
+      "फर्मी विरोधाभास: अगर ब्रह्मांड में इतने तारे हैं तो एलियंस कहाँ हैं?",
+    ];
+  } else if (styleLower.includes("gaming") || styleLower.includes("unreal")) {
+    topVideoTitles = [
+      "GTA 6 के लीक हुए फिजिक्स इंजन के 10 हैरान करने वाले सच",
+      "ब्लैक होल के अंदर जाने पर क्या दिखेगा? Unreal Engine 5 Simulation",
+      "सबनॉटिका का सबसे गहरा महासागर: Mariana Trench Horror",
+    ];
+  }
+
   const topVideos = [
     {
-      videoId: "clove_fact_01",
-      title: "लौंग असल में फूल है या फल? (The Science Behind Cloves)",
+      videoId: "top_01",
+      title: topVideoTitles[0],
       views: Math.floor(totalViews * 0.48),
       estimatedMinutesWatched: Math.floor(totalMinutes * 0.52),
       averageViewDurationSeconds: 220,
@@ -118,8 +175,8 @@ function generateChannelReport(
       publishedAt: "2026-11-02T14:30:00Z",
     },
     {
-      videoId: "earth_stop_02",
-      title: "अगर धरती सिर्फ 5 सेकंड के लिए घूमना बंद कर दे तो क्या होगा?",
+      videoId: "top_02",
+      title: topVideoTitles[1],
       views: Math.floor(totalViews * 0.32),
       estimatedMinutesWatched: Math.floor(totalMinutes * 0.3),
       averageViewDurationSeconds: 195,
@@ -128,8 +185,8 @@ function generateChannelReport(
       publishedAt: "2026-10-28T16:00:00Z",
     },
     {
-      videoId: "airplane_white_03",
-      title: "हवाई जहाज का रंग हमेशा सफेद ही क्यों होता है?",
+      videoId: "top_03",
+      title: topVideoTitles[2],
       views: Math.floor(totalViews * 0.2),
       estimatedMinutesWatched: Math.floor(totalMinutes * 0.18),
       averageViewDurationSeconds: 165,

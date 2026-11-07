@@ -11,6 +11,7 @@ import {
   Eye,
   CheckCircle2,
   PenTool,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -21,7 +22,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 
 export default function CompetitorResearchPage() {
   const { channel } = useAuth();
-  const [competitors, setCompetitors] = React.useState([
+  const DEFAULT_COMPETITORS = [
     {
       id: 1,
       name: "GetsetflySCIENCE by Gaurav Thakur",
@@ -55,9 +56,38 @@ export default function CompetitorResearchPage() {
       outlierViews: "2.6M views (9.2x Channel Average)",
       outlierAngle: "Minimalist bold vector graphic contrasting white vs black airplane with thermal heat map.",
     },
-  ]);
+  ];
 
+  const storageKey = `ash_competitors_${channel?.id || "default"}`;
+  const [competitors, setCompetitors] = React.useState(DEFAULT_COMPETITORS);
   const [newHandle, setNewHandle] = React.useState("");
+
+  // Load from localStorage on mount
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setCompetitors(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load competitors from storage:", e);
+    }
+  }, [storageKey]);
+
+  const saveCompetitors = (updated: typeof competitors) => {
+    setCompetitors(updated);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(updated));
+      } catch (e) {
+        console.warn("Failed to persist competitors to storage:", e);
+      }
+    }
+  };
 
   const handleAddCompetitor = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +96,7 @@ export default function CompetitorResearchPage() {
     const handle = newHandle.trim().startsWith("@") ? newHandle.trim() : `@${newHandle.trim()}`;
     const cleanName = handle.replace("@", "").toUpperCase();
 
-    setCompetitors([
+    const updated = [
       {
         id: Date.now(),
         name: cleanName,
@@ -74,13 +104,19 @@ export default function CompetitorResearchPage() {
         subscribers: "120K",
         avgViews: "25K",
         uploadRate: "2 videos/week",
-        outlierVideo: "शीर्ष 5 विज्ञान रहस्य जो स्कूल में नहीं पढ़ाए जाते",
+        outlierVideo: `${cleanName} Top Performing Video Analysis`,
         outlierViews: "180K views (7.2x Channel Average)",
         outlierAngle: "High-contrast listicle packaging with curiosity hook.",
       },
       ...competitors,
-    ]);
+    ];
+    saveCompetitors(updated);
     setNewHandle("");
+  };
+
+  const handleDeleteCompetitor = (id: number) => {
+    const updated = competitors.filter((c) => c.id !== id);
+    saveCompetitors(updated);
   };
 
   return (
@@ -177,7 +213,16 @@ export default function CompetitorResearchPage() {
                 {comp.outlierAngle}
               </p>
 
-              <div className="pt-2 flex items-center justify-end">
+              <div className="pt-2 flex items-center justify-between">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleDeleteCompetitor(comp.id)}
+                  className="text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 gap-1 h-8 px-2"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Remove</span>
+                </Button>
                 <Link href={`/modules/script-writer?title=${encodeURIComponent(comp.outlierVideo)}`}>
                   <Button size="sm" variant="outline" className="text-xs gap-1.5 h-8">
                     <PenTool className="h-3 w-3" />

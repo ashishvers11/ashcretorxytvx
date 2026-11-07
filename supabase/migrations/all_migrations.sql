@@ -64,6 +64,16 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
+-- Safe backfill for existing auth.users who signed up before this trigger was created
+insert into public.profiles (id, email, full_name, avatar_url)
+select 
+  id, 
+  email, 
+  raw_user_meta_data->>'full_name', 
+  raw_user_meta_data->>'avatar_url'
+from auth.users
+on conflict (id) do nothing;
+
 -- ==============================================================================
 -- PART 2: YouTube Channel Connections (AES-256-GCM Secure Storage)
 -- ==============================================================================
@@ -114,6 +124,27 @@ create policy "Users can delete own youtube connection"
   using (auth.uid() = user_id);
 
 create index if not exists idx_youtube_connections_user_id on public.youtube_connections(user_id);
+
+-- Secure public view: omits encrypted_refresh_token, token_iv, and token_auth_tag
+create or replace view public.youtube_connections_public as
+select 
+  id,
+  user_id,
+  channel_id,
+  title,
+  description,
+  custom_url,
+  thumbnail_url,
+  subscriber_count,
+  view_count,
+  video_count,
+  uploads_playlist_id,
+  recent_videos,
+  analytics_summary,
+  scopes,
+  connected_at,
+  updated_at
+from public.youtube_connections;
 
 -- ==============================================================================
 -- PART 3: Channel Audits & Intelligence

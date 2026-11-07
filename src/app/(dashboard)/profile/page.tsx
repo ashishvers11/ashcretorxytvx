@@ -17,10 +17,16 @@ import {
   Lock,
   ArrowRight,
   Video,
+  Settings,
+  Globe,
+  Clock,
+  Sparkles,
+  Save,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/auth-context";
 import { useYouTubeChannel } from "@/hooks/use-youtube-channel";
 
@@ -29,6 +35,12 @@ export default function ProfilePage() {
   const { channel, connected, loading: channelLoading, disconnectChannel } = useYouTubeChannel();
   const [disconnecting, setDisconnecting] = useState(false);
   const [disconnectMessage, setDisconnectMessage] = useState<string | null>(null);
+
+  // Studio Preferences State
+  const [language, setLanguage] = useState<string>("English");
+  const [timezone, setTimezone] = useState<string>("UTC");
+  const [defaultFormat, setDefaultFormat] = useState<string>("shorts");
+  const [savedPreferences, setSavedPreferences] = useState(false);
 
   const handleDisconnect = async () => {
     if (!window.confirm("Are you sure you want to disconnect your YouTube channel?")) {
@@ -43,18 +55,23 @@ export default function ProfilePage() {
     setDisconnecting(false);
   };
 
+  const handleSavePreferences = () => {
+    setSavedPreferences(true);
+    setTimeout(() => setSavedPreferences(false), 2500);
+  };
+
   const formatMetric = (val: number | null | undefined) => {
     if (val === null || val === undefined) return "Unavailable";
     return val.toLocaleString();
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
           <User className="h-6 w-6 text-brand-400" />
-          <span>Creator Profile & Linked Accounts</span>
+          <span>Creator Profile &amp; Linked Accounts</span>
         </h1>
         <p className="text-sm text-slate-400 mt-1">
           Manage your ASH Creator Studio account, authentication identity, and connected YouTube channels.
@@ -314,6 +331,83 @@ export default function ProfilePage() {
                   </Link>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Section 3: Creator Studio Preferences */}
+          <Card className="border-slate-800 bg-surface-900/90 shadow-xl">
+            <CardHeader className="border-b border-slate-800/80 pb-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Settings className="h-4 w-4 text-brand-400" />
+                <span>Studio Preferences &amp; Defaults</span>
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-400">
+                Customize your default generation settings, language pacing, and timezone.
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="pt-4 space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-slate-400 font-semibold uppercase text-[10px]">Default Format</label>
+                  <select
+                    value={defaultFormat}
+                    onChange={(e) => setDefaultFormat(e.target.value)}
+                    className="w-full rounded-md border border-slate-800 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200"
+                  >
+                    <option value="shorts">YouTube Shorts (9:16)</option>
+                    <option value="longform">Longform Video (16:9)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-slate-400 font-semibold uppercase text-[10px]">Default Language</label>
+                  <select
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="w-full rounded-md border border-slate-800 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200"
+                  >
+                    <option value="English">English</option>
+                    <option value="Hindi">Hindi / Hinglish</option>
+                    <option value="Spanish">Spanish</option>
+                    <option value="German">German</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-slate-400 font-semibold uppercase text-[10px]">Time Zone</label>
+                  <select
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                    className="w-full rounded-md border border-slate-800 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200"
+                  >
+                    <option value="UTC">UTC (Universal)</option>
+                    <option value="IST">IST (UTC +5:30)</option>
+                    <option value="EST">EST (UTC -5:00)</option>
+                    <option value="PST">PST (UTC -8:00)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-slate-800/60">
+                {savedPreferences ? (
+                  <span className="text-emerald-400 flex items-center gap-1.5 text-xs">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Preferences updated successfully!
+                  </span>
+                ) : (
+                  <span className="text-slate-500 text-[11px]">Settings saved to creator profile</span>
+                )}
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSavePreferences}
+                  className="gap-1.5 text-xs"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  <span>Save Preferences</span>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { generateScriptWithAI } from "@/lib/ai/provider";
+import { runScriptEnginePipeline } from "@/lib/script-engine/pipeline";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,57 +54,60 @@ export async function POST(request: NextRequest) {
 
     const videoFormat = body.videoFormat === "longform" ? "longform" : "shorts";
     const targetDuration = Number(body.targetDuration) || (videoFormat === "shorts" ? 60 : 300);
-    const audience = body.audience || "General Audience";
-    const language = body.language || "English";
+    const language = body.language || "Hinglish";
+    const niche = body.niche || "Curiosity & Science";
+    const presetId = body.presetId || "preset-fact-slice";
+    const researchSources = Array.isArray(body.researchSources) ? body.researchSources : [];
 
-    // Generate script using AI provider or rule-based fallback engine
-    const script = await generateScriptWithAI({
+    // Run the professional 8-stage Script Pipeline
+    const script = await runScriptEnginePipeline({
       topic,
-      videoFormat,
-      targetDuration,
-      audience,
+      niche,
+      presetId,
+      format: videoFormat,
+      targetDurationSeconds: targetDuration,
       language,
+      researchSources,
     });
 
     // Save to database
-    const { data: savedScript, error: dbError } = await (supabase
-      .from("creator_scripts") as any)
-      .insert({
+    try {
+      const { error: dbError } = await (supabase.from("creator_scripts") as any).insert({
         user_id: user.id,
         title: script.title,
         topic: script.topic,
-        video_format: script.videoFormat,
-        target_duration: script.targetDuration,
-        target_audience: audience,
-        language,
-        hook: script.hook,
-        body_story: script.body_story,
-        payoff: script.payoff,
-        cta: script.cta,
-        full_voiceover: script.full_voiceover,
-        estimated_word_count: script.estimated_word_count,
-        on_screen_text: script.on_screen_text,
+        video_format: script.format,
+        target_duration: script.targetDurationSeconds,
+        target_audience: niche,
+        language: script.language,
+        hook: script.narrativeStructure.hook,
+        body_story: script.narrativeStructure.mainExplanation,
+        payoff: script.narrativeStructure.payoff,
+        cta: script.narrativeStructure.cta,
+        full_voiceover: script.fullVoiceover,
+        estimated_word_count: script.wordCount,
+        on_screen_text: script.scenes.map((s) => ({ timecode: s.timeRange, text: s.onScreenText })),
         scenes: script.scenes,
-        fact_sources: script.fact_sources,
+        fact_sources: script.factChecks,
         status: "ready",
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      console.warn("Could not persist script to Supabase (check migration):", dbError.message);
-    } else {
-      // Log recent activity
-      await (supabase.from("recent_activities") as any).insert({
-        user_id: user.id,
-        module: "Trend Research + Script Writing",
-        action: "Created Script",
-        title: script.title,
-        link: "/trend-script",
       });
+
+      if (!dbError) {
+        await (supabase.from("recent_activities") as any).insert({
+          user_id: user.id,
+          module: "Trend Research + Script Writing",
+          action: "Generated 8-Stage Professional Script",
+          title: script.title,
+        });
+      }
+    } catch (saveErr) {
+      console.warn("Could not save to Supabase creator_scripts (fallback active):", saveErr);
     }
 
-    return NextResponse.json({ script: savedScript || script });
+    return NextResponse.json({
+      success: true,
+      script,
+    });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Internal error";
     return NextResponse.json({ error: msg }, { status: 500 });

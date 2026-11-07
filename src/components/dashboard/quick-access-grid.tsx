@@ -12,6 +12,7 @@ import {
   User,
   KeyRound,
   ArrowRight,
+  Sparkles,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,18 +41,29 @@ const CORE_MODULES = [
     isCurrent: false,
   },
   {
-    title: "3. Trend Research + Script",
-    href: "/trend-script",
+    title: "3. Trend Radar",
+    href: "/trend-radar",
     icon: Flame,
-    badge: "V2 Script Engine",
+    badge: "Viral Topics",
     badgeVariant: "warning" as const,
-    description: "Discover verified niche trends and generate structured, retention-engineered scripts.",
+    description: "Discover verified niche breakout topics with high view velocity and low competition gaps.",
     iconColor: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+    buttonLabel: "Open Trend Radar",
+    isCurrent: false,
+  },
+  {
+    title: "4. Script Studio",
+    href: "/trend-script",
+    icon: Sparkles,
+    badge: "8-Stage AI",
+    badgeVariant: "default" as const,
+    description: "Generate structured, retention-engineered viral scripts with 3 hooks and scene-by-scene timing.",
+    iconColor: "text-brand-400 bg-brand-500/10 border-brand-500/20",
     buttonLabel: "Open Script Studio",
     isCurrent: false,
   },
   {
-    title: "4. Video Production",
+    title: "5. Video Production",
     href: "/video-production",
     icon: Video,
     badge: "Scene Director",
@@ -62,7 +74,7 @@ const CORE_MODULES = [
     isCurrent: false,
   },
   {
-    title: "5. SEO Studio",
+    title: "6. SEO Studio",
     href: "/seo-studio",
     icon: Search,
     badge: "Optimization",
@@ -73,7 +85,7 @@ const CORE_MODULES = [
     isCurrent: false,
   },
   {
-    title: "6. Thumbnail Studio",
+    title: "7. Thumbnail Studio",
     href: "/thumbnail-studio",
     icon: ImageIcon,
     badge: "Visual AI",

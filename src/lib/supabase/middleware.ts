@@ -5,6 +5,7 @@ import { getSupabaseEnv, isSupabaseConfigured } from "./config";
 export const PROTECTED_ROUTES = [
   "/dashboard",
   "/channel-audit",
+  "/trend-radar",
   "/trend-script",
   "/video-production",
   "/seo-studio",

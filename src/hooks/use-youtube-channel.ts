@@ -10,6 +10,8 @@ export interface YouTubeVideoItem {
   publishedAt: string;
   thumbnailUrl: string | null;
   videoUrl: string;
+  views?: number;
+  likes?: number;
 }
 
 export interface YouTubeAnalyticsData {
@@ -21,6 +23,11 @@ export interface YouTubeAnalyticsData {
   views?: number | "Unavailable";
   likes?: number | "Unavailable";
   comments?: number | "Unavailable";
+  avgViewsPerVideo?: number | "Unavailable";
+  avgLikesPerVideo?: number | "Unavailable";
+  engagementRate?: string;
+  topVideo?: { title: string; views: number; likes: number; videoId: string } | null;
+  underperformingVideo?: { title: string; views: number; likes: number; videoId: string } | null;
   reason?: string;
 }
 
@@ -35,6 +42,7 @@ export interface ConnectedYouTubeChannel {
   viewCount: number | null;
   videoCount: number | null;
   uploadsPlaylistId: string | null;
+  niche?: string;
   recentVideos: YouTubeVideoItem[];
   analytics?: YouTubeAnalyticsData | null;
   connectedAt: string;
@@ -48,12 +56,6 @@ export function useYouTubeChannel() {
   const { user } = useAuth();
 
   const fetchChannelStatus = useCallback(async () => {
-    if (!user) {
-      setChannel(null);
-      setLoading(false);
-      return;
-    }
-
     try {
       const response = await fetch("/api/auth/youtube/status", {
         method: "GET",
@@ -63,11 +65,7 @@ export function useYouTubeChannel() {
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          setChannel(null);
-        } else {
-          setError("Failed to fetch YouTube channel status");
-        }
+        setChannel(null);
         return;
       }
 
@@ -83,7 +81,7 @@ export function useYouTubeChannel() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     fetchChannelStatus();

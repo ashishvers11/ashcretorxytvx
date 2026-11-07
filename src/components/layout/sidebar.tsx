@@ -40,11 +40,18 @@ export const ALL_CORE_MODULES = [
         badgeVariant: "secondary",
       },
       {
-        name: "Trend & Script",
-        href: "/trend-script",
+        name: "Trend Radar",
+        href: "/trend-radar",
         icon: Flame,
-        badge: "V2 Script",
+        badge: "Viral Topics",
         badgeVariant: "warning",
+      },
+      {
+        name: "Script Studio",
+        href: "/trend-script",
+        icon: Sparkles,
+        badge: "AI Writer",
+        badgeVariant: "default",
       },
       {
         name: "Video Production",

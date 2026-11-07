@@ -36,14 +36,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerSupabaseClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    let user: any = null;
+    let supabase: any = null;
 
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    try {
+      supabase = createServerSupabaseClient();
+      const authRes = await supabase.auth.getUser();
+      user = authRes.data?.user || null;
+    } catch {
+      // Guest or local mode
     }
 
     const body = await request.json();
@@ -53,10 +54,10 @@ export async function POST(request: NextRequest) {
     }
 
     const videoFormat = body.videoFormat === "longform" ? "longform" : "shorts";
-    const targetDuration = Number(body.targetDuration) || (videoFormat === "shorts" ? 60 : 300);
+    const targetDuration = Number(body.targetDuration) || (videoFormat === "shorts" ? 30 : 300);
     const language = body.language || "Hinglish";
     const niche = body.niche || "Curiosity & Science";
-    const presetId = body.presetId || "preset-fact-slice";
+    const presetId = body.presetId || "preset-zackd-facts";
     const researchSources = Array.isArray(body.researchSources) ? body.researchSources : [];
 
     // Run the professional 8-stage Script Pipeline
@@ -70,38 +71,40 @@ export async function POST(request: NextRequest) {
       researchSources,
     });
 
-    // Save to database
-    try {
-      const { error: dbError } = await (supabase.from("creator_scripts") as any).insert({
-        user_id: user.id,
-        title: script.title,
-        topic: script.topic,
-        video_format: script.format,
-        target_duration: script.targetDurationSeconds,
-        target_audience: niche,
-        language: script.language,
-        hook: script.narrativeStructure.hook,
-        body_story: script.narrativeStructure.mainExplanation,
-        payoff: script.narrativeStructure.payoff,
-        cta: script.narrativeStructure.cta,
-        full_voiceover: script.fullVoiceover,
-        estimated_word_count: script.wordCount,
-        on_screen_text: script.scenes.map((s) => ({ timecode: s.timeRange, text: s.onScreenText })),
-        scenes: script.scenes,
-        fact_sources: script.factChecks,
-        status: "ready",
-      });
-
-      if (!dbError) {
-        await (supabase.from("recent_activities") as any).insert({
+    // Save to database if user is authenticated
+    if (user && supabase) {
+      try {
+        const { error: dbError } = await (supabase.from("creator_scripts") as any).insert({
           user_id: user.id,
-          module: "Trend Research + Script Writing",
-          action: "Generated 8-Stage Professional Script",
           title: script.title,
+          topic: script.topic,
+          video_format: script.format,
+          target_duration: script.targetDurationSeconds,
+          target_audience: niche,
+          language: script.language,
+          hook: script.narrativeStructure.hook,
+          body_story: script.narrativeStructure.mainExplanation,
+          payoff: script.narrativeStructure.payoff,
+          cta: script.narrativeStructure.cta,
+          full_voiceover: script.fullVoiceover,
+          estimated_word_count: script.wordCount,
+          on_screen_text: script.scenes.map((s) => ({ timecode: s.timeRange, text: s.onScreenText })),
+          scenes: script.scenes,
+          fact_sources: script.factChecks,
+          status: "ready",
         });
+
+        if (!dbError) {
+          await (supabase.from("recent_activities") as any).insert({
+            user_id: user.id,
+            module: "Trend Research + Script Writing",
+            action: "Generated 8-Stage Professional Script",
+            title: script.title,
+          });
+        }
+      } catch (saveErr) {
+        console.warn("Could not save to Supabase creator_scripts (fallback active):", saveErr);
       }
-    } catch (saveErr) {
-      console.warn("Could not save to Supabase creator_scripts (fallback active):", saveErr);
     }
 
     return NextResponse.json({

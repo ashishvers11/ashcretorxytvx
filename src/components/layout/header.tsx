@@ -51,7 +51,8 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
   const getPageTitle = (path: string) => {
     if (path === "/dashboard") return "Dashboard Mission Control";
     if (path.startsWith("/channel-audit")) return "Channel Audit & Diagnostics";
-    if (path.startsWith("/trend-script")) return "Trend Research + Script Writing";
+    if (path.startsWith("/trend-radar")) return "Trend Radar & Topic Discovery";
+    if (path.startsWith("/trend-script")) return "Script Studio (8-Stage AI Writer)";
     if (path.startsWith("/video-production")) return "Video Production Workspace";
     if (path.startsWith("/seo-studio")) return "SEO Studio & Metadata Architect";
     if (path.startsWith("/thumbnail-studio")) return "Thumbnail Studio & Click Intelligence";

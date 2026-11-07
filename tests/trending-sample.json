@@ -1,0 +1,46 @@
+{
+  "feedNudgeRenderer": {
+    "title": {
+      "runs": [
+        {
+          "text": "Try searching to get started"
+        }
+      ],
+      "accessibility": {
+        "accessibilityData": {
+          "label": "Try searching to get started"
+        }
+      }
+    },
+    "subtitle": {
+      "runs": [
+        {
+          "text": "Start watching videos to help us build a feed of videos you'll love."
+        }
+      ],
+      "accessibility": {
+        "accessibilityData": {
+          "label": "Start watching videos to help us build a feed of videos you'll love."
+        }
+      }
+    },
+    "impressionEndpoint": {
+      "clickTrackingParams": "CBUQoogMIhMIr-C5zYf2lwMVf0YsBR0fbwH0ygEENUPfHg==",
+      "commandMetadata": {
+        "webCommandMetadata": {
+          "sendPost": true,
+          "apiUrl": "/youtubei/v1/feedback"
+        }
+      },
+      "feedbackEndpoint": {
+        "feedbackToken": "AB9zfpLyo9bqlToluvMITwLOWv4UxpZMUlLOFOCAzMdtK6yv6IdBcTERsB7HJOjgITsWlVXzfvOw6MoFwiLTQ8gmHZYKpKoNV3oUTOPqW51cEhFrPpbHlgS-8vObsnQoqHGNLy4TT9ezW6GfhD49O61I2MPDDSWpmA"
+      }
+    },
+    "trackingParams": "CBUQoogMIhMIr-C5zYf2lwMVf0YsBR0fbwH0",
+    "applyModernizedStyle": true,
+    "contentsLocation": "FEED_NUDGE_CONTENTS_LOCATION_UNKNOWN",
+    "trimStyle": "FEED_NUDGE_TRIM_STYLE_NO_TRIM",
+    "backgroundStyle": "FEED_NUDGE_BACKGROUND_STYLE_UNKNOWN",
+    "disableDropShadow": false
+  }
+}

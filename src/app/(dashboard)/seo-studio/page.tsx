@@ -24,8 +24,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { GeneratedSEOResult } from "@/lib/ai/provider";
+import { useYouTubeChannel } from "@/hooks/use-youtube-channel";
 
 export default function SeoStudioPage() {
+  const { channel, connected } = useYouTubeChannel();
   const searchParams = useSearchParams();
   const initialTopic = searchParams.get("topic") || "Dinosaur extinction mystery";
 
@@ -102,6 +104,38 @@ export default function SeoStudioPage() {
           </Link>
         </div>
       </div>
+
+      {/* Connected Channel Quick Selector */}
+      {connected && channel?.recentVideos && channel.recentVideos.length > 0 && (
+        <div className="rounded-xl border border-brand-500/30 bg-surface-900/90 p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-white flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-brand-400" />
+              <span>Optimize SEO for {channel.title}&apos;s Uploads:</span>
+            </span>
+            <Badge variant="success" className="text-[9px]">
+              Channel Synced
+            </Badge>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {channel.recentVideos.slice(0, 6).map((v) => (
+              <button
+                key={v.videoId}
+                type="button"
+                onClick={() => setTopic(v.title)}
+                className={`px-3 py-1.5 rounded-lg text-xs transition-colors border text-left truncate max-w-sm ${
+                  topic === v.title
+                    ? "bg-brand-500/20 text-brand-300 border-brand-500/50 font-medium"
+                    : "bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white"
+                }`}
+                title={v.title}
+              >
+                {v.title}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Input Console */}
       <Card className="border-slate-800 bg-surface-900/90 shadow-xl p-5">

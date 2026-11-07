@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "test": "npx tsx tests/trend-script-engine.test.mjs && npx tsx tests/five-topics-validation.test.mjs"
+    "test": "npx tsx tests/trend-script-engine.test.mjs && npx tsx tests/five-topics-validation.test.mjs && npx tsx tests/youtube-quota-deep.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

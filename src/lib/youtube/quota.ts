@@ -70,7 +70,7 @@ export function getNextPacificMidnightUtc(date: Date = new Date()): Date {
   return candidate;
 }
 
-class PersistentQuotaTracker {
+export class PersistentQuotaTracker {
   // Configurable limits from env or official Google defaults
   private getSearchLimit(): number {
     const envVal = parseInt(process.env.YOUTUBE_SEARCH_DAILY_LIMIT || "", 10);

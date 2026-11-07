@@ -370,7 +370,56 @@ create index if not exists idx_recent_activities_user_id on public.recent_activi
 create index if not exists idx_recent_activities_created_at on public.recent_activities(created_at desc);
 
 -- ==============================================================================
--- PART 9: Explicit Permissions & Schema Cache Reload
+-- PART 9: YouTube API Persistent Quota & Research Cache
+-- ==============================================================================
+create table if not exists public.youtube_api_quotas (
+  day_pt text primary key, -- e.g. '2026-11-07' in America/Los_Angeles
+  search_requests_count integer not null default 0,
+  shared_units_count integer not null default 0,
+  updated_at timestamptz default now() not null
+);
+
+alter table public.youtube_api_quotas enable row level security;
+drop policy if exists "Authenticated users can read quotas" on public.youtube_api_quotas;
+create policy "Authenticated users can read quotas" on public.youtube_api_quotas for select using (true);
+drop policy if exists "Authenticated users can upsert quotas" on public.youtube_api_quotas;
+create policy "Authenticated users can upsert quotas" on public.youtube_api_quotas for all using (true);
+
+create table if not exists public.youtube_research_cache (
+  cache_key text primary key,
+  data jsonb not null,
+  expires_at timestamptz not null,
+  created_at timestamptz default now() not null
+);
+
+alter table public.youtube_research_cache enable row level security;
+drop policy if exists "Authenticated users can read research cache" on public.youtube_research_cache;
+create policy "Authenticated users can read research cache" on public.youtube_research_cache for select using (true);
+drop policy if exists "Authenticated users can upsert research cache" on public.youtube_research_cache;
+create policy "Authenticated users can upsert research cache" on public.youtube_research_cache for all using (true);
+
+-- Atomic quota increment function
+create or replace function public.increment_youtube_quota(
+  target_day_pt text,
+  search_inc integer,
+  shared_inc integer
+)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  insert into public.youtube_api_quotas (day_pt, search_requests_count, shared_units_count, updated_at)
+  values (target_day_pt, greatest(0, search_inc), greatest(0, shared_inc), now())
+  on conflict (day_pt) do update set
+    search_requests_count = public.youtube_api_quotas.search_requests_count + greatest(0, search_inc),
+    shared_units_count = public.youtube_api_quotas.shared_units_count + greatest(0, shared_inc),
+    updated_at = now();
+end;
+$$;
+
+-- ==============================================================================
+-- PART 10: Explicit Permissions & Schema Cache Reload
 -- ==============================================================================
 grant all on all tables in schema public to authenticated;
 grant all on all sequences in schema public to authenticated;

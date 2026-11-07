@@ -1,6 +1,6 @@
 /**
  * Professional Script Engine Types
- * ASH Creator Studio — 8-Stage Research-to-Script Pipeline
+ * ASH Creator Studio — Phase 2 Enhanced Fact Verification & Quality Gating
  */
 
 export interface ScriptPreset {
@@ -56,31 +56,49 @@ export interface ScenePlanItem {
   transition: string;
 }
 
+export type VerificationStatus =
+  | "VERIFIED_PRIMARY"
+  | "VERIFIED_SECONDARY"
+  | "UNVERIFIED"
+  | "CONFLICTING_EVIDENCE";
+
 export interface FactCheckItem {
   claim: string;
   sourceTitle: string;
   sourceUrl: string;
-  verified: boolean;
-  publicationDate?: string;
+  sourceType: "Primary (Academic / Institutional)" | "Secondary (Reputable Reference)" | "Unverified";
+  supportingPassage: string;
+  verificationStatus: VerificationStatus;
   researchDate: string;
-  notes?: string;
+  conflictingEvidenceNotes?: string;
+}
+
+export interface QualityMetricDetail {
+  score: number;
+  whatIsEvaluated: string;
+  howEvaluated: string;
+  evidenceUsed: string;
+  whyAssigned: string;
+  penaltiesApplied: string[];
 }
 
 export interface QualityGateAssessment {
-  overallScore: number; // 0 - 100
+  overallScore: number; // 0 - 100 heuristic evaluation
   verdict: "Ready for Production" | "Needs Revision" | "Draft";
   metrics: {
-    hookStrength: { score: number; feedback: string };
-    originality: { score: number; feedback: string };
-    factualReliability: { score: number; feedback: string };
-    narrativeContinuity: { score: number; feedback: string };
-    spokenNaturalness: { score: number; feedback: string };
-    retentionPotential: { score: number; feedback: string };
-    visualStorytelling: { score: number; feedback: string };
-    durationAccuracy: { score: number; feedback: string };
-    payoffQuality: { score: number; feedback: string };
+    hookStrength: QualityMetricDetail;
+    originality: QualityMetricDetail;
+    factualReliability: QualityMetricDetail;
+    narrativeContinuity: QualityMetricDetail;
+    spokenNaturalness: QualityMetricDetail;
+    retentionPotential: QualityMetricDetail;
+    visualStorytelling: QualityMetricDetail;
+    durationAccuracy: QualityMetricDetail;
+    payoffQuality: QualityMetricDetail;
   };
+  negativeCheckPenalties: string[];
   recommendations: string[];
+  heuristicDisclaimer: string;
 }
 
 export interface ProfessionalScript {
@@ -94,7 +112,7 @@ export interface ProfessionalScript {
   estimatedDurationSeconds: number;
   wordCount: number;
   language: string;
-  
+
   // 8 Stages
   researchBrief: ResearchBrief;
   angles: StoryAngle[];

@@ -339,17 +339,19 @@ export default function TrendScriptPage() {
               {/* Quota Status & API Notice */}
               {researchReport && (
                 <div className="mt-4 pt-3 border-t border-slate-800/60 flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-400">
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <span className="flex items-center gap-1.5">
                       <BarChart3 className="h-3.5 w-3.5 text-brand-400" />
-                      <span>YouTube API Quota: <strong>{researchReport.quotaStatus.consumedUnits}</strong> / {researchReport.quotaStatus.dailyLimit} units used</span>
+                      <span>Search Requests: <strong>{researchReport.quotaStatus.searchConsumed}</strong> / {researchReport.quotaStatus.searchDailyLimit}</span>
                     </span>
                     <span className="text-slate-600">•</span>
-                    <span>Resets: {new Date(researchReport.quotaStatus.resetTimeUtc).toLocaleTimeString()}</span>
+                    <span>Shared Units: <strong>{researchReport.quotaStatus.sharedConsumed}</strong> / {researchReport.quotaStatus.sharedDailyLimit}</span>
+                    <span className="text-slate-600">•</span>
+                    <span>Reset: <strong>Midnight PT</strong> ({researchReport.quotaStatus.resetTimeFormattedPt})</span>
                   </div>
 
                   <span className="text-slate-500">
-                    Researched at: {new Date(researchReport.timestamp).toLocaleTimeString()}
+                    Day: {researchReport.quotaStatus.currentDayPt} PT
                   </span>
                 </div>
               )}
@@ -472,11 +474,13 @@ export default function TrendScriptPage() {
                           <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80">
                             <span className="text-[10px] text-slate-400 block">Avg Views / Day</span>
                             <strong className="text-slate-100 font-bold text-sm">
-                              {typeof opp.evidence.avgViewsPerDay === "number"
-                                ? opp.evidence.avgViewsPerDay.toLocaleString()
-                                : opp.evidence.avgViewsPerDay}
+                              {typeof opp.evidence.avgHistoricalViewsPerDay === "number"
+                                ? opp.evidence.avgHistoricalViewsPerDay.toLocaleString()
+                                : opp.evidence.avgHistoricalViewsPerDay}
                             </strong>
-                            <span className="text-[9px] text-slate-500 block mt-0.5">Historical avg rate</span>
+                            <span className="text-[9px] text-slate-500 block mt-0.5">
+                              {opp.evidence.hasEarlyVelocityEstimates ? "Normalized rate (<24h)" : "Historical avg rate"}
+                            </span>
                           </div>
 
                           <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80">
@@ -555,7 +559,7 @@ export default function TrendScriptPage() {
                                         {sample.title}
                                       </p>
                                       <p className="text-[10px] text-slate-500">
-                                        {sample.channelTitle} • {sample.viewCount.toLocaleString()} views ({sample.viewsPerDay.toLocaleString()}/day)
+                                        {sample.channelTitle} • {sample.viewCount.toLocaleString()} views (~{sample.historicalViewsPerDay.toLocaleString()}/day)
                                       </p>
                                     </div>
                                     <ExternalLink className="h-3.5 w-3.5 text-slate-500 shrink-0 group-hover:text-white" />
@@ -1029,23 +1033,57 @@ export default function TrendScriptPage() {
               {/* SUBSTAGE: FACTS */}
               {activeScriptStage === "facts" && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
-                    Stage 7 — Verified Institutional Fact Checks ({script.factChecks.length})
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
+                      Stage 7 — Verified Institutional Fact Checks ({script.factChecks.length})
+                    </h3>
+                    <span className="text-xs text-slate-500">Real Primary &amp; Secondary Citations</span>
+                  </div>
+
                   {script.factChecks.map((f, idx) => (
                     <div key={idx} className="p-4 rounded-xl border border-slate-800 bg-slate-950 text-xs space-y-2">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="font-semibold text-white">{f.claim}</span>
-                        <Badge variant="success" className="text-[10px]">Verified Source</Badge>
+                        <div className="flex items-center gap-1.5">
+                          <Badge
+                            variant={
+                              f.verificationStatus === "VERIFIED_PRIMARY"
+                                ? "success"
+                                : f.verificationStatus === "VERIFIED_SECONDARY"
+                                ? "default"
+                                : f.verificationStatus === "CONFLICTING_EVIDENCE"
+                                ? "warning"
+                                : "outline"
+                            }
+                            className="text-[10px]"
+                          >
+                            {f.verificationStatus}
+                          </Badge>
+                          <Badge variant="outline" className="text-[9px] text-slate-400">
+                            {f.sourceType}
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-slate-400">
-                        <span>Institution: <strong className="text-slate-200">{f.sourceTitle}</strong></span>
-                        <a href={f.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:underline flex items-center gap-1">
-                          <span>Visit Citation</span>
+
+                      <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80 text-[11px] text-slate-300">
+                        <strong className="text-slate-400 block mb-0.5">Supporting Passage / Evidence:</strong>
+                        &ldquo;{f.supportingPassage}&rdquo;
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-slate-400 text-[11px] pt-1">
+                        <div>
+                          <span>Source: <strong className="text-slate-200">{f.sourceTitle}</strong></span>
+                        </div>
+                        <a
+                          href={f.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-400 hover:underline flex items-center gap-1"
+                        >
+                          <span>Direct Institutional Link</span>
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       </div>
-                      {f.notes && <p className="text-[11px] text-slate-500">{f.notes}</p>}
                     </div>
                   ))}
                 </div>

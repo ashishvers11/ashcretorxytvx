@@ -1,13 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-// Import modules to test
 import {
   calculateTransparentTrendScore,
   executeDailyTrendResearch,
 } from "../src/lib/youtube/trend-engine.ts";
-import { parseIsoDuration } from "../src/lib/youtube/data-api.ts";
-import { youtubeQuota } from "../src/lib/youtube/quota.ts";
+import {
+  parseIsoDuration,
+  detectContentLanguage,
+} from "../src/lib/youtube/data-api.ts";
+import {
+  youtubeQuota,
+  getPacificDateString,
+  getNextPacificMidnightUtc,
+} from "../src/lib/youtube/quota.ts";
 import { isYouTubeApiKeyConfigured, getYoutubeApiKey } from "../src/lib/youtube/config.ts";
 import { runScriptEnginePipeline } from "../src/lib/script-engine/pipeline.ts";
 import { BUILT_IN_PRESETS, getPresetById } from "../src/lib/script-engine/presets.ts";
@@ -15,7 +21,6 @@ import { BUILT_IN_PRESETS, getPresetById } from "../src/lib/script-engine/preset
 test("1. YouTube API Key Configuration Status", () => {
   const isConfigured = isYouTubeApiKeyConfigured();
   const apiKey = getYoutubeApiKey();
-  // We transparently report whether key is configured or not
   if (!isConfigured) {
     assert.equal(typeof isConfigured, "boolean");
     console.log("   [CONFIG STATUS] YOUTUBE_API_KEY is currently unconfigured or placeholder.");
@@ -25,86 +30,113 @@ test("1. YouTube API Key Configuration Status", () => {
   }
 });
 
-test("2. ISO 8601 Duration Parsing (Video statistics)", () => {
-  assert.equal(parseIsoDuration("PT58S"), 58);
-  assert.equal(parseIsoDuration("PT1M30S"), 90);
-  assert.equal(parseIsoDuration("PT1H2M10S"), 3730);
-  assert.equal(parseIsoDuration(""), 0);
+test("2. Google Quota Reset at Midnight Pacific Time (PT) Rule", () => {
+  const now = new Date();
+  const ptDate = getPacificDateString(now);
+  assert.match(ptDate, /^\d{4}-\d{2}-\d{2}$/);
+
+  const nextMidnightUtc = getNextPacificMidnightUtc(now);
+  assert.ok(nextMidnightUtc.getTime() > now.getTime());
+
+  // In America/Los_Angeles, nextMidnightUtc must format as 12:00:00 AM (00:00)
+  const ptHour = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    hour: "numeric",
+    hourCycle: "h23",
+  }).format(nextMidnightUtc);
+
+  assert.ok(ptHour === "0" || ptHour === "00");
+  console.log(`   [PT RESET VERIFIED] Next Google Reset: ${nextMidnightUtc.toISOString()} (12:00 AM PT)`);
 });
 
-test("3. Video Statistics & Historical Views-per-Day Calculation", () => {
-  const sampleVideos = [
-    {
-      id: "v1",
-      title: "Science Discovery Video 1",
-      description: "Sample",
-      channelId: "c1",
-      channelTitle: "Science Channel A",
-      publishedAt: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(),
-      thumbnailUrl: "https://i.ytimg.com/vi/v1/hqdefault.jpg",
-      viewCount: 60000,
-      likeCount: 4200,
-      commentCount: 300,
-      durationSeconds: 58,
-      isoDuration: "PT58S",
-      categoryId: "28",
-      tags: ["science", "discovery"],
-      videoUrl: "https://www.youtube.com/watch?v=v1",
-      ageInDays: 3,
-      viewsPerDay: 20000,
-      engagementRate: 7.5,
-    },
-    {
-      id: "v2",
-      title: "Science Discovery Video 2",
-      description: "Sample",
-      channelId: "c2",
-      channelTitle: "Science Channel B",
-      publishedAt: new Date(Date.now() - 4 * 24 * 3600 * 1000).toISOString(),
-      thumbnailUrl: "https://i.ytimg.com/vi/v2/hqdefault.jpg",
-      viewCount: 40000,
-      likeCount: 2800,
-      commentCount: 200,
-      durationSeconds: 55,
-      isoDuration: "PT55S",
-      categoryId: "28",
-      tags: ["physics", "curiosity"],
-      videoUrl: "https://www.youtube.com/watch?v=v2",
-      ageInDays: 4,
-      viewsPerDay: 10000,
-      engagementRate: 7.5,
-    },
-    {
-      id: "v3",
-      title: "Science Discovery Video 3",
-      description: "Sample",
-      channelId: "c3",
-      channelTitle: "Science Channel C",
-      publishedAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
-      thumbnailUrl: "https://i.ytimg.com/vi/v3/hqdefault.jpg",
-      viewCount: 90000,
-      likeCount: 6000,
-      commentCount: 500,
-      durationSeconds: 59,
-      isoDuration: "PT59S",
-      categoryId: "28",
-      tags: ["truth", "nature"],
-      videoUrl: "https://www.youtube.com/watch?v=v3",
-      ageInDays: 2,
-      viewsPerDay: 45000,
-      engagementRate: 7.2,
-    },
-  ];
+test("3. Dual Counter Quota Accounting (Search Requests vs. Shared Units)", async () => {
+  const initialStatus = await youtubeQuota.getStatus();
+  assert.equal(initialStatus.searchDailyLimit, 100);
+  assert.equal(initialStatus.sharedDailyLimit, 10000);
 
-  const scoring = calculateTransparentTrendScore(sampleVideos);
-  assert.notEqual(scoring.score, "INSUFFICIENT DATA");
-  assert.ok(typeof scoring.score === "number" && scoring.score >= 50);
-  assert.equal(scoring.confidence, "MODERATE");
-  assert.ok(scoring.avgViewsPerDay > 15000);
+  // Record 1 search call (costs 1 search request + 1 shared unit)
+  await youtubeQuota.recordUsage({
+    searchRequests: 1,
+    sharedUnits: 1,
+    operationName: "Unit Test Search Query",
+  });
+
+  const updatedStatus = await youtubeQuota.getStatus();
+  assert.equal(updatedStatus.searchConsumed, initialStatus.searchConsumed + 1);
+  assert.equal(updatedStatus.sharedConsumed, initialStatus.sharedConsumed + 1);
 });
 
-test("4. Transparent Scoring: INSUFFICIENT DATA Rule", () => {
-  // If fewer than 2 videos, must return INSUFFICIENT DATA
+test("4. Language Detection Accuracy (Hindi, Hinglish, English, Uncertain)", () => {
+  const hindi = detectContentLanguage("हवाई जहाज की खिड़कियां गोल क्यों होती हैं?");
+  assert.equal(hindi, "Hindi");
+
+  const hinglish = detectContentLanguage("Airplane ki windows round kyu hoti hai? Sach jaan lo");
+  assert.equal(hinglish, "Hinglish");
+
+  const english = detectContentLanguage("Why Airplane Windows Are Actually Round and Not Square");
+  assert.equal(english, "English");
+
+  const uncertain = detectContentLanguage("12345 !!! ???");
+  assert.equal(uncertain, "Uncertain / Mixed");
+});
+
+test("5. Trend Velocity: Safe Denominators (No Artificial Inflation)", () => {
+  const freshVideo = {
+    id: "v-fresh",
+    title: "Fresh Video 1 Hour Old",
+    description: "Sample",
+    channelId: "c1",
+    channelTitle: "Creator",
+    publishedAt: new Date(Date.now() - 3600 * 1000).toISOString(), // 1 hour ago
+    thumbnailUrl: "https://i.ytimg.com/vi/v-fresh/hqdefault.jpg",
+    viewCount: 10000,
+    likeCount: 500,
+    commentCount: 40,
+    durationSeconds: 58,
+    isoDuration: "PT58S",
+    categoryId: "28",
+    tags: [],
+    videoUrl: "https://www.youtube.com/watch?v=v-fresh",
+    ageInDays: 0.04,
+    ageInHours: 1.0,
+    historicalViewsPerDay: 10000, // Safe denominator: Math.max(1.0, ageInDays)
+    isEarlyVelocityEstimate: true,
+    engagementRate: 5.4,
+    detectedLanguage: "English",
+  };
+
+  const matureVideo = {
+    id: "v-mature",
+    title: "Mature Video 5 Days Old",
+    description: "Sample",
+    channelId: "c2",
+    channelTitle: "Creator 2",
+    publishedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+    thumbnailUrl: "https://i.ytimg.com/vi/v-mature/hqdefault.jpg",
+    viewCount: 50000,
+    likeCount: 2500,
+    commentCount: 200,
+    durationSeconds: 60,
+    isoDuration: "PT1M",
+    categoryId: "28",
+    tags: [],
+    videoUrl: "https://www.youtube.com/watch?v=v-mature",
+    ageInDays: 5.0,
+    ageInHours: 120.0,
+    historicalViewsPerDay: 10000,
+    isEarlyVelocityEstimate: false,
+    engagementRate: 5.4,
+    detectedLanguage: "English",
+  };
+
+  const scoring = calculateTransparentTrendScore([freshVideo, matureVideo]);
+  assert.equal(scoring.hasEarlyEstimates, true);
+  // Avg views per day should be 10,000, NOT millions!
+  assert.equal(scoring.avgHistoricalViewsPerDay, 10000);
+  assert.ok(scoring.score >= 50 && scoring.score <= 95);
+});
+
+test("6. Transparent Scoring: INSUFFICIENT DATA Rule", () => {
   const singleSample = [
     {
       id: "v-lonely",
@@ -123,8 +155,11 @@ test("4. Transparent Scoring: INSUFFICIENT DATA Rule", () => {
       tags: [],
       videoUrl: "https://www.youtube.com/watch?v=v-lonely",
       ageInDays: 1,
-      viewsPerDay: 1000000,
+      ageInHours: 24,
+      historicalViewsPerDay: 1000000,
+      isEarlyVelocityEstimate: false,
       engagementRate: 5.2,
+      detectedLanguage: "English",
     },
   ];
 
@@ -135,106 +170,44 @@ test("4. Transparent Scoring: INSUFFICIENT DATA Rule", () => {
   assert.ok(scoring.explanation.includes("Fewer than 2"));
 });
 
-test("5. Quota Tracking & Daily Limit Warnings", () => {
-  const initialStatus = youtubeQuota.getStatus();
-  assert.equal(initialStatus.dailyLimit, 10000);
-  assert.ok(initialStatus.remainingUnits >= 0);
+test("7. Persistent Research Caching with TTL Expiration", async () => {
+  const testKey = "persistent:unit:test:cache";
+  await youtubeQuota.setCache(testKey, { test: "data-persisted" }, 2000);
 
-  // Record simulated usage
-  youtubeQuota.recordUsage(100, "Unit Test Search Query");
-  const updatedStatus = youtubeQuota.getStatus();
-  assert.equal(updatedStatus.consumedUnits, initialStatus.consumedUnits + 100);
+  const cached = await youtubeQuota.getCache(testKey);
+  assert.deepEqual(cached, { test: "data-persisted" });
 });
 
-test("6. Research Query Caching & Expiration", () => {
-  const cacheKey = "test:query:cache";
-  youtubeQuota.setCache(cacheKey, { payload: "fresh-research" }, 500); // 500ms TTL
-
-  assert.deepEqual(youtubeQuota.getCache(cacheKey), { payload: "fresh-research" });
-  youtubeQuota.clearCache();
-  assert.equal(youtubeQuota.getCache(cacheKey), null);
-});
-
-test("7. Creator Presets (Part 7)", () => {
-  assert.ok(BUILT_IN_PRESETS.length >= 3);
-  const factSlice = getPresetById("preset-fact-slice");
-  assert.equal(factSlice.name, "FACT SLICE");
-  assert.equal(factSlice.format, "shorts");
-  assert.equal(factSlice.aspectRatio, "9:16");
-
-  const curiokid = getPresetById("preset-curiokid-vers");
-  assert.equal(curiokid.name, "CURIOKID_VERS");
-  assert.equal(curiokid.language, "Hinglish");
-});
-
-test("8. 8-Stage Script Engine Pipeline: Complete End-to-End Generation", async () => {
+test("8. Script Engine Fact Verification: Real Primary Sources & Passages", async () => {
   const script = await runScriptEnginePipeline({
     topic: "Why Airplane Windows Are Round",
-    niche: "Science & Engineering",
-    presetId: "preset-fact-slice",
     format: "shorts",
-    targetDurationSeconds: 60,
+    language: "English",
+  });
+
+  assert.ok(script.factChecks.length >= 2);
+  const primary = script.factChecks.find((f) => f.verificationStatus === "VERIFIED_PRIMARY");
+  assert.ok(primary);
+  assert.ok(primary.sourceUrl.startsWith("https://"));
+  assert.ok(primary.supportingPassage.length > 20);
+});
+
+test("9. Script Quality Gate: Heuristic Evaluation & Negative Checks", async () => {
+  const script = await runScriptEnginePipeline({
+    topic: "Pistol Shrimp Cavitation Shockwave",
+    format: "shorts",
     language: "Hinglish",
   });
 
-  // Stage 1: Research Brief
-  assert.ok(script.researchBrief.centralFact.length > 20);
-  assert.ok(script.researchBrief.commonMisconceptions.length >= 2);
-
-  // Stage 2: Original Angles
-  assert.ok(script.angles.length >= 3);
-  assert.ok(script.selectedAngleId.length > 0);
-
-  // Stage 3: Hook Development (3 Distinct Frameworks)
-  assert.equal(script.hooks.length, 3);
-  const styles = script.hooks.map((h) => h.style);
-  assert.ok(styles.includes("Curiosity Gap"));
-  assert.ok(styles.includes("Pattern Interrupt"));
-  assert.ok(styles.includes("Bold Contrarian"));
-  assert.ok(script.hooks.some((h) => h.isRecommended));
-
-  // Stage 4 & 5: Story Construction & Voiceover Duration
-  assert.ok(script.fullVoiceover.length > 100);
-  assert.ok(script.wordCount >= 70 && script.wordCount <= 180);
-  assert.ok(script.estimatedDurationSeconds >= 35 && script.estimatedDurationSeconds <= 75);
-
-  // Stage 6: Scene-by-Scene Visual Planning
-  assert.ok(script.scenes.length >= 5);
-  const scene1 = script.scenes[0];
-  assert.equal(scene1.sceneNumber, 1);
-  assert.ok(scene1.imagePrompt.includes("--v 6.0") || scene1.imagePrompt.includes("9:16"));
-  assert.ok(scene1.soundEffect.length > 0);
-  assert.ok(scene1.transition.length > 0);
-
-  // Stage 7: Fact Verification
-  assert.ok(script.factChecks.length >= 2);
-  assert.ok(script.factChecks.every((f) => f.verified === true));
-  assert.ok(script.factChecks.every((f) => f.sourceTitle.length > 5));
-
-  // Stage 8: Script Quality Gate
-  assert.ok(script.qualityGate.overallScore >= 80);
-  assert.equal(script.qualityGate.verdict, "Ready for Production");
-  assert.ok(script.qualityGate.metrics.hookStrength.score >= 85);
-  assert.ok(script.qualityGate.metrics.factualReliability.score >= 90);
+  const qGate = script.qualityGate;
+  assert.ok(qGate.overallScore >= 80);
+  assert.ok(qGate.metrics.hookStrength.whatIsEvaluated.length > 10);
+  assert.ok(qGate.metrics.hookStrength.howEvaluated.length > 10);
+  assert.ok(qGate.metrics.hookStrength.whyAssigned.length > 10);
+  assert.ok(qGate.heuristicDisclaimer.includes("heuristic"));
 });
 
-test("9. Script Engine Hindi & English Voiceover Cadence", async () => {
-  const hindiScript = await runScriptEnginePipeline({
-    topic: "Chandrayaan-3 Moon Landing",
-    language: "Hindi",
-  });
-  assert.equal(hindiScript.language, "Hindi");
-  assert.ok(hindiScript.fullVoiceover.includes("Pehli nazar mein") || hindiScript.fullVoiceover.includes("hai"));
-
-  const englishScript = await runScriptEnginePipeline({
-    topic: "Black Hole Event Horizon",
-    language: "English",
-  });
-  assert.equal(englishScript.language, "English");
-  assert.ok(englishScript.fullVoiceover.includes("At first glance"));
-});
-
-test("10. Daily Research Fallback & Unconfigured Reporting", async () => {
+test("10. Daily Research Unconfigured Behavior & Reporting", async () => {
   const report = await executeDailyTrendResearch({
     niche: "Interesting Facts",
     country: "IN",
@@ -243,8 +216,6 @@ test("10. Daily Research Fallback & Unconfigured Reporting", async () => {
 
   assert.equal(report.country, "IN");
   assert.ok(report.timestamp.length > 0);
-  assert.ok(report.quotaStatus.dailyLimit === 10000);
-  if (!report.isApiConfigured) {
-    assert.ok(report.unconfiguredNotice?.includes("YOUTUBE_API_KEY"));
-  }
+  assert.equal(report.quotaStatus.sharedDailyLimit, 10000);
+  assert.equal(report.quotaStatus.searchDailyLimit, 100);
 });

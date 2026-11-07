@@ -1,7 +1,7 @@
 /**
  * ASH Creator Studio — Daily Trend Research & Transparent Scoring Engine
- * Evaluates real YouTube video data using mathematical evidence.
- * No manufactured scores, no fake breakout badges, explicit INSUFFICIENT DATA state.
+ * Phase 2 Upgraded: Safe denominators, persistent caching, Pacific Time resets,
+ * channel-size normalization, and language detection.
  */
 
 import {
@@ -10,9 +10,10 @@ import {
   getChannelsDetails,
   type YouTubePublicVideo,
   type YouTubePublicChannel,
+  type DetectedLanguage,
 } from "./data-api";
 import { isYouTubeApiKeyConfigured } from "./config";
-import { youtubeQuota } from "./quota";
+import { youtubeQuota, type QuotaStatus } from "./quota";
 
 export type TrendClassification =
   | "Breakout Candidate"
@@ -30,11 +31,14 @@ export interface CompetitorSample {
   channelTitle: string;
   publishedAt: string;
   viewCount: number;
-  viewsPerDay: number;
+  historicalViewsPerDay: number;
+  isEarlyVelocityEstimate: boolean;
+  ageInHours: number;
   engagementRate: number;
   videoUrl: string;
   thumbnailUrl: string;
   durationSeconds: number;
+  detectedLanguage: DetectedLanguage;
 }
 
 export interface TrendOpportunity {
@@ -48,10 +52,17 @@ export interface TrendOpportunity {
   sampleSize: number;
   researchDate: string;
   evidence: {
-    avgViewsPerDay: number | "Unavailable";
+    avgHistoricalViewsPerDay: number | "Unavailable";
+    hasEarlyVelocityEstimates: boolean;
     medianEngagementRate: number | "Unavailable";
     freshnessWindowDays: number;
     competingVideosCount: number;
+    ageCohortBreakdown: {
+      under48h: number;
+      twoToSevenDays: number;
+      eightToThirtyDays: number;
+    };
+    languageBreakdown: Record<string, number>;
     sampleVideos: CompetitorSample[];
   };
   contentGap: {
@@ -75,6 +86,7 @@ export interface DailyResearchParams {
   videoFormat?: "shorts" | "longform" | "all";
   timeframe?: "24h" | "7d" | "30d";
   userChannelVideos?: Array<{ title: string; videoId: string; description?: string }>;
+  userTimezone?: string;
 }
 
 export interface DailyResearchReport {
@@ -83,7 +95,7 @@ export interface DailyResearchReport {
   language: string;
   niche: string;
   totalTopicsResearched: number;
-  quotaStatus: ReturnType<typeof youtubeQuota.getStatus>;
+  quotaStatus: QuotaStatus;
   opportunities: TrendOpportunity[];
   isApiConfigured: boolean;
   unconfiguredNotice?: string;
@@ -92,97 +104,137 @@ export interface DailyResearchReport {
 /**
  * Calculates a transparent evidence-based score between 0 and 100.
  * If fewer than 2 relevant video samples exist, returns 'INSUFFICIENT DATA'.
+ * Enforces safe denominators to avoid artificial inflation from newly published videos.
  */
-export function calculateTransparentTrendScore(videos: YouTubePublicVideo[]): {
+export function calculateTransparentTrendScore(
+  videos: YouTubePublicVideo[],
+  channelsMap?: Map<string, YouTubePublicChannel>
+): {
   score: number | "INSUFFICIENT DATA";
   classification: TrendClassification;
   confidence: ConfidenceLevel;
   explanation: string;
-  avgViewsPerDay: number;
+  avgHistoricalViewsPerDay: number;
+  hasEarlyEstimates: boolean;
   medianEngagement: number;
+  ageCohorts: { under48h: number; twoToSevenDays: number; eightToThirtyDays: number };
 } {
+  const ageCohorts = { under48h: 0, twoToSevenDays: 0, eightToThirtyDays: 0 };
+
   if (!videos || videos.length < 2) {
     return {
       score: "INSUFFICIENT DATA",
       classification: "Insufficient Data",
       confidence: "INSUFFICIENT DATA",
       explanation:
-        "Fewer than 2 verified public video samples were found for this query in the specified timeframe. A single video or absence of samples does not prove a trend.",
-      avgViewsPerDay: 0,
+        "Fewer than 2 verified public video samples were found for this topic. A single high-performing video does not prove a trend.",
+      avgHistoricalViewsPerDay: 0,
+      hasEarlyEstimates: false,
       medianEngagement: 0,
+      ageCohorts,
     };
   }
 
   const sampleSize = videos.length;
-  const totalViewsPerDay = videos.reduce((acc, v) => acc + v.viewsPerDay, 0);
-  const avgViewsPerDay = Math.round(totalViewsPerDay / sampleSize);
+  let hasEarlyEstimates = false;
+
+  for (const v of videos) {
+    if (v.ageInHours < 48) ageCohorts.under48h++;
+    else if (v.ageInDays <= 7) ageCohorts.twoToSevenDays++;
+    else ageCohorts.eightToThirtyDays++;
+    if (v.isEarlyVelocityEstimate) hasEarlyEstimates = true;
+  }
+
+  // Calculate safe historical views-per-day
+  const totalViewsPerDay = videos.reduce((acc, v) => acc + v.historicalViewsPerDay, 0);
+  const avgHistoricalViewsPerDay = Math.round(totalViewsPerDay / sampleSize);
 
   const engagements = videos.map((v) => v.engagementRate).sort((a, b) => a - b);
   const medianEngagement = engagements[Math.floor(engagements.length / 2)] || 0;
 
-  const avgAge = videos.reduce((acc, v) => acc + v.ageInDays, 0) / sampleSize;
+  const avgAgeDays = videos.reduce((acc, v) => acc + v.ageInDays, 0) / sampleSize;
 
-  // Confidence is strictly tied to sample verification
+  // Confidence level strictly tied to verified sample volume
   const confidence: ConfidenceLevel = sampleSize >= 5 ? "HIGH" : "MODERATE";
 
-  // Freshness factor (0-30 points): Recent uploads within 7 days score highest
+  // 1. Freshness Score (0 - 25 pts)
   let freshnessScore = 0;
-  if (avgAge <= 2) freshnessScore = 30;
-  else if (avgAge <= 7) freshnessScore = 24;
-  else if (avgAge <= 14) freshnessScore = 18;
-  else if (avgAge <= 30) freshnessScore = 12;
-  else freshnessScore = 5;
+  if (avgAgeDays <= 2) freshnessScore = 25;
+  else if (avgAgeDays <= 7) freshnessScore = 20;
+  else if (avgAgeDays <= 14) freshnessScore = 14;
+  else if (avgAgeDays <= 30) freshnessScore = 8;
+  else freshnessScore = 3;
 
-  // Velocity factor (0-40 points): Historical views per day benchmark
+  // 2. Velocity Benchmark Score (0 - 35 pts)
   let velocityScore = 0;
-  if (avgViewsPerDay >= 50000) velocityScore = 40;
-  else if (avgViewsPerDay >= 15000) velocityScore = 32;
-  else if (avgViewsPerDay >= 5000) velocityScore = 25;
-  else if (avgViewsPerDay >= 1000) velocityScore = 18;
-  else velocityScore = 10;
+  if (avgHistoricalViewsPerDay >= 50000) velocityScore = 35;
+  else if (avgHistoricalViewsPerDay >= 20000) velocityScore = 28;
+  else if (avgHistoricalViewsPerDay >= 8000) velocityScore = 22;
+  else if (avgHistoricalViewsPerDay >= 2000) velocityScore = 15;
+  else velocityScore = 8;
 
-  // Engagement factor (0-20 points): Like/comment interaction
+  // 3. Engagement Score (0 - 20 pts)
   let engagementScore = 0;
   if (medianEngagement >= 6.0) engagementScore = 20;
   else if (medianEngagement >= 3.5) engagementScore = 15;
   else if (medianEngagement >= 1.5) engagementScore = 10;
   else engagementScore = 5;
 
-  // Consistency bonus (0-10 points): Multiple separate channels participating
+  // 4. Channel Diversity & Channel-Size Ratio (0 - 20 pts)
   const uniqueChannels = new Set(videos.map((v) => v.channelId)).size;
-  const consistencyScore = Math.min(10, uniqueChannels * 2);
+  let diversityScore = Math.min(10, uniqueChannels * 2.5);
 
-  const rawScore = freshnessScore + velocityScore + engagementScore + consistencyScore;
+  // Bonus if smaller/medium channels are overperforming their baseline
+  let channelSizeBonus = 5;
+  if (channelsMap) {
+    let outperformingChannels = 0;
+    for (const v of videos) {
+      const ch = channelsMap.get(v.channelId);
+      if (ch && ch.subscriberCount && ch.subscriberCount > 0) {
+        const ratio = v.viewCount / ch.subscriberCount;
+        if (ratio >= 2.0) outperformingChannels++;
+      }
+    }
+    if (outperformingChannels >= 2) channelSizeBonus = 10;
+  }
+
+  const rawScore = freshnessScore + velocityScore + engagementScore + diversityScore + channelSizeBonus;
   const finalScore = Math.min(98, Math.max(15, rawScore));
 
   // Transparent Classification
   let classification: TrendClassification = "Rising Opportunity";
-  if (avgAge <= 4 && avgViewsPerDay >= 25000 && uniqueChannels >= 3) {
+  if (avgAgeDays <= 5 && avgHistoricalViewsPerDay >= 20000 && uniqueChannels >= 3) {
     classification = "Breakout Candidate";
-  } else if (sampleSize >= 15 && avgViewsPerDay < 3000) {
+  } else if (sampleSize >= 12 && avgHistoricalViewsPerDay < 2500) {
     classification = "Saturated";
-  } else if (avgAge >= 20 && avgViewsPerDay >= 4000) {
+  } else if (avgAgeDays >= 18 && avgHistoricalViewsPerDay >= 3500) {
     classification = "Evergreen";
-  } else if (uniqueChannels <= 2 && avgViewsPerDay >= 10000) {
+  } else if (uniqueChannels <= 2 && avgHistoricalViewsPerDay >= 8000) {
     classification = "Content Gap";
   } else {
     classification = "Rising Opportunity";
   }
 
-  const explanation = `Score computed from ${sampleSize} verified video samples across ${uniqueChannels} unique channels. Average historical rate: ${avgViewsPerDay.toLocaleString()} views/day with ${medianEngagement}% median audience engagement.`;
+  const noteEarly = hasEarlyEstimates
+    ? " Includes newly published videos with rate normalized to 24h baseline."
+    : "";
+
+  const explanation = `Score evaluated from ${sampleSize} verified video samples across ${uniqueChannels} independent channels. Historical daily rate: ~${avgHistoricalViewsPerDay.toLocaleString()} views/day with ${medianEngagement}% median audience interaction.${noteEarly}`;
 
   return {
     score: finalScore,
     classification,
     confidence,
     explanation,
-    avgViewsPerDay,
+    avgHistoricalViewsPerDay,
+    hasEarlyEstimates,
     medianEngagement,
+    ageCohorts,
   };
 }
 
 /**
- * Checks channel-specific intelligence against the creator's upload history.
+ * Evaluates creator's own channel upload history against discovered topic.
  */
 function analyzeChannelFit(
   topicTitle: string,
@@ -229,7 +281,7 @@ function analyzeChannelFit(
 }
 
 /**
- * Executes a full Daily Trend Research cycle.
+ * Executes a full Daily Trend Research cycle using persistent storage and quota tracking.
  */
 export async function executeDailyTrendResearch(params: DailyResearchParams): Promise<DailyResearchReport> {
   const {
@@ -239,22 +291,22 @@ export async function executeDailyTrendResearch(params: DailyResearchParams): Pr
     videoFormat = "shorts",
     timeframe = "7d",
     userChannelVideos = [],
+    userTimezone = "America/Los_Angeles",
   } = params;
 
-  const cacheKey = `trends:${country}:${language}:${niche}:${videoFormat}:${timeframe}`;
-  const cachedReport = youtubeQuota.getCache<DailyResearchReport>(cacheKey);
+  const cacheKey = `trends_v2:${country}:${language}:${niche}:${videoFormat}:${timeframe}`;
+  const cachedReport = await youtubeQuota.getCache<DailyResearchReport>(cacheKey);
   if (cachedReport) {
     return cachedReport;
   }
 
-  // Calculate publishedAfter boundary
   const now = Date.now();
   const windowDays = timeframe === "24h" ? 1 : timeframe === "7d" ? 7 : 30;
   const publishedAfter = new Date(now - windowDays * 24 * 3600 * 1000).toISOString();
 
   const isConfigured = isYouTubeApiKeyConfigured();
+  const currentQuotaStatus = await youtubeQuota.getStatus(userTimezone);
 
-  // If API key is not configured, return transparent unconfigured status
   if (!isConfigured) {
     return {
       timestamp: new Date().toISOString(),
@@ -262,7 +314,7 @@ export async function executeDailyTrendResearch(params: DailyResearchParams): Pr
       language,
       niche,
       totalTopicsResearched: 0,
-      quotaStatus: youtubeQuota.getStatus(),
+      quotaStatus: currentQuotaStatus,
       opportunities: [],
       isApiConfigured: false,
       unconfiguredNotice:
@@ -270,7 +322,7 @@ export async function executeDailyTrendResearch(params: DailyResearchParams): Pr
     };
   }
 
-  // Generate 4 targeted research queries for this niche
+  // 4 targeted research queries
   const searchQueries = [
     `${niche} facts`,
     `${niche} mystery explained`,
@@ -283,7 +335,7 @@ export async function executeDailyTrendResearch(params: DailyResearchParams): Pr
   for (let i = 0; i < searchQueries.length; i++) {
     const q = searchQueries[i];
     try {
-      // 1. Search YouTube Data API v3
+      // 1. Search YouTube Data API v3 (1 search request + 1 shared unit)
       const videoIds = await searchYouTubeVideos({
         query: q,
         regionCode: country,
@@ -296,12 +348,27 @@ export async function executeDailyTrendResearch(params: DailyResearchParams): Pr
 
       if (videoIds.length === 0) continue;
 
-      // 2. Fetch batched video details (statistics, duration, tags)
+      // 2. Fetch batched video details
       const videoDetails = await getVideosDetails(videoIds);
       if (videoDetails.length === 0) continue;
 
-      // 3. Score the opportunity
-      const scoring = calculateTransparentTrendScore(videoDetails);
+      // 3. Batched channel lookup for channel-size normalization
+      const channelIds = videoDetails.map((v) => v.channelId);
+      const channelsMap = await getChannelsDetails(channelIds);
+
+      // 4. Score with safe denominators
+      const scoring = calculateTransparentTrendScore(videoDetails, channelsMap);
+
+      // Language breakdown tally
+      const languageBreakdown: Record<string, number> = {
+        Hindi: 0,
+        Hinglish: 0,
+        English: 0,
+        "Uncertain / Mixed": 0,
+      };
+      for (const v of videoDetails) {
+        languageBreakdown[v.detectedLanguage] = (languageBreakdown[v.detectedLanguage] || 0) + 1;
+      }
 
       const competitorSamples: CompetitorSample[] = videoDetails.slice(0, 4).map((v) => ({
         videoId: v.id,
@@ -309,14 +376,16 @@ export async function executeDailyTrendResearch(params: DailyResearchParams): Pr
         channelTitle: v.channelTitle,
         publishedAt: v.publishedAt,
         viewCount: v.viewCount,
-        viewsPerDay: v.viewsPerDay,
+        historicalViewsPerDay: v.historicalViewsPerDay,
+        isEarlyVelocityEstimate: v.isEarlyVelocityEstimate,
+        ageInHours: v.ageInHours,
         engagementRate: v.engagementRate,
         videoUrl: v.videoUrl,
         thumbnailUrl: v.thumbnailUrl,
         durationSeconds: v.durationSeconds,
+        detectedLanguage: v.detectedLanguage,
       }));
 
-      // 4. Derive primary topic name from top sample
       const primaryVideo = videoDetails[0];
       const cleanTopic = primaryVideo
         ? primaryVideo.title.replace(/#[a-zA-Z0-9_]+/g, "").trim()
@@ -335,14 +404,17 @@ export async function executeDailyTrendResearch(params: DailyResearchParams): Pr
         sampleSize: videoDetails.length,
         researchDate: new Date().toISOString(),
         evidence: {
-          avgViewsPerDay: scoring.avgViewsPerDay,
+          avgHistoricalViewsPerDay: scoring.avgHistoricalViewsPerDay,
+          hasEarlyVelocityEstimates: scoring.hasEarlyEstimates,
           medianEngagementRate: scoring.medianEngagement,
           freshnessWindowDays: windowDays,
           competingVideosCount: videoDetails.length,
+          ageCohortBreakdown: scoring.ageCohorts,
+          languageBreakdown,
           sampleVideos: competitorSamples,
         },
         contentGap: {
-          description: `Existing videos average ${scoring.avgViewsPerDay.toLocaleString()} views/day but heavily rely on standard titles. An educational curiosity hook addressing root causes is missing.`,
+          description: `Existing videos average ~${scoring.avgHistoricalViewsPerDay.toLocaleString()} views/day. An educational curiosity hook addressing root causes is missing in recent uploads.`,
           unaddressedAngle: "Highlight the exact counter-intuitive mechanism that debunked earlier assumptions.",
           recommendedFormat: videoFormat === "longform" ? "Long-form" : "Shorts",
         },
@@ -353,19 +425,21 @@ export async function executeDailyTrendResearch(params: DailyResearchParams): Pr
     }
   }
 
+  const updatedQuotaStatus = await youtubeQuota.getStatus(userTimezone);
+
   const report: DailyResearchReport = {
     timestamp: new Date().toISOString(),
     country,
     language,
     niche,
     totalTopicsResearched: opportunities.length,
-    quotaStatus: youtubeQuota.getStatus(),
+    quotaStatus: updatedQuotaStatus,
     opportunities,
     isApiConfigured: true,
   };
 
-  // Cache report for 1 hour to prevent quota drain on repeated refreshes
-  youtubeQuota.setCache(cacheKey, report, 3600 * 1000);
+  // Persist to Supabase cache with 1-hour TTL
+  await youtubeQuota.setCache(cacheKey, report, 3600 * 1000);
 
   return report;
 }

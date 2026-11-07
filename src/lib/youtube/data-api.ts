@@ -1,11 +1,13 @@
 /**
  * Official YouTube Data API v3 Client
  * Implements: search.list, videos.list, channels.list, playlistItems.list
- * Features: Request batching, quota tracking, ISO-8601 duration parsing, error handling.
+ * Features: Request batching, dual quota tracking, persistent caching, language detection.
  */
 
 import { getYoutubeApiKey, isYouTubeApiKeyConfigured } from "./config";
 import { youtubeQuota } from "./quota";
+
+export type DetectedLanguage = "Hindi" | "Hinglish" | "English" | "Uncertain / Mixed";
 
 export interface YouTubePublicVideo {
   id: string;
@@ -25,8 +27,11 @@ export interface YouTubePublicVideo {
   videoUrl: string;
   // Computed analytical fields
   ageInDays: number;
-  viewsPerDay: number; // Public viewCount / ageInDays (Historical average)
+  ageInHours: number;
+  historicalViewsPerDay: number; // Public viewCount / Math.max(1.0, ageInDays)
+  isEarlyVelocityEstimate: boolean; // True if published < 24 hours ago
   engagementRate: number; // (likes + comments) / views * 100
+  detectedLanguage: DetectedLanguage;
 }
 
 export interface YouTubePublicChannel {
@@ -50,6 +55,51 @@ export interface SearchOptions {
 }
 
 /**
+ * Accurately detects content language from title and description.
+ * Strictly avoids silently labeling unknown text as Hindi or English.
+ */
+export function detectContentLanguage(title = "", description = ""): DetectedLanguage {
+  const combined = (title + " " + description).trim();
+  if (!combined) return "Uncertain / Mixed";
+
+  // 1. Devanagari Unicode script range (Hindi)
+  const devanagariMatches = combined.match(/[\u0900-\u097F]/g);
+  const devanagariCount = devanagariMatches ? devanagariMatches.length : 0;
+  if (devanagariCount >= 4 || devanagariCount / combined.length > 0.08) {
+    return "Hindi";
+  }
+
+  // 2. Romanized Hindi (Hinglish) vocabulary tokens
+  const hinglishTokens = [
+    "kya", "kaise", "kyun", "kyu", "nahi", "nhi", "hota", "hoti", "hote",
+    "dekhkar", "dekho", "dekhiye", "dekhein", "sach", "sachai", "log", "logon",
+    "yeh", "woh", "hain", "rahasya", "galti", "gajab", "shuru", "jaan",
+    "aakhir", "asli", "karo", "karein", "hum", "tum", "aap", "aapko", "iska", "uski", "inke"
+  ];
+
+  const lower = combined.toLowerCase();
+  const words = lower.split(/[^a-z0-9]+/).filter((w) => w.length >= 2);
+  const matchedHinglish = words.filter((w) => hinglishTokens.includes(w));
+
+  if (matchedHinglish.length >= 2) {
+    return "Hinglish";
+  }
+
+  // 3. English vocabulary tokens
+  const englishWords = [
+    "the", "why", "how", "what", "is", "are", "and", "of", "in", "to", "for",
+    "science", "truth", "secret", "never", "everyone", "shocking", "mystery", "explained",
+    "video", "shorts", "channel", "physics", "universe", "human", "brain"
+  ];
+  const matchedEnglish = words.filter((w) => englishWords.includes(w));
+  if (matchedEnglish.length >= 2 && matchedHinglish.length === 0) {
+    return "English";
+  }
+
+  return "Uncertain / Mixed";
+}
+
+/**
  * Parses ISO 8601 duration (e.g. PT4M13S, PT58S, PT1H2M10S) to seconds.
  */
 export function parseIsoDuration(durationStr: string): number {
@@ -66,7 +116,7 @@ export function parseIsoDuration(durationStr: string): number {
 /**
  * 1. search.list
  * Discovers video IDs based on keywords, region, language, and date range.
- * Quota cost: 100 units.
+ * Tracks: 1 Search Request count + 1 Shared Quota Unit.
  */
 export async function searchYouTubeVideos(options: SearchOptions): Promise<string[]> {
   const {
@@ -83,7 +133,8 @@ export async function searchYouTubeVideos(options: SearchOptions): Promise<strin
     throw new Error("YOUTUBE_API_KEY is not configured in .env.local");
   }
 
-  if (!youtubeQuota.canAfford(100)) {
+  const canAfford = await youtubeQuota.canAffordSearch();
+  if (!canAfford) {
     throw new Error("YouTube API daily quota limit reached. Search deferred to prevent overage.");
   }
 
@@ -106,7 +157,12 @@ export async function searchYouTubeVideos(options: SearchOptions): Promise<strin
   });
 
   const data = await response.json();
-  youtubeQuota.recordUsage(100, `search.list [q: ${query}]`);
+  // Official Quota Accounting: 1 search request + 1 shared unit
+  await youtubeQuota.recordUsage({
+    searchRequests: 1,
+    sharedUnits: 1,
+    operationName: `search.list [q: ${query}]`,
+  });
 
   if (!response.ok) {
     const msg = data.error?.message || `YouTube search.list failed (${response.status})`;
@@ -125,7 +181,7 @@ export async function searchYouTubeVideos(options: SearchOptions): Promise<strin
 /**
  * 2. videos.list
  * Batched lookup for full video statistics, duration, tags, and engagement.
- * Up to 50 IDs per call. Quota cost: 1 unit.
+ * Up to 50 IDs per call. Quota cost: 1 shared unit.
  */
 export async function getVideosDetails(videoIds: string[]): Promise<YouTubePublicVideo[]> {
   if (videoIds.length === 0) return [];
@@ -135,11 +191,12 @@ export async function getVideosDetails(videoIds: string[]): Promise<YouTubePubli
 
   const apiKey = getYoutubeApiKey();
   const results: YouTubePublicVideo[] = [];
-  const chunkSize = 50; // Official YouTube batch size limit
+  const chunkSize = 50;
 
   for (let i = 0; i < videoIds.length; i += chunkSize) {
     const chunk = videoIds.slice(i, i + chunkSize);
-    if (!youtubeQuota.canAfford(1)) break;
+    const canAfford = await youtubeQuota.canAffordShared(1);
+    if (!canAfford) break;
 
     const url = new URL("https://www.googleapis.com/youtube/v3/videos");
     url.searchParams.set("part", "snippet,contentDetails,statistics");
@@ -152,7 +209,10 @@ export async function getVideosDetails(videoIds: string[]): Promise<YouTubePubli
     });
 
     const data = await response.json();
-    youtubeQuota.recordUsage(1, `videos.list [batch: ${chunk.length} items]`);
+    await youtubeQuota.recordUsage({
+      sharedUnits: 1,
+      operationName: `videos.list [batch: ${chunk.length} items]`,
+    });
 
     if (!response.ok) {
       throw new Error(data.error?.message || `YouTube videos.list failed (${response.status})`);
@@ -167,13 +227,20 @@ export async function getVideosDetails(videoIds: string[]): Promise<YouTubePubli
 
         const publishedAt = snippet.publishedAt || new Date().toISOString();
         const pubTime = new Date(publishedAt).getTime();
-        const ageInDays = Math.max(0.05, (now - pubTime) / (1000 * 3600 * 24));
+        const diffMs = Math.max(0, now - pubTime);
+        const ageInHours = parseFloat((diffMs / (1000 * 3600)).toFixed(1));
+        const rawAgeInDays = diffMs / (1000 * 3600 * 24);
 
         const viewCount = parseInt(stats.viewCount || "0", 10);
         const likeCount = parseInt(stats.likeCount || "0", 10);
         const commentCount = parseInt(stats.commentCount || "0", 10);
 
-        const viewsPerDay = Math.round(viewCount / ageInDays);
+        // Safe Denominator Calculation:
+        // Do NOT let very fresh uploads (e.g. 1 hour old) create artificial millions of views/day
+        const safeDenominatorDays = Math.max(1.0, rawAgeInDays);
+        const historicalViewsPerDay = Math.round(viewCount / safeDenominatorDays);
+        const isEarlyVelocityEstimate = rawAgeInDays < 1.0;
+
         const engagementRate = viewCount > 0 ? ((likeCount + commentCount) / viewCount) * 100 : 0;
 
         const thumbs = snippet.thumbnails || {};
@@ -185,6 +252,7 @@ export async function getVideosDetails(videoIds: string[]): Promise<YouTubePubli
           `https://i.ytimg.com/vi/${item.id}/hqdefault.jpg`;
 
         const durationSeconds = parseIsoDuration(content.duration || "");
+        const detectedLanguage = detectContentLanguage(snippet.title || "", snippet.description || "");
 
         results.push({
           id: item.id,
@@ -202,9 +270,12 @@ export async function getVideosDetails(videoIds: string[]): Promise<YouTubePubli
           categoryId: snippet.categoryId || "0",
           tags: Array.isArray(snippet.tags) ? snippet.tags : [],
           videoUrl: `https://www.youtube.com/watch?v=${item.id}`,
-          ageInDays: parseFloat(ageInDays.toFixed(1)),
-          viewsPerDay,
+          ageInDays: parseFloat(rawAgeInDays.toFixed(2)),
+          ageInHours,
+          historicalViewsPerDay,
+          isEarlyVelocityEstimate,
           engagementRate: parseFloat(engagementRate.toFixed(2)),
+          detectedLanguage,
         });
       }
     }
@@ -216,7 +287,7 @@ export async function getVideosDetails(videoIds: string[]): Promise<YouTubePubli
 /**
  * 3. channels.list
  * Batched lookup for public channel subscriber counts and upload playlists.
- * Up to 50 IDs per call. Quota cost: 1 unit.
+ * Up to 50 IDs per call. Quota cost: 1 shared unit.
  */
 export async function getChannelsDetails(channelIds: string[]): Promise<Map<string, YouTubePublicChannel>> {
   const map = new Map<string, YouTubePublicChannel>();
@@ -225,6 +296,9 @@ export async function getChannelsDetails(channelIds: string[]): Promise<Map<stri
 
   const apiKey = getYoutubeApiKey();
   const uniqueIds = Array.from(new Set(channelIds)).slice(0, 50);
+
+  const canAfford = await youtubeQuota.canAffordShared(1);
+  if (!canAfford) return map;
 
   const url = new URL("https://www.googleapis.com/youtube/v3/channels");
   url.searchParams.set("part", "snippet,statistics");
@@ -237,7 +311,10 @@ export async function getChannelsDetails(channelIds: string[]): Promise<Map<stri
   });
 
   const data = await response.json();
-  youtubeQuota.recordUsage(1, `channels.list [${uniqueIds.length} channels]`);
+  await youtubeQuota.recordUsage({
+    sharedUnits: 1,
+    operationName: `channels.list [${uniqueIds.length} channels]`,
+  });
 
   if (response.ok && data.items) {
     for (const item of data.items) {
@@ -262,12 +339,15 @@ export async function getChannelsDetails(channelIds: string[]): Promise<Map<stri
 
 /**
  * 4. playlistItems.list
- * Retrieves latest uploads for a specific channel's upload playlist.
- * Quota cost: 1 unit.
+ * Retrieves latest uploads for a channel's upload playlist.
+ * Quota cost: 1 shared unit.
  */
 export async function getPlaylistItems(uploadsPlaylistId: string, maxResults = 10): Promise<string[]> {
   if (!isYouTubeApiKeyConfigured()) return [];
   const apiKey = getYoutubeApiKey();
+
+  const canAfford = await youtubeQuota.canAffordShared(1);
+  if (!canAfford) return [];
 
   const url = new URL("https://www.googleapis.com/youtube/v3/playlistItems");
   url.searchParams.set("part", "contentDetails");
@@ -281,7 +361,10 @@ export async function getPlaylistItems(uploadsPlaylistId: string, maxResults = 1
   });
 
   const data = await response.json();
-  youtubeQuota.recordUsage(1, `playlistItems.list [${uploadsPlaylistId}]`);
+  await youtubeQuota.recordUsage({
+    sharedUnits: 1,
+    operationName: `playlistItems.list [${uploadsPlaylistId}]`,
+  });
 
   if (!response.ok || !data.items) return [];
 

@@ -32,8 +32,8 @@ export function WelcomeSection({ onConnectClick, onExploreClick }: WelcomeSectio
             <Sparkles className="h-3.5 w-3.5 text-brand-400" />
             <span>ASH Creator Studio 2.0</span>
           </Badge>
-          <Badge variant="outline" className="border-slate-700/80 text-slate-400 text-[11px]">
-            Step 2: Mission Control
+          <Badge variant="outline" className="border-slate-700/80 text-brand-300 text-[11px]">
+            8 Core Modules • Production Ready
           </Badge>
         </div>
 

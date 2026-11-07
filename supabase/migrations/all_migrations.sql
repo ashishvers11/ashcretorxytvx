@@ -1,8 +1,11 @@
 -- ==============================================================================
--- ASH CREATOR STUDIO — MASTER DATABASE MIGRATION SCRIPT
--- Executes all schemas with idempotent safety, constraints & strict RLS policies.
--- Run this entire script in Supabase Dashboard -> SQL Editor -> Run
+-- ASH CREATOR STUDIO — MASTER DATABASE MIGRATION SCRIPT (V2)
+-- Idempotent, includes table creations, constraints, RLS, grants, and schema reload.
+-- Copy and run this ENTIRE script in Supabase Dashboard -> SQL Editor -> Run
 -- ==============================================================================
+
+-- 1. Ensure schema usage
+grant usage on schema public to anon, authenticated;
 
 -- ==============================================================================
 -- PART 1: User Profiles & Automated Provisioning Trigger
@@ -49,7 +52,9 @@ begin
     new.raw_user_meta_data->>'full_name',
     new.raw_user_meta_data->>'avatar_url'
   )
-  on conflict (id) do nothing;
+  on conflict (id) do update set
+    email = excluded.email,
+    updated_at = now();
   return new;
 end;
 $$;
@@ -363,3 +368,13 @@ create policy "Users can delete own activities"
 
 create index if not exists idx_recent_activities_user_id on public.recent_activities(user_id);
 create index if not exists idx_recent_activities_created_at on public.recent_activities(created_at desc);
+
+-- ==============================================================================
+-- PART 9: Explicit Permissions & Schema Cache Reload
+-- ==============================================================================
+grant all on all tables in schema public to authenticated;
+grant all on all sequences in schema public to authenticated;
+grant select on public.profiles to anon;
+
+-- Force PostgREST to reload its schema cache immediately
+notify pgrst, 'reload schema';

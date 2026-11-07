@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/auth-context";
 
 const NAVIGATION_ITEMS = [
   {
@@ -69,6 +70,7 @@ const NAVIGATION_ITEMS = [
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const pathname = usePathname();
+  const { user, loading, signOut } = useAuth();
 
   // Close mobile menu on route change
   React.useEffect(() => {
@@ -159,15 +161,27 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs text-slate-400">System Ready</span>
+              <span className="text-xs text-slate-400">
+                {user ? "Session Active" : "System Ready"}
+              </span>
             </div>
-            <Link
-              href="/auth/login"
-              className="text-xs text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              Sign Out
-            </Link>
+            {user ? (
+              <button
+                onClick={signOut}
+                className="text-xs text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors"
+                title="Sign out of Supabase"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Sign Out</span>
+              </button>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1 transition-colors"
+              >
+                <span>Sign In</span>
+              </Link>
+            )}
           </div>
         </div>
       </aside>
@@ -195,14 +209,27 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-full text-slate-400 hover:text-white">
               <Bell className="h-4 w-4" />
             </Button>
-            <Link href="/profile">
-              <div className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors cursor-pointer">
-                <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-brand-500 to-indigo-600 flex items-center justify-center text-white text-xs font-semibold">
-                  <User className="h-3.5 w-3.5" />
+            {loading ? (
+              <div className="h-8 w-28 rounded-full bg-slate-900 animate-pulse border border-slate-800" />
+            ) : user ? (
+              <Link href="/profile">
+                <div className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors cursor-pointer max-w-[200px]">
+                  <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-brand-500 to-indigo-600 flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                    <User className="h-3.5 w-3.5" />
+                  </div>
+                  <span className="text-xs font-medium text-slate-200 truncate hidden sm:inline">
+                    {user.email}
+                  </span>
                 </div>
-                <span className="text-xs font-medium text-slate-200 hidden sm:inline">Creator Account</span>
-              </div>
-            </Link>
+              </Link>
+            ) : (
+              <Link href="/auth/login">
+                <Button variant="outline" size="sm" className="text-xs gap-1.5">
+                  <User className="h-3.5 w-3.5" />
+                  <span>Sign In</span>
+                </Button>
+              </Link>
+            )}
           </div>
         </header>
 

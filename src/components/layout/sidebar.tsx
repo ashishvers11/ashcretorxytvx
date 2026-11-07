@@ -14,6 +14,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth-context";
 
 const NAVIGATION_ITEMS = [
   {
@@ -62,6 +63,7 @@ const NAVIGATION_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, signOut } = useAuth();
 
   return (
     <aside className="w-64 border-r border-slate-800/80 bg-surface-950 flex flex-col h-screen fixed left-0 top-0 z-30">
@@ -124,15 +126,26 @@ export function Sidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs text-slate-400">System Active</span>
+            <span className="text-xs text-slate-400">
+              {user ? "Session Active" : "System Active"}
+            </span>
           </div>
-          <Link
-            href="/auth/login"
-            className="text-xs text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Sign Out
-          </Link>
+          {user ? (
+            <button
+              onClick={signOut}
+              className="text-xs text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Sign Out</span>
+            </button>
+          ) : (
+            <Link
+              href="/auth/login"
+              className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1 transition-colors"
+            >
+              <span>Sign In</span>
+            </Link>
+          )}
         </div>
       </div>
     </aside>

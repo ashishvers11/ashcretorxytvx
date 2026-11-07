@@ -89,6 +89,34 @@ export function useYouTubeChannel() {
     fetchChannelStatus();
   }, [fetchChannelStatus]);
 
+  const connectByUrl = async (channelUrl: string): Promise<{ success: boolean; error?: string }> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/youtube/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channelUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        const errorMsg = data.error || "Failed to connect YouTube channel.";
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
+      }
+      if (data.channel) {
+        setChannel(data.channel);
+      }
+      return { success: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Network error connecting channel";
+      setError(msg);
+      return { success: false, error: msg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const disconnectChannel = async (): Promise<boolean> => {
     setLoading(true);
     try {
@@ -120,6 +148,7 @@ export function useYouTubeChannel() {
     loading,
     error,
     refreshChannel: fetchChannelStatus,
+    connectByUrl,
     disconnectChannel,
   };
 }

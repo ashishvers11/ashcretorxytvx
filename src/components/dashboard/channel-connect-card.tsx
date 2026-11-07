@@ -23,15 +23,19 @@ import {
   MessageSquare,
   BarChart3,
   Calendar,
+  Link2,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useYouTubeChannel } from "@/hooks/use-youtube-channel";
 
 export function ChannelConnectCard() {
-  const { channel, connected, loading, disconnectChannel, refreshChannel } = useYouTubeChannel();
+  const { channel, connected, loading, disconnectChannel, refreshChannel, connectByUrl } = useYouTubeChannel();
   const [connecting, setConnecting] = useState(false);
+  const [connectingLink, setConnectingLink] = useState(false);
+  const [channelInput, setChannelInput] = useState("");
   const [disconnecting, setDisconnecting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -70,6 +74,27 @@ export function ChannelConnectCard() {
     setConnecting(true);
     // Initiates server-side protected Google OAuth flow with PKCE
     window.location.href = "/api/auth/youtube";
+  };
+
+  const handleConnectLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = channelInput.trim();
+    if (!trimmed) {
+      setErrorMessage("Please enter a YouTube channel link or @handle (e.g. @MrBeast, https://youtube.com/@handle).");
+      return;
+    }
+    setConnectingLink(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    const result = await connectByUrl(trimmed);
+    if (result.success) {
+      setSuccessMessage("YouTube channel connected successfully!");
+      setChannelInput("");
+      refreshChannel();
+    } else {
+      setErrorMessage(result.error || "Failed to connect YouTube channel. Please check the URL.");
+    }
+    setConnectingLink(false);
   };
 
   const handleDisconnect = async () => {
@@ -405,44 +430,118 @@ export function ChannelConnectCard() {
           </div>
         )}
 
-        {/* Unconnected Channel Action Card */}
-        <div className="rounded-xl border border-dashed border-slate-700/80 bg-slate-950/40 p-5 flex flex-col md:flex-row items-center justify-between gap-5">
-          <div className="space-y-1.5 text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start gap-2 text-slate-200 font-medium text-sm">
-              <Lock className="h-4 w-4 text-slate-400" />
-              <span>No Channel Currently Linked</span>
+        {/* Option 1: Instant Channel Link Connection (No Google Cloud setup required) */}
+        <div className="rounded-xl border border-brand-500/30 bg-gradient-to-br from-slate-950 via-surface-900 to-slate-900 p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center shrink-0">
+                <Link2 className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <span>Connect with YouTube Channel Link or @Handle</span>
+                  <Badge variant="success" className="text-[9px] uppercase tracking-wider py-0 px-1.5">
+                    Instant
+                  </Badge>
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Connect instantly using your public channel handle. Zero Google Cloud setup required.
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 max-w-xl">
-              Connect your YouTube channel to allow ASH Creator Studio to calculate accurate view velocities,
-              tailor video hooks to your audience, and suggest topics in your exact genre.
+          </div>
+
+          <form onSubmit={handleConnectLink} className="space-y-3">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
+                <Input
+                  type="text"
+                  placeholder="e.g. @MrBeast, https://youtube.com/@mkbhd, or channel link"
+                  value={channelInput}
+                  onChange={(e) => setChannelInput(e.target.value)}
+                  disabled={connectingLink}
+                  className="bg-slate-950/80 border-slate-700 focus:border-brand-500 text-sm h-11 pl-3.5 pr-20 text-slate-100 placeholder:text-slate-500"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={connectingLink || !channelInput.trim()}
+                className="h-11 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold gap-2 shadow-lg shadow-red-600/20 shrink-0"
+              >
+                {connectingLink ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Connecting Channel...</span>
+                  </>
+                ) : (
+                  <>
+                    <Youtube className="h-4 w-4" />
+                    <span>Connect Channel</span>
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Quick Suggestions Chips */}
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
+              <span className="text-[11px] text-slate-500">Quick Test:</span>
+              {["@MrBeast", "@mkbhd", "@veritasium"].map((handle) => (
+                <button
+                  key={handle}
+                  type="button"
+                  onClick={() => setChannelInput(handle)}
+                  className="px-2 py-0.5 rounded-md bg-slate-800/80 hover:bg-slate-700 text-[11px] text-brand-300 font-mono transition-colors border border-slate-700/60"
+                >
+                  {handle}
+                </button>
+              ))}
+            </div>
+          </form>
+        </div>
+
+        {/* Divider */}
+        <div className="relative my-2">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-800"></div>
+          </div>
+          <div className="relative flex justify-center text-[10px] uppercase">
+            <span className="bg-surface-900 px-3 text-slate-500 font-medium tracking-wider">
+              Or connect via official Google OAuth 2.0
+            </span>
+          </div>
+        </div>
+
+        {/* Option 2: Google OAuth 2.0 Flow */}
+        <div className="rounded-xl border border-dashed border-slate-800 bg-slate-950/40 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="space-y-1 text-center sm:text-left">
+            <div className="flex items-center justify-center sm:justify-start gap-1.5 text-slate-300 font-medium text-xs">
+              <Lock className="h-3.5 w-3.5 text-slate-400" />
+              <span>Google Cloud OAuth 2.0 Flow (Private Analytics)</span>
+            </div>
+            <p className="text-[11px] text-slate-500 max-w-md">
+              Enables authorized private YouTube Studio audience analytics. Requires Google OAuth Client ID and Secret in .env.local.
             </p>
           </div>
 
-          <div className="flex flex-col items-center md:items-end gap-2 shrink-0">
-            <Button
-              variant="primary"
-              size="md"
-              onClick={handleStartOAuth}
-              disabled={connecting}
-              className="gap-2 bg-red-600 hover:bg-red-700 shadow-red-600/20 text-white font-medium"
-            >
-              {connecting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Connecting Google...</span>
-                </>
-              ) : (
-                <>
-                  <Youtube className="h-4 w-4" />
-                  <span>Connect YouTube Channel</span>
-                </>
-              )}
-            </Button>
-            <span className="text-[11px] text-slate-500 flex items-center gap-1">
-              <ShieldCheck className="h-3 w-3 text-emerald-400" />
-              Official Google OAuth 2.0 (Read-Only)
-            </span>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleStartOAuth}
+            disabled={connecting}
+            className="text-xs gap-2 border-slate-700 hover:bg-slate-800 text-slate-200 shrink-0"
+          >
+            {connecting ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <span>Redirecting...</span>
+              </>
+            ) : (
+              <>
+                <Youtube className="h-3.5 w-3.5 text-red-500" />
+                <span>Connect via Google OAuth</span>
+              </>
+            )}
+          </Button>
         </div>
 
         {/* Explicit Permissions Transparency Section */}

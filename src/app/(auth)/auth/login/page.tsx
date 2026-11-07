@@ -31,9 +31,41 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [redirectDestination, setRedirectDestination] = useState<string>("/dashboard");
+  const [resending, setResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState<string | null>(null);
 
   const router = useRouter();
   const configured = isSupabaseConfigured();
+
+  const handleResendConfirmation = async () => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setErrorMessage("Please enter your email address to resend confirmation.");
+      return;
+    }
+    setResending(true);
+    setResendSuccess(null);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: trimmedEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) {
+        setErrorMessage(error.message);
+      } else {
+        setResendSuccess(`Confirmation link re-sent to ${trimmedEmail}! Check your inbox or spam folder.`);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to resend confirmation.";
+      setErrorMessage(msg);
+    } finally {
+      setResending(false);
+    }
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -181,13 +213,55 @@ export default function LoginPage() {
           </div>
         )}
 
+        {resendSuccess && (
+          <div
+            role="status"
+            className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 mb-4 flex items-start gap-2 text-xs text-emerald-300"
+          >
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
+            <span>{resendSuccess}</span>
+          </div>
+        )}
+
         {errorMessage && (
           <div
             role="alert"
-            className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 mb-4 flex items-start gap-2 text-xs text-rose-300"
+            className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 mb-4 text-xs text-rose-300 space-y-2.5"
           >
-            <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
-            <span>{errorMessage}</span>
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
+              <span className="font-medium">{errorMessage}</span>
+            </div>
+
+            {errorMessage.toLowerCase().includes("email not confirmed") && (
+              <div className="pt-2 border-t border-rose-500/20 space-y-2">
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Supabase requires email confirmation before signing in. Check your inbox or spam folder for the confirmation link, or resend it below:
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleResendConfirmation}
+                    disabled={resending || !email.trim()}
+                    className="h-7 text-xs border-rose-500/40 text-rose-200 hover:bg-rose-500/20"
+                  >
+                    {resending ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                        <span>Sending Link...</span>
+                      </>
+                    ) : (
+                      <span>Resend Confirmation Email</span>
+                    )}
+                  </Button>
+                </div>
+                <div className="mt-2 p-2 rounded-lg bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400">
+                  <strong className="text-amber-400">Quick fix in Supabase:</strong> In your Supabase Dashboard &gt; <em>Authentication &gt; Providers &gt; Email</em>, turn OFF <em>&quot;Confirm email&quot;</em> to let users log in immediately without verification.
+                </div>
+              </div>
+            )}
           </div>
         )}
 

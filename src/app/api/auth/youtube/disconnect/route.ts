@@ -45,22 +45,23 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Delete connection from Supabase
-    const { error: deleteError } = await supabase
-      .from("youtube_connections")
-      .delete()
-      .eq("user_id", user.id);
-
-    if (deleteError) {
-      return NextResponse.json(
-        { success: false, error: deleteError.message },
-        { status: 500 }
-      );
+    try {
+      await supabase
+        .from("youtube_connections")
+        .delete()
+        .eq("user_id", user.id);
+    } catch (delErr) {
+      console.warn("Could not delete from youtube_connections:", delErr);
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: "YouTube channel successfully disconnected.",
     });
+
+    response.cookies.delete("ash_connected_channel");
+
+    return response;
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Internal error";
     return NextResponse.json({ success: false, error: errorMsg }, { status: 500 });

@@ -1,21 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { AuthProvider } from "@/components/providers/auth-provider";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
 
 export const metadata: Metadata = {
-  title: "ASH Creator Studio — YouTube Growth OS",
-  description:
-    "AI-powered YouTube Creator Growth platform for high-velocity creators. Real metrics, intelligent packaging, and automated channel audits.",
-  icons: {
-    icon: "/favicon.ico",
-  },
+  title: "ASH Creator Studio — AI YouTube Platform",
+  description: "AI-powered YouTube creator growth platform for automated research, scriptwriting, video scene direction, SEO and thumbnails.",
 };
 
 export default function RootLayout({
@@ -24,16 +12,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>{children}</AuthProvider>
-        </ThemeProvider>
+    <html lang="en" className="dark">
+      <body className="bg-surface-950 text-slate-100 antialiased selection:bg-brand-500/20 selection:text-brand-300">
+        {children}
       </body>
     </html>
   );

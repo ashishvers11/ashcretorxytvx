@@ -5,22 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatNumber(num: number | null | undefined): string {
-  if (num === null || num === undefined) return "--";
-  if (num === 0) return "0";
-  return new Intl.NumberFormat("en-US", {
-    notation: "compact",
-    compactDisplay: "short",
-    maximumFractionDigits: 1,
-  }).format(num);
+export function formatNumber(num: number): string {
+  if (num >= 1_000_000) {
+    return `${(num / 1_000_000).toFixed(1)}M`;
+  }
+  if (num >= 1_000) {
+    return `${(num / 1_000).toFixed(1)}K`;
+  }
+  return num.toString();
 }
 
-export function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "--";
-  const date = new Date(dateStr);
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
+export function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s < 10 ? "0" : ""}${s}`;
 }

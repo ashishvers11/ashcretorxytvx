@@ -4,6 +4,7 @@ import React from "react";
 import { Sparkles, Youtube, Compass, ArrowRight, ShieldCheck, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useYouTubeChannel } from "@/hooks/use-youtube-channel";
 
 interface WelcomeSectionProps {
   onConnectClick: () => void;
@@ -11,6 +12,8 @@ interface WelcomeSectionProps {
 }
 
 export function WelcomeSection({ onConnectClick, onExploreClick }: WelcomeSectionProps) {
+  const { channel, connected } = useYouTubeChannel();
+
   return (
     <div className="relative overflow-hidden rounded-2xl border border-slate-800/90 bg-gradient-to-br from-surface-900 via-surface-900/95 to-brand-950/30 p-6 sm:p-8 shadow-2xl">
       {/* Background ambient glow */}
@@ -79,8 +82,17 @@ export function WelcomeSection({ onConnectClick, onExploreClick }: WelcomeSectio
             <span>Auth System: <strong className="text-slate-200 font-medium">Supabase Ready</strong></span>
           </div>
           <div className="flex items-center gap-2 text-slate-400 col-span-2 sm:col-span-1">
-            <div className="h-2 w-2 rounded-full bg-amber-400" />
-            <span>Channel Sync: <strong className="text-amber-400 font-medium">Awaiting Setup</strong></span>
+            <div className={`h-2 w-2 rounded-full ${connected ? "bg-emerald-400" : "bg-amber-400"}`} />
+            <span>
+              Channel Sync:{" "}
+              {connected && channel ? (
+                <strong className="text-emerald-400 font-medium truncate max-w-[120px] inline-block align-bottom">
+                  {channel.title}
+                </strong>
+              ) : (
+                <strong className="text-amber-400 font-medium">Awaiting Setup</strong>
+              )}
+            </span>
           </div>
         </div>
       </div>

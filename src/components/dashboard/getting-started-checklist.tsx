@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useYouTubeChannel } from "@/hooks/use-youtube-channel";
 
 interface GettingStartedChecklistProps {
   onConnectClick: () => void;
@@ -90,6 +91,22 @@ const ONBOARDING_STEPS = [
 ];
 
 export function GettingStartedChecklist({ onConnectClick }: GettingStartedChecklistProps) {
+  const { channel, connected } = useYouTubeChannel();
+
+  const steps = ONBOARDING_STEPS.map((s) => {
+    if (s.stepNumber === "01") {
+      return {
+        ...s,
+        status: connected ? "Connected" : "Pending Setup",
+        statusVariant: connected ? ("success" as const) : ("warning" as const),
+        isCompleted: connected,
+      };
+    }
+    return { ...s, isCompleted: false };
+  });
+
+  const completedCount = steps.filter((s) => s.isCompleted).length;
+
   return (
     <Card id="getting-started" className="border-slate-800 bg-surface-900/90 shadow-xl">
       <CardHeader className="border-b border-slate-800/80 pb-5">
@@ -97,8 +114,8 @@ export function GettingStartedChecklist({ onConnectClick }: GettingStartedCheckl
           <div>
             <div className="flex items-center gap-2">
               <CardTitle className="text-lg">Getting Started Checklist</CardTitle>
-              <Badge variant="outline" className="text-[10px] text-slate-400">
-                0 of 6 Steps Completed
+              <Badge variant={completedCount > 0 ? "success" : "outline"} className="text-[10px]">
+                {completedCount} of 6 Steps Completed
               </Badge>
             </div>
             <CardDescription className="text-xs text-slate-400 mt-1">
@@ -115,7 +132,7 @@ export function GettingStartedChecklist({ onConnectClick }: GettingStartedCheckl
 
       <CardContent className="pt-6">
         <div className="space-y-3">
-          {ONBOARDING_STEPS.map((step) => {
+          {steps.map((step) => {
             const Icon = step.icon;
 
             return (
@@ -124,8 +141,18 @@ export function GettingStartedChecklist({ onConnectClick }: GettingStartedCheckl
                 className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-800/80 bg-slate-950/40 hover:border-slate-700/80 transition-colors"
               >
                 <div className="flex items-start sm:items-center gap-3.5">
-                  <div className="h-8 w-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 text-slate-400">
-                    <Circle className="h-4 w-4 text-slate-500" />
+                  <div
+                    className={`h-8 w-8 rounded-lg border flex items-center justify-center shrink-0 ${
+                      step.isCompleted
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                        : "bg-slate-900 border-slate-800 text-slate-400"
+                    }`}
+                  >
+                    {step.isCompleted ? (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-slate-500" />
+                    )}
                   </div>
 
                   <div className="space-y-1">

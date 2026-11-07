@@ -13,7 +13,10 @@ export default function DashboardPage() {
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
 
   const handleOpenConnectModal = () => {
-    setIsConnectModalOpen(true);
+    const channelSetup = document.getElementById("channel-setup");
+    if (channelSetup) {
+      channelSetup.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const handleCloseConnectModal = () => {
@@ -37,9 +40,9 @@ export default function DashboardPage() {
         />
       </section>
 
-      {/* Section B: YouTube Channel Connection Card (Unconnected state, explanation, visual placeholder) */}
+      {/* Section B: YouTube Channel Connection Card */}
       <section aria-label="YouTube Channel Setup">
-        <ChannelConnectCard onConnectClick={handleOpenConnectModal} />
+        <ChannelConnectCard />
       </section>
 
       {/* Section C: Quick Access Section (Cards for 8 Core Modules) */}

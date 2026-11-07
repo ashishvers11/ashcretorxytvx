@@ -1,17 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles, Youtube, Bell, User } from "lucide-react";
+import { Youtube, Bell, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useYouTubeChannel } from "@/hooks/use-youtube-channel";
 
 export function Header() {
+  const { channel } = useYouTubeChannel();
+
   return (
     <header className="h-16 border-b border-slate-800/80 bg-surface-950/80 backdrop-blur-md sticky top-0 z-20 px-8 flex items-center justify-between">
       {/* Left: Platform badge */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs">
-          <Youtube className="h-3.5 w-3.5 text-slate-400" />
-          <span className="text-slate-400">YouTube Channel: <span className="text-amber-400 font-medium">Not Connected</span></span>
+          <Youtube className={`h-3.5 w-3.5 ${channel ? "text-red-500" : "text-slate-400"}`} />
+          {channel ? (
+            <span className="text-slate-300">
+              YouTube: <span className="text-emerald-400 font-medium">{channel.title}</span>
+            </span>
+          ) : (
+            <span className="text-slate-400">
+              YouTube Channel: <span className="text-amber-400 font-medium">Not Connected</span>
+            </span>
+          )}
         </div>
       </div>
 

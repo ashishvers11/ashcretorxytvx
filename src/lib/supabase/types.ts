@@ -37,6 +37,64 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
+      };
+      youtube_connections: {
+        Row: {
+          id: string;
+          user_id: string;
+          channel_id: string;
+          title: string;
+          description: string | null;
+          custom_url: string | null;
+          thumbnail_url: string | null;
+          subscriber_count: number;
+          view_count: number;
+          video_count: number;
+          encrypted_refresh_token: string | null;
+          token_iv: string | null;
+          token_auth_tag: string | null;
+          scopes: string[] | null;
+          connected_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          channel_id: string;
+          title: string;
+          description?: string | null;
+          custom_url?: string | null;
+          thumbnail_url?: string | null;
+          subscriber_count?: number;
+          view_count?: number;
+          video_count?: number;
+          encrypted_refresh_token?: string | null;
+          token_iv?: string | null;
+          token_auth_tag?: string | null;
+          scopes?: string[] | null;
+          connected_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          channel_id?: string;
+          title?: string;
+          description?: string | null;
+          custom_url?: string | null;
+          thumbnail_url?: string | null;
+          subscriber_count?: number;
+          view_count?: number;
+          video_count?: number;
+          encrypted_refresh_token?: string | null;
+          token_iv?: string | null;
+          token_auth_tag?: string | null;
+          scopes?: string[] | null;
+          connected_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       users: {
         Row: {
@@ -63,6 +121,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       channels: {
         Row: {
@@ -110,7 +169,20 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
 }

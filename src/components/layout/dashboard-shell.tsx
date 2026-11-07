@@ -184,10 +184,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             >
               <Menu className="h-5 w-5" />
             </button>
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300">
-              <Youtube className="h-3.5 w-3.5 text-red-500" />
-              <span className="hidden sm:inline">Channel Sync Active</span>
-              <span className="sm:hidden">Sync</span>
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs">
+              <Youtube className="h-3.5 w-3.5 text-slate-400" />
+              <span className="hidden sm:inline text-slate-400">YouTube Channel: <span className="text-amber-400 font-medium">Not Connected</span></span>
+              <span className="sm:hidden text-amber-400 font-medium">Not Connected</span>
             </div>
           </div>
 

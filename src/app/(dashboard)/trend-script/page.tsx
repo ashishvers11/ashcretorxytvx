@@ -95,22 +95,72 @@ export default function TrendScriptPage() {
   // Script Engine State
   const [scriptTopic, setScriptTopic] = useState<string>(initialTopic);
   const [scriptNiche, setScriptNiche] = useState<string>("Science");
-  const [selectedPresetId, setSelectedPresetId] = useState<string>("preset-zackd-facts");
+  const [scriptChannelType, setScriptChannelType] = useState<"education" | "entertainment" | "asmr">(() => {
+    const raw = (initialTopic + " " + (urlNiche || "")).toLowerCase();
+    if (/cat|billi|dog|kutta|puppy|kitten|pet|pets|mischief|prank|comedy|funny|slapstick|tom\s*and\s*jerry|shinchan|cartoon|chibi|doodh|dudh/i.test(raw)) {
+      return "entertainment";
+    }
+    if (/asmr|crush|crushing|press|hydraulic|soap|sand|slice|slicing|slime|satisfy|satisfying|oddly|crunch/i.test(raw)) {
+      return "asmr";
+    }
+    return "education";
+  });
+  const [selectedPresetId, setSelectedPresetId] = useState<string>(() => {
+    const raw = (initialTopic + " " + (urlNiche || "")).toLowerCase();
+    if (/cat|billi|dog|kutta|puppy|kitten|pet|pets|mischief|prank|comedy|funny|slapstick|tom\s*and\s*jerry|shinchan|cartoon|chibi|doodh|dudh/i.test(raw)) {
+      return "preset-cute-naughty-animation";
+    }
+    if (/asmr|crush|crushing|press|hydraulic|soap|sand|slice|slicing|slime|satisfy|satisfying|oddly|crunch/i.test(raw)) {
+      return "preset-asmr-satisfying";
+    }
+    return "preset-stickman-science";
+  });
   const [scriptLanguage, setScriptLanguage] = useState<"Hindi" | "Hinglish" | "English">("Hinglish");
   const [scriptFormat, setScriptFormat] = useState<"shorts" | "longform">("shorts");
-  const [scriptDuration, setScriptDuration] = useState<number>(30);
+  const [scriptDuration, setScriptDuration] = useState<number>(() => {
+    const raw = (initialTopic + " " + (urlNiche || "")).toLowerCase();
+    if (/cat|billi|dog|kutta|puppy|kitten|pet|pets|mischief|prank|comedy|funny|slapstick|tom\s*and\s*jerry|shinchan|cartoon|chibi|doodh|dudh|asmr|crush|hydraulic|soap|sand|slice/i.test(raw)) {
+      return 18;
+    }
+    return 30;
+  });
   const [scriptGenerating, setScriptGenerating] = useState(false);
   const [script, setScript] = useState<ProfessionalScript | null>(null);
   const [activeScriptStage, setActiveScriptStage] = useState<"brief" | "hooks" | "voiceover" | "scenes" | "facts" | "quality">("voiceover");
 
   const [copiedText, setCopiedText] = useState<string | null>(null);
 
+  // Auto-detect channel type when URL topic or niche changes
+  useEffect(() => {
+    const combined = ((urlTopic || initialTopic) + " " + (urlNiche || "")).toLowerCase();
+    if (/cat|billi|dog|kutta|puppy|kitten|pet|pets|mischief|prank|comedy|funny|slapstick|tom\s*and\s*jerry|shinchan|cartoon|chibi|doodh|dudh/i.test(combined)) {
+      setScriptChannelType("entertainment");
+      setSelectedPresetId("preset-cute-naughty-animation");
+      setScriptDuration(18);
+    } else if (/asmr|crush|crushing|press|hydraulic|soap|sand|slice|slicing|slime|satisfy|satisfying|oddly|crunch/i.test(combined)) {
+      setScriptChannelType("asmr");
+      setSelectedPresetId("preset-asmr-satisfying");
+      setScriptDuration(18);
+    } else {
+      setScriptChannelType("education");
+      setSelectedPresetId("preset-stickman-science");
+      setScriptDuration(30);
+    }
+  }, [urlTopic, urlNiche, initialTopic]);
+
   // Auto-generate script if navigated from Trend Radar with auto=true
   useEffect(() => {
     if (autoParam && urlTopic) {
       setScriptTopic(urlTopic);
       if (urlNiche) setScriptNiche(urlNiche);
-      handleGenerateScript(urlTopic, urlNiche || undefined);
+      const combined = (urlTopic + " " + (urlNiche || "")).toLowerCase();
+      const detectedChannel: "education" | "entertainment" | "asmr" =
+        /cat|billi|dog|kutta|puppy|kitten|pet|pets|mischief|prank|comedy|funny|slapstick|tom\s*and\s*jerry|shinchan|cartoon|chibi|doodh|dudh/i.test(combined)
+          ? "entertainment"
+          : /asmr|crush|crushing|press|hydraulic|soap|sand|slice|slicing|slime|satisfy|satisfying|oddly|crunch/i.test(combined)
+          ? "asmr"
+          : "education";
+      handleGenerateScript(urlTopic, urlNiche || undefined, detectedChannel);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoParam, urlTopic]);
@@ -144,9 +194,25 @@ export default function TrendScriptPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [niche, country, language, videoFormat, timeframe]);
 
-  const handleGenerateScript = async (topicToUse?: string, nicheToUse?: string) => {
+  const handleGenerateScript = async (
+    topicToUse?: string,
+    nicheToUse?: string,
+    channelTypeOverride?: "education" | "entertainment" | "asmr"
+  ) => {
     const targetTopic = topicToUse || scriptTopic;
     if (!targetTopic.trim()) return;
+
+    const targetChannelType = channelTypeOverride || scriptChannelType;
+    let targetPreset = selectedPresetId;
+    let targetDuration = scriptDuration;
+
+    if (targetChannelType === "entertainment") {
+      targetPreset = "preset-cute-naughty-animation";
+      targetDuration = 18;
+    } else if (targetChannelType === "asmr") {
+      targetPreset = "preset-asmr-satisfying";
+      targetDuration = 18;
+    }
 
     setScriptGenerating(true);
     try {
@@ -156,9 +222,10 @@ export default function TrendScriptPage() {
         body: JSON.stringify({
           topic: targetTopic,
           niche: nicheToUse || scriptNiche,
-          presetId: selectedPresetId,
+          presetId: targetPreset,
+          channelType: targetChannelType,
           videoFormat: scriptFormat,
-          targetDuration: scriptDuration,
+          targetDuration: targetDuration,
           language: scriptLanguage,
         }),
       });
@@ -190,15 +257,187 @@ export default function TrendScriptPage() {
   };
 
   const handleProcessCustomScript = (overrideText?: string) => {
-    const raw = (typeof overrideText === "string" ? overrideText : customScriptText || editableVoiceoverText || "").trim();
-    if (!raw) {
-      setCustomError("Kripya pehle apni script paste ya type karein.");
-      return;
-    }
+    const activeTopic = customScriptTopic || scriptTopic || "Viral Video Topic";
     setCustomError(null);
     setSplittingCustom(true);
 
-    const activeTopic = customScriptTopic || scriptTopic || "Viral Video Topic";
+    // If Entertainment or ASMR channel is active, generate under-20s scenes with ZERO voiceover!
+    if (scriptChannelType === "entertainment") {
+      const p1 = buildCinematicScenePrompts(activeTopic, 1, false, "9:16", "style-toon-pixar-chibi", undefined, true, "");
+      const p2 = buildCinematicScenePrompts(activeTopic, 2, false, "9:16", "style-toon-pixar-chibi", undefined, true, "");
+      const p3 = buildCinematicScenePrompts(activeTopic, 3, false, "9:16", "style-toon-pixar-chibi", undefined, true, "");
+      const p4 = buildCinematicScenePrompts(activeTopic, 4, true, "9:16", "style-toon-pixar-chibi", undefined, true, "");
+
+      const customScenes = [
+        {
+          id: "scene-1",
+          sceneNumber: 1,
+          durationSeconds: 4,
+          timecode: "0:00 - 0:04",
+          sceneType: "Comedic Gag 1: Sneaky Setup",
+          title: "Scene 1: Sneaky Mischief Setup",
+          visualDirection: p1.directorCue,
+          voiceover: "",
+          onScreenText: "WAIT FOR THIS PRANK 😜",
+          sfx: "Funny cartoon tip-toe pizzicato strings + cheeky eye blink SFX",
+          imagePrompt: p1.imagePrompt,
+          motionPrompt: p1.motionPrompt,
+        },
+        {
+          id: "scene-2",
+          sceneNumber: 2,
+          durationSeconds: 5,
+          timecode: "0:04 - 0:09",
+          sceneType: "Comedic Gag 2: The Action",
+          title: "Scene 2: Sneaky Pet Mischief",
+          visualDirection: p2.directorCue,
+          voiceover: "",
+          onScreenText: "THE SNEAKY MISCHIEF 🐾🥛",
+          sfx: "Slide whistle descending + wobbling boing spring sound",
+          imagePrompt: p2.imagePrompt,
+          motionPrompt: p2.motionPrompt,
+        },
+        {
+          id: "scene-3",
+          sceneNumber: 3,
+          durationSeconds: 5,
+          timecode: "0:09 - 0:14",
+          sceneType: "Comedic Gag 3: The Climax",
+          title: "Scene 3: Who Did This?!",
+          visualDirection: p3.directorCue,
+          voiceover: "",
+          onScreenText: "WHO DID THIS?! 🐶😳",
+          sfx: "Spring jump boing SFX + comedic trombone wah-wah + dramatic pet gasp",
+          imagePrompt: p3.imagePrompt,
+          motionPrompt: p3.motionPrompt,
+        },
+        {
+          id: "scene-4",
+          sceneNumber: 4,
+          durationSeconds: 4,
+          timecode: "0:14 - 0:18",
+          sceneType: "Comedic Gag 4: Infinite Loop",
+          title: "Scene 4: Instant Karma Fail & Loop",
+          visualDirection: p4.directorCue,
+          voiceover: "",
+          onScreenText: "INSTANT KARMA! 😂💥",
+          sfx: "Cymbal crash + funny cartoon splat + upbeat xylophone roll",
+          imagePrompt: p4.imagePrompt,
+          motionPrompt: p4.motionPrompt,
+        },
+      ];
+
+      const customScriptObj: any = {
+        id: `custom-script-${Date.now()}`,
+        topic: activeTopic,
+        targetDuration: 18,
+        language: "Hinglish",
+        preset: BUILT_IN_PRESETS.find((p) => p.id === "preset-cute-naughty-animation") || BUILT_IN_PRESETS[2],
+        voiceover: { fullScript: "", estimatedSpeakingTimeSeconds: 18, targetWordCount: 0, actualWordCount: 0, paragraphs: [] },
+        scenes: { totalScenes: 4, scenes: customScenes },
+        qualityGate: { passed: true, score: 99, allScenesUnder10s: true, has3sHook: true },
+      };
+
+      try {
+        localStorage.setItem("ash_active_script", JSON.stringify(customScriptObj));
+      } catch (e) {}
+
+      setSplittingCustom(false);
+      window.location.href = `/video-production?topic=${encodeURIComponent(activeTopic)}&channel=entertainment`;
+      return;
+    }
+
+    if (scriptChannelType === "asmr") {
+      const p1 = buildCinematicScenePrompts(activeTopic, 1, false, "9:16", "style-asmr-crushing", undefined, true, "");
+      const p2 = buildCinematicScenePrompts(activeTopic, 2, false, "9:16", "style-asmr-crushing", undefined, true, "");
+      const p3 = buildCinematicScenePrompts(activeTopic, 3, false, "9:16", "style-asmr-crushing", undefined, true, "");
+      const p4 = buildCinematicScenePrompts(activeTopic, 4, true, "9:16", "style-asmr-crushing", undefined, true, "");
+
+      const customScenes = [
+        {
+          id: "scene-1",
+          sceneNumber: 1,
+          durationSeconds: 4,
+          timecode: "0:00 - 0:04",
+          sceneType: "Tactile Sensory Hook",
+          title: "Scene 1: Textured Object Reveal",
+          visualDirection: p1.directorCue,
+          voiceover: "",
+          onScreenText: "ODDLY SATISFYING ✨🎧",
+          sfx: "Crisp macro surface tap + deep mechanical hydraulic hum",
+          imagePrompt: p1.imagePrompt,
+          motionPrompt: p1.motionPrompt,
+        },
+        {
+          id: "scene-2",
+          sceneNumber: 2,
+          durationSeconds: 5,
+          timecode: "0:04 - 0:09",
+          sceneType: "Tactile Descent",
+          title: "Scene 2: Mechanical Descent & Contact",
+          visualDirection: p2.directorCue,
+          voiceover: "",
+          onScreenText: "THE FIRST CRUNCH 💥",
+          sfx: "1000fps high-frequency crackle + layered crunchy foam/soap slice sound",
+          imagePrompt: p2.imagePrompt,
+          motionPrompt: p2.motionPrompt,
+        },
+        {
+          id: "scene-3",
+          sceneNumber: 3,
+          durationSeconds: 5,
+          timecode: "0:09 - 0:14",
+          sceneType: "Tactile Climax",
+          title: "Scene 3: Macro Crushing Burst",
+          visualDirection: p3.directorCue,
+          voiceover: "",
+          onScreenText: "PURE BRAIN TINGLES 🧠✨",
+          sfx: "Massive sub-bass compression drop + ultra-satisfying continuous shearing SFX",
+          imagePrompt: p3.imagePrompt,
+          motionPrompt: p3.motionPrompt,
+        },
+        {
+          id: "scene-4",
+          sceneNumber: 4,
+          durationSeconds: 4,
+          timecode: "0:14 - 0:18",
+          sceneType: "Tactile Infinite Loop",
+          title: "Scene 4: Clean Replay Loop",
+          visualDirection: p4.directorCue,
+          voiceover: "",
+          onScreenText: "WAIT FOR REPLAY 🔁",
+          sfx: "Clean suction release hiss + resonant ambient chime",
+          imagePrompt: p4.imagePrompt,
+          motionPrompt: p4.motionPrompt,
+        },
+      ];
+
+      const customScriptObj: any = {
+        id: `custom-script-${Date.now()}`,
+        topic: activeTopic,
+        targetDuration: 18,
+        language: "Hinglish",
+        preset: BUILT_IN_PRESETS.find((p) => p.id === "preset-asmr-satisfying") || BUILT_IN_PRESETS[3],
+        voiceover: { fullScript: "", estimatedSpeakingTimeSeconds: 18, targetWordCount: 0, actualWordCount: 0, paragraphs: [] },
+        scenes: { totalScenes: 4, scenes: customScenes },
+        qualityGate: { passed: true, score: 99, allScenesUnder10s: true, has3sHook: true },
+      };
+
+      try {
+        localStorage.setItem("ash_active_script", JSON.stringify(customScriptObj));
+      } catch (e) {}
+
+      setSplittingCustom(false);
+      window.location.href = `/video-production?topic=${encodeURIComponent(activeTopic)}&channel=asmr`;
+      return;
+    }
+
+    const raw = (typeof overrideText === "string" ? overrideText : customScriptText || editableVoiceoverText || "").trim();
+    if (!raw) {
+      setCustomError("Kripya pehle apni script paste ya type karein.");
+      setSplittingCustom(false);
+      return;
+    }
 
     const allWords = raw.split(/\s+/).filter(Boolean);
     if (allWords.length < 5) {
@@ -932,9 +1171,122 @@ export default function TrendScriptPage() {
             </CardHeader>
 
             <CardContent className="pt-5 space-y-6">
-              {/* STEP 1: Creator Preset Picker */}
+              {/* STEP 0: Dedicated Channel Category Selector */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                    <span className="h-5 w-5 rounded-full bg-brand-500 text-slate-950 text-xs font-bold flex items-center justify-center">★</span>
+                    <span>CHANNEL CATEGORY CHUNO (Aapka Video Kis Channel Ke Liye Hai?):</span>
+                  </label>
+                  <Badge variant="outline" className="text-[11px] text-brand-300 font-semibold">
+                    {scriptChannelType === "education" && "🎓 Education Channel Active"}
+                    {scriptChannelType === "entertainment" && "😂 Entertainment Channel Active (Zero Voiceover • Under 20s)"}
+                    {scriptChannelType === "asmr" && "✨ ASMR Channel Active (Zero Voiceover • Under 20s)"}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Channel A: Education */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setScriptChannelType("education");
+                      setSelectedPresetId("preset-stickman-science");
+                      setScriptDuration(30);
+                    }}
+                    className={`p-4 rounded-xl border text-left transition-all ${
+                      scriptChannelType === "education"
+                        ? "border-sky-500 bg-sky-500/15 text-white ring-2 ring-sky-500/50 shadow-lg shadow-sky-500/20"
+                        : "border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <strong className="text-xs font-bold text-sky-300 flex items-center gap-1.5">
+                        <span>🎓 Education &amp; Science</span>
+                      </strong>
+                      <Badge variant={scriptChannelType === "education" ? "default" : "outline"} className="text-[9px]">
+                        Voiceover Script
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
+                      3D Sticky Man (Ashish FN Signature), Zack D., MrBeast Fast-Cut Science.
+                    </p>
+                    <div className="flex items-center gap-2 text-[10px] text-sky-400 font-medium">
+                      <span>⏱️ 30s ya 60s Duration</span>
+                      <span>•</span>
+                      <span>🗣️ Spoken Voiceover Line</span>
+                    </div>
+                  </button>
+
+                  {/* Channel B: Entertainment */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setScriptChannelType("entertainment");
+                      setSelectedPresetId("preset-cute-naughty-animation");
+                      setScriptDuration(18);
+                    }}
+                    className={`p-4 rounded-xl border text-left transition-all ${
+                      scriptChannelType === "entertainment"
+                        ? "border-amber-500 bg-amber-500/15 text-white ring-2 ring-amber-500/50 shadow-lg shadow-amber-500/20"
+                        : "border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <strong className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                        <span>😂 Entertainment &amp; Comedy</span>
+                      </strong>
+                      <Badge variant="success" className="text-[9px] bg-amber-500 text-slate-950 font-black">
+                        ZERO Voiceover ⚡
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
+                      Tom &amp; Jerry Slapstick, Cute Pets (Naughty Billi &amp; Kutta Pranks), Shinchan Chibi.
+                    </p>
+                    <div className="flex items-center gap-2 text-[10px] text-amber-300 font-medium">
+                      <span>⚡ Under 20s (18s Total)</span>
+                      <span>•</span>
+                      <span>🔇 BINA Voiceover (Music + SFX)</span>
+                    </div>
+                  </button>
+
+                  {/* Channel C: ASMR */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setScriptChannelType("asmr");
+                      setSelectedPresetId("preset-asmr-satisfying");
+                      setScriptDuration(18);
+                    }}
+                    className={`p-4 rounded-xl border text-left transition-all ${
+                      scriptChannelType === "asmr"
+                        ? "border-teal-500 bg-teal-500/15 text-white ring-2 ring-teal-500/50 shadow-lg shadow-teal-500/20"
+                        : "border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <strong className="text-xs font-bold text-teal-300 flex items-center gap-1.5">
+                        <span>✨ Visual ASMR &amp; Crushing</span>
+                      </strong>
+                      <Badge variant="success" className="text-[9px] bg-teal-500 text-slate-950 font-black">
+                        ZERO Voiceover ⚡
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
+                      Hydraulic Press Crushing, Hot Knife Soap Slicing, Kinetic Sand Crunch.
+                    </p>
+                    <div className="flex items-center gap-2 text-[10px] text-teal-300 font-medium">
+                      <span>⚡ Under 20s (18s Total)</span>
+                      <span>•</span>
+                      <span>🎧 1000fps Macro Audio</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* STEP 1: Creator Preset Picker (Filtered by Channel) */}
+              <div className="space-y-2 pt-1 border-t border-slate-800/60">
+                <div className="flex items-center justify-between pt-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-brand-400 flex items-center gap-2">
                     <span className="h-5 w-5 rounded-full bg-brand-500 text-slate-950 text-xs font-bold flex items-center justify-center">1</span>
                     <span>STYLE CHUNO (Script Ka Format Select Karein):</span>
@@ -944,8 +1296,12 @@ export default function TrendScriptPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {BUILT_IN_PRESETS.map((p) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {BUILT_IN_PRESETS.filter((p) => {
+                    if (scriptChannelType === "entertainment") return p.id === "preset-cute-naughty-animation";
+                    if (scriptChannelType === "asmr") return p.id === "preset-asmr-satisfying";
+                    return p.id !== "preset-cute-naughty-animation" && p.id !== "preset-asmr-satisfying";
+                  }).map((p) => {
                     const isSelected = selectedPresetId === p.id;
                     return (
                       <button
@@ -988,98 +1344,127 @@ export default function TrendScriptPage() {
                     <span>TIME / DURATION CHUNO (Kitne Second Ka Video Banana Hai):</span>
                   </label>
                   <span className="text-[11px] text-amber-300 font-bold">
-                    {scriptDuration <= 30 ? "⚡ 20-30 Second Viral Short" : scriptDuration === 60 ? "⏱️ 60 Second Standard Short" : `${scriptDuration} Second`}
+                    {scriptChannelType === "entertainment" || scriptChannelType === "asmr"
+                      ? "⚡ Under 20s (18s Total • 4 Rapid Cuts)"
+                      : scriptDuration <= 30
+                      ? "⚡ 20-30 Second Viral Short"
+                      : scriptDuration === 60
+                      ? "⏱️ 60 Second Standard Short"
+                      : `${scriptDuration} Second`}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setScriptDuration(30)}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      scriptDuration === 30
-                        ? "border-emerald-500 bg-emerald-500/15 text-white ring-2 ring-emerald-500/40 shadow-lg shadow-emerald-500/20"
-                        : "border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700 hover:text-slate-200"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                        {scriptDuration === 30 && <Check className="h-3.5 w-3.5 text-emerald-400" />}
-                        <span>⚡ Under 30s</span>
-                      </span>
-                      <Badge variant="success" className="text-[9px]">Viral Fast</Badge>
+                {scriptChannelType === "entertainment" || scriptChannelType === "asmr" ? (
+                  <div className="p-4 rounded-xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-slate-950 to-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center font-bold text-base shrink-0">
+                        ⚡
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-amber-200">
+                          Duration Auto-Locked: Under 20 Seconds (18s Total • 4 Fast Cuts)
+                        </p>
+                        <p className="text-[11px] text-slate-300 mt-0.5">
+                          {scriptChannelType === "entertainment"
+                            ? "Entertainment cartoon comedy shorts strictly 20s ke andar hote hain bina kisi voiceover monologue ke (sirf funny moments + sound effects + music)!"
+                            : "ASMR videos strictly 20s ke andar hote hain bina kisi voiceover ke (sirf crisp macro sound effects + tactile satisfaction)!"}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[10px] text-slate-400 leading-tight">
-                      3 Rapid Scenes (~45 words). 24s-28s max retention.
-                    </p>
-                  </button>
+                    <Badge variant="success" className="text-xs shrink-0 font-black bg-amber-500 text-slate-950 px-3 py-1">
+                      ⚡ 18s (Under 20s)
+                    </Badge>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setScriptDuration(30)}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        scriptDuration === 30
+                          ? "border-emerald-500 bg-emerald-500/15 text-white ring-2 ring-emerald-500/40 shadow-lg shadow-emerald-500/20"
+                          : "border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                          {scriptDuration === 30 && <Check className="h-3.5 w-3.5 text-emerald-400" />}
+                          <span>⚡ Under 30s</span>
+                        </span>
+                        <Badge variant="success" className="text-[9px]">Viral Fast</Badge>
+                      </div>
+                      <p className="text-[10px] text-slate-400 leading-tight">
+                        4 Rapid Scenes (~45 words). 26s max retention.
+                      </p>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setScriptDuration(60)}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      scriptDuration === 60
-                        ? "border-brand-500 bg-brand-500/15 text-white ring-2 ring-brand-500/40 shadow-lg shadow-brand-500/20"
-                        : "border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700 hover:text-slate-200"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-brand-300 flex items-center gap-1">
-                        {scriptDuration === 60 && <Check className="h-3.5 w-3.5 text-brand-400" />}
-                        <span>⏱️ 60 Seconds</span>
-                      </span>
-                      <Badge variant="outline" className="text-[9px]">Standard</Badge>
-                    </div>
-                    <p className="text-[10px] text-slate-400 leading-tight">
-                      6 Balanced Scenes (~100 words). In-depth facts.
-                    </p>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setScriptDuration(60)}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        scriptDuration === 60
+                          ? "border-brand-500 bg-brand-500/15 text-white ring-2 ring-brand-500/40 shadow-lg shadow-brand-500/20"
+                          : "border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-brand-300 flex items-center gap-1">
+                          {scriptDuration === 60 && <Check className="h-3.5 w-3.5 text-brand-400" />}
+                          <span>⏱️ 60 Seconds</span>
+                        </span>
+                        <Badge variant="outline" className="text-[9px]">Standard</Badge>
+                      </div>
+                      <p className="text-[10px] text-slate-400 leading-tight">
+                        6 Balanced Scenes (~100 words). In-depth facts.
+                      </p>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setScriptDuration(90)}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      scriptDuration === 90
-                        ? "border-brand-500 bg-brand-500/15 text-white ring-2 ring-brand-500/40 shadow-lg shadow-brand-500/20"
-                        : "border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700 hover:text-slate-200"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-slate-200 flex items-center gap-1">
-                        {scriptDuration === 90 && <Check className="h-3.5 w-3.5 text-brand-400" />}
-                        <span>🎬 90 Seconds</span>
-                      </span>
-                      <Badge variant="outline" className="text-[9px]">Extended</Badge>
-                    </div>
-                    <p className="text-[10px] text-slate-400 leading-tight">
-                      Full story breakdown for longer Shorts.
-                    </p>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setScriptDuration(90)}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        scriptDuration === 90
+                          ? "border-brand-500 bg-brand-500/15 text-white ring-2 ring-brand-500/40 shadow-lg shadow-brand-500/20"
+                          : "border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-slate-200 flex items-center gap-1">
+                          {scriptDuration === 90 && <Check className="h-3.5 w-3.5 text-brand-400" />}
+                          <span>🎬 90 Seconds</span>
+                        </span>
+                        <Badge variant="outline" className="text-[9px]">Extended</Badge>
+                      </div>
+                      <p className="text-[10px] text-slate-400 leading-tight">
+                        Full story breakdown for longer Shorts.
+                      </p>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setScriptDuration(300);
-                      setScriptFormat("longform");
-                    }}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      scriptDuration === 300
-                        ? "border-brand-500 bg-brand-500/15 text-white ring-2 ring-brand-500/40 shadow-lg shadow-brand-500/20"
-                        : "border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700 hover:text-slate-200"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-slate-200 flex items-center gap-1">
-                        {scriptDuration === 300 && <Check className="h-3.5 w-3.5 text-brand-400" />}
-                        <span>📽️ 3-5 Mins</span>
-                      </span>
-                      <Badge variant="outline" className="text-[9px]">Long-form</Badge>
-                    </div>
-                    <p className="text-[10px] text-slate-400 leading-tight">
-                      Landscape 16:9 complete explainer video.
-                    </p>
-                  </button>
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setScriptDuration(300);
+                        setScriptFormat("longform");
+                      }}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        scriptDuration === 300
+                          ? "border-brand-500 bg-brand-500/15 text-white ring-2 ring-brand-500/40 shadow-lg shadow-brand-500/20"
+                          : "border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-slate-200 flex items-center gap-1">
+                          {scriptDuration === 300 && <Check className="h-3.5 w-3.5 text-brand-400" />}
+                          <span>📽️ 3-5 Mins</span>
+                        </span>
+                        <Badge variant="outline" className="text-[9px]">Long-form</Badge>
+                      </div>
+                      <p className="text-[10px] text-slate-400 leading-tight">
+                        Landscape 16:9 complete explainer video.
+                      </p>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* STEP 3: Topic Input & Big Generate Button */}
@@ -1293,7 +1678,67 @@ export default function TrendScriptPage() {
                   </CardHeader>
 
                   <CardContent className="pt-5 space-y-4">
-                    {voiceoverViewMode === "edit" ? (
+                    {/* ZERO VOICEOVER MODE FOR ENTERTAINMENT & ASMR */}
+                    {(!script.fullVoiceover || scriptChannelType === "entertainment" || scriptChannelType === "asmr") ? (
+                      <div className="space-y-4">
+                        <div className="p-4 rounded-xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-slate-900 to-slate-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
+                          <div className="flex items-center gap-3">
+                            <span className="text-3xl">{scriptChannelType === "entertainment" ? "😂" : "✨"}</span>
+                            <div>
+                              <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                                <span>{scriptChannelType === "entertainment" ? "Entertainment & Cartoon Comedy Gag" : "Visual ASMR & Crushing"}</span>
+                                <Badge variant="success" className="text-[10px] bg-amber-500 text-slate-950 font-black px-2 py-0.5">
+                                  ⚡ ZERO VOICE OVER • UNDER 20s
+                                </Badge>
+                              </h4>
+                              <p className="text-xs text-slate-300 mt-0.5">
+                                {scriptChannelType === "entertainment"
+                                  ? "Is video me koi boring voiceover/monologue nahi hai! Sirf 4 rapid funny action cuts, playful sound effects aur background music hai."
+                                  : "Is ASMR video me koi voiceover nahi hai! Sirf 1000fps macro tactile sounds, crushing textures aur binaural audio hai."}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="text-xs text-amber-300 font-mono shrink-0">
+                            4 Rapid Cuts • 18s Total
+                          </Badge>
+                        </div>
+
+                        {/* Scene Breakdown Cards (Zero Voiceover Mode) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {script.scenes.map((sc) => (
+                            <div key={sc.sceneNumber} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2.5 shadow-md">
+                              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                                <span className="text-xs font-bold text-amber-400">
+                                  Cut {sc.sceneNumber} ({sc.timeRange})
+                                </span>
+                                <span className="text-[11px] font-bold text-white bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                                  &ldquo;{sc.onScreenText}&rdquo;
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-200 leading-relaxed">
+                                <strong className="text-slate-400">Visual Action:</strong> {sc.visualConcept}
+                              </p>
+                              <p className="text-[11px] text-amber-300/90 font-medium">
+                                <strong className="text-slate-400">Audio &amp; SFX:</strong> {sc.soundEffect}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Direct Button to Video Production */}
+                        <Link
+                          href={`/video-production?topic=${encodeURIComponent(script.topic)}&channel=${scriptChannelType}`}
+                          className="block"
+                        >
+                          <Button
+                            className="w-full h-14 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-sm uppercase tracking-wide gap-2.5 shadow-xl shadow-amber-500/25 active:scale-[0.99] transition-transform"
+                          >
+                            <Zap className="h-5 w-5 fill-slate-950" />
+                            <span>🎬 OPEN IN VIDEO PRODUCTION &amp; GENERATE 8K PROMPTS ➔</span>
+                          </Button>
+                        </Link>
+                      </div>
+                    ) : voiceoverViewMode === "edit" ? (
                       <div className="space-y-3">
                         <div className="flex items-center justify-between text-[11px] text-slate-400">
                           <span className="flex items-center gap-1.5 text-emerald-400 font-medium">

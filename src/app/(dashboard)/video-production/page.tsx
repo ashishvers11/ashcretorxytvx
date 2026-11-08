@@ -452,19 +452,44 @@ export default function VideoProductionPage() {
   const { channel, connected } = useYouTubeChannel();
   const searchParams = useSearchParams();
   const initialTopic = searchParams.get("topic") || "ASML Microchip Monopoly & Extreme EUV Physics";
+  const urlChannel = searchParams.get("channel") as "education" | "entertainment" | "asmr" | null;
+
+  const detectedChannel: "education" | "entertainment" | "asmr" = useMemo(() => {
+    if (urlChannel === "entertainment" || urlChannel === "asmr" || urlChannel === "education") {
+      return urlChannel;
+    }
+    const raw = initialTopic.toLowerCase();
+    if (/cat|billi|dog|kutta|puppy|kitten|pet|pets|mischief|prank|comedy|funny|slapstick|tom\s*and\s*jerry|shinchan|cartoon|chibi|doodh|dudh/i.test(raw)) {
+      return "entertainment";
+    }
+    if (/asmr|crush|crushing|press|hydraulic|soap|sand|slice|slicing|slime|satisfy|satisfying|oddly|crunch/i.test(raw)) {
+      return "asmr";
+    }
+    return "education";
+  }, [urlChannel, initialTopic]);
 
   const [topic, setTopic] = useState<string>(initialTopic);
-  const [selectedStyleId, setSelectedStyleId] = useState<string>("style-stickman");
-  const [channelTypeTab, setChannelTypeTab] = useState<"education" | "entertainment" | "asmr">("education");
+  const [channelTypeTab, setChannelTypeTab] = useState<"education" | "entertainment" | "asmr">(detectedChannel);
+  const [selectedStyleId, setSelectedStyleId] = useState<string>(() => {
+    if (detectedChannel === "entertainment") return "style-toon-pixar-chibi";
+    if (detectedChannel === "asmr") return "style-asmr-crushing";
+    return "style-stickman";
+  });
   const [aspectRatio, setAspectRatio] = useState<"9:16" | "16:9">("9:16");
   const [durationMode, setDurationMode] = useState<"under30" | "standard60">("under30");
   const [copiedPromptId, setCopiedPromptId] = useState<string | null>(null);
 
   // 100% Character Consistency Engine (Cartoonish & 3D Sticky Man)
   const [characterConsistencyLocked, setCharacterConsistencyLocked] = useState<boolean>(true);
-  const [characterAnchor, setCharacterAnchor] = useState<string>(
-    "3D stylized minimalist white stickman (sticky man) with big expressive cartoon eyes, smooth rounded 3D stick limbs, Zack D. Films / Alan Becker cartoon animation style, high-end 3D render, no realistic humans, no photorealistic people"
-  );
+  const [characterAnchor, setCharacterAnchor] = useState<string>(() => {
+    if (detectedChannel === "entertainment") {
+      return "Cute chubby 3D cartoon cat and puppy, vibrant Pixar animation style, oversized glossy expressive eyes, soft fluffy fur textures, playful slapstick comedy gestures, high-end 3D render, no realistic humans";
+    }
+    if (detectedChannel === "asmr") {
+      return "Oddly satisfying macro tactile textures, 10-ton hydraulic press crushing colorful blocks, heated glowing knife slicing soap grid, kinetic sand ribbons, hyper-detailed 8K macro render";
+    }
+    return "3D stylized minimalist white stickman (sticky man) with big expressive cartoon eyes, smooth rounded 3D stick limbs, Zack D. Films / Alan Becker cartoon animation style, high-end 3D render, no realistic humans, no photorealistic people";
+  });
 
   const cleanSpoken = useMemo(() => cleanTopicForSpoken(topic), [topic]);
 
@@ -765,9 +790,12 @@ export default function VideoProductionPage() {
   };
 
   // Choreographed Scenes with Auto-Split under 10s (Hook 3s)
-  const [scenes, setScenes] = useState<ChoreographedScene[]>(() =>
-    buildUnder30Scenes(cleanTopicForSpoken(initialTopic))
-  );
+  const [scenes, setScenes] = useState<ChoreographedScene[]>(() => {
+    const clean = cleanTopicForSpoken(initialTopic);
+    if (detectedChannel === "entertainment") return buildUnder20FunnyAnimationScenes(clean);
+    if (detectedChannel === "asmr") return buildUnder20ASMRScenes(clean);
+    return buildUnder30Scenes(clean);
+  });
 
   // Sync script from localStorage if available
   useEffect(() => {

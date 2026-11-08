@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
     const language = body.language || "Hinglish";
     const niche = body.niche || "Curiosity & Science";
     const presetId = body.presetId || "preset-zackd-facts";
+    const channelType = body.channelType || undefined;
     const researchSources = Array.isArray(body.researchSources) ? body.researchSources : [];
 
     // Run the professional 8-stage Script Pipeline
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
       topic,
       niche,
       presetId,
+      channelType,
       format: videoFormat,
       targetDurationSeconds: targetDuration,
       language,

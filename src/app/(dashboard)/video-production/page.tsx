@@ -23,6 +23,7 @@ import {
   Lock,
   Eye,
   RefreshCw,
+  ExternalLink,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -941,33 +942,64 @@ export default function VideoProductionPage() {
                       </div>
                     </div>
 
-                    {/* Visual Direction & Spoken Voiceover Teleprompter */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                      <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800 space-y-1">
-                        <span className="font-semibold text-brand-400 block flex items-center gap-1.5">
-                          <Eye className="h-3.5 w-3.5" />
-                          <span>Director Visual Cue:</span>
-                        </span>
-                        <p className="text-slate-300 leading-relaxed">{scene.visualDirection}</p>
+                    {/* Live 8K AI Generated Scene Visual Card */}
+                    <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950/80 p-3.5 flex flex-col md:flex-row gap-4 items-center md:items-start">
+                      <div className="relative aspect-[9/16] w-48 md:w-44 rounded-lg overflow-hidden bg-slate-900 border border-slate-800 shrink-0 shadow-xl group">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`https://image.pollinations.ai/prompt/${encodeURIComponent(
+                            cleanTopicForSpoken(scene.title) + " " + scene.visualDirection + " " + activeStyle.name + " 8k cinematic photorealistic Octane 3D render masterpiece"
+                          )}?width=720&height=1280&nologo=true&seed=${scene.number * 83}`}
+                          alt={scene.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[9px] font-mono font-bold text-amber-300 border border-amber-500/30">
+                          Scene {scene.number} Visual
+                        </div>
+                        <a
+                          href={`https://image.pollinations.ai/prompt/${encodeURIComponent(
+                            cleanTopicForSpoken(scene.title) + " " + scene.visualDirection + " " + activeStyle.name + " 8k cinematic photorealistic Octane 3D render masterpiece"
+                          )}?width=1080&height=1920&nologo=true&seed=${scene.number * 83}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/80 hover:bg-brand-500 text-white text-[10px] font-semibold transition-colors flex items-center gap-1 shadow-lg"
+                        >
+                          <ExternalLink className="h-2.5 w-2.5" />
+                          <span>View 8K HD</span>
+                        </a>
                       </div>
 
-                      <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800 space-y-1">
-                        <span className="font-semibold text-slate-400 block">🎙️ Spoken Teleprompter Line:</span>
-                        <p className="text-slate-100 font-medium italic leading-relaxed">&ldquo;{scene.voiceover}&rdquo;</p>
-                      </div>
-                    </div>
+                      <div className="flex-1 w-full space-y-3 flex flex-col justify-between">
+                        {/* Visual Direction & Spoken Voiceover Teleprompter */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 space-y-1">
+                            <span className="font-semibold text-brand-400 block flex items-center gap-1.5">
+                              <Eye className="h-3.5 w-3.5" />
+                              <span>Director Visual Cue:</span>
+                            </span>
+                            <p className="text-slate-300 leading-relaxed text-[11px]">{scene.visualDirection}</p>
+                          </div>
 
-                    {/* SFX Audio Cue & On-Screen Caption */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs bg-slate-950/40 px-3 py-2 rounded-lg border border-slate-800">
-                      <div className="flex items-center gap-2 text-slate-400">
-                        <Volume2 className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                        <span>
-                          <strong>SFX Cue:</strong> {scene.sfx}
-                        </span>
+                          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 space-y-1">
+                            <span className="font-semibold text-slate-400 block">🎙️ Spoken Teleprompter Line:</span>
+                            <p className="text-slate-100 font-medium italic leading-relaxed text-xs">&ldquo;{scene.voiceover}&rdquo;</p>
+                          </div>
+                        </div>
+
+                        {/* SFX Audio Cue & On-Screen Caption */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs bg-slate-950/40 px-3 py-2 rounded-lg border border-slate-800">
+                          <div className="flex items-center gap-2 text-slate-400">
+                            <Volume2 className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                            <span>
+                              <strong>SFX Cue:</strong> {scene.sfx}
+                            </span>
+                          </div>
+                          <Badge variant="outline" className="text-[10px] bg-slate-900 border-slate-700 text-slate-300 self-start sm:self-auto font-bold">
+                            On-Screen: &quot;{scene.onScreenText}&quot;
+                          </Badge>
+                        </div>
                       </div>
-                      <Badge variant="outline" className="text-[10px] bg-slate-900 border-slate-700 text-slate-300 self-start sm:self-auto font-bold">
-                        On-Screen: &quot;{scene.onScreenText}&quot;
-                      </Badge>
                     </div>
 
                     {/* AI Prompt 1: Midjourney / FLUX 8K Image Prompt */}

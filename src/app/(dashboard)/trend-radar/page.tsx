@@ -18,6 +18,7 @@ import {
   Play,
   Globe2,
   Clock,
+  FileText,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,10 @@ export default function TrendRadarPage() {
     router.push(`/trend-script?tab=script&topic=${encodeURIComponent(topic)}&niche=${encodeURIComponent(oppNiche)}&format=${format}&auto=true`);
   };
 
+  const handleCustomScript = (topic: string, oppNiche: string) => {
+    router.push(`/trend-script?tab=custom&topic=${encodeURIComponent(topic)}&niche=${encodeURIComponent(oppNiche)}&format=${format}`);
+  };
+
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-12">
       {/* Sleek, Minimal Header */}
@@ -124,6 +129,13 @@ export default function TrendRadarPage() {
             <Button variant="primary" size="sm" className="text-xs font-semibold gap-1.5 shadow-md shadow-brand-500/20">
               <Sparkles className="h-3.5 w-3.5" />
               <span>Script Studio</span>
+            </Button>
+          </Link>
+
+          <Link href="/trend-script?tab=custom">
+            <Button variant="outline" size="sm" className="text-xs font-semibold gap-1.5 border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 shadow-sm">
+              <FileText className="h-3.5 w-3.5" />
+              <span>Custom Script</span>
             </Button>
           </Link>
         </div>
@@ -303,17 +315,29 @@ export default function TrendRadarPage() {
                     </div>
                   )}
 
-                  {/* Primary 1-Click Action Button */}
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handleWriteScript(opp.topic, opp.niche)}
-                    className="w-full text-xs font-bold gap-1.5 bg-gradient-to-r from-brand-500 to-indigo-600 hover:from-brand-400 hover:to-indigo-500 text-white shadow-md shadow-brand-500/15 h-8 mt-1"
-                  >
-                    <Zap className="h-3.5 w-3.5 fill-white" />
-                    <span>Write Script for This Topic</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
+                  {/* Dual Action Buttons: AI Script & Custom Script */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => handleWriteScript(opp.topic, opp.niche)}
+                      className="w-full text-xs font-bold gap-1.5 bg-gradient-to-r from-brand-500 to-indigo-600 hover:from-brand-400 hover:to-indigo-500 text-white shadow-md shadow-brand-500/15 h-8"
+                    >
+                      <Zap className="h-3.5 w-3.5 fill-white" />
+                      <span>⚡ AI Write Script</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCustomScript(opp.topic, opp.niche)}
+                      className="w-full text-xs font-bold gap-1.5 border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 shadow-md shadow-emerald-500/10 h-8"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-emerald-400" />
+                      <span>✍️ Custom Script</span>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             );

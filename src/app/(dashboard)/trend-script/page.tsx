@@ -231,7 +231,11 @@ export default function TrendScriptPage() {
     wordPointer = hookWordCount;
     currentTimeSec = 3;
 
-    const sc1 = buildCinematicScenePrompts(activeTopic, 1, false, "9:16", "style-stickman", undefined, true, hookWords);
+    const chosenStyle = /animation|cute|naughty|funny|comedy|cartoon|chibi/i.test(activeTopic + " " + scriptNiche + " " + raw)
+      ? "style-cute-naughty-animation"
+      : "style-stickman";
+
+    const sc1 = buildCinematicScenePrompts(activeTopic, 1, false, "9:16", chosenStyle, undefined, true, hookWords);
 
     scenes.push({
       id: "scene-1",
@@ -268,7 +272,7 @@ export default function TrendScriptPage() {
       };
 
       const isLast = wordPointer >= allWords.length;
-      const scProgress = buildCinematicScenePrompts(activeTopic, sceneIndex, isLast, "9:16", "style-stickman", undefined, true, chunkWords);
+      const scProgress = buildCinematicScenePrompts(activeTopic, sceneIndex, isLast, "9:16", chosenStyle, undefined, true, chunkWords);
 
       scenes.push({
         id: `scene-${sceneIndex}`,
@@ -935,7 +939,7 @@ export default function TrendScriptPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {BUILT_IN_PRESETS.map((p) => {
                     const isSelected = selectedPresetId === p.id;
                     return (

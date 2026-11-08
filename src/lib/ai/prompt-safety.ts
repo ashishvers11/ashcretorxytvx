@@ -40,6 +40,16 @@ export const STYLE_DEFINITIONS: Record<string, StyleDefinition> = {
     renderKeywords: "Pixar 3D animation style, soft subsurface scattering, vibrant fairytale contrast, clean animated studio, 8k resolution",
     cameraMovement: "smooth cinematic 60fps crane orbit and push-in tracking the cartoon explorer character",
   },
+  "style-cute-naughty-animation": {
+    id: "style-cute-naughty-animation",
+    name: "Cute & Naughty 3D Cartoon Comedy",
+    characterDescription:
+      "charming chubby 3D animated cartoon chibi character with mischievous cheeky smirk, huge sparkling expressive cartoon eyes, playful funny gestures, Pixar and Illumination animation aesthetic, high-end 3D character render, zero realistic humans, no photorealistic people",
+    characterActionPrefix: "the mischievous cute 3D cartoon character cheekily pulling off a funny prank with ",
+    environmentDescription: "a vibrant cheerful stylized cartoon room with playful candy-toned pastel lighting, bouncy props, and soft cartoon drop-shadows",
+    renderKeywords: "Pixar and Minions 3D animation aesthetic, exaggerated squash-and-stretch cartoon physics, vibrant playful pastel lighting, slapstick comedy timing, clean animated 3D studio, 8k resolution",
+    cameraMovement: "funny comic double-take snap-zoom, dynamic 60fps tracking camera following cheeky cartoon antics, slapstick motion timing",
+  },
   "style-zackd": {
     id: "style-zackd",
     name: "Zack D. Films 3D Simulation",

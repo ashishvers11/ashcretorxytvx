@@ -630,6 +630,76 @@ export function getCuratedTrendOpportunities(
         },
       ];
     }
+  } else if (
+    normNiche.includes("animation") ||
+    normNiche.includes("cute") ||
+    normNiche.includes("naughty") ||
+    normNiche.includes("funny") ||
+    normNiche.includes("comedy") ||
+    normNiche.includes("meme")
+  ) {
+    topics = [
+      {
+        title: "😜 Naughty Billi Ne Dudh Giraya Phir Kutta Par Ilzaam Laga Diya! 😂🐱 (Cute 3D Animation)",
+        viewsPerDay: 350000,
+        score: 99,
+        classification: "Breakout Candidate",
+        gap: "Viral pet comedy with cheeky 3D cartoon expressions, dramatic slow-mo paw tap, and hilarious innocent face.",
+        angle: "Start immediately at 0:00: Naughty 3D kitten making huge sparkling innocent eyes while the bulldog gets scolded.",
+        sampleChannel: "Naughty Toons Hindi",
+        sampleViews: 1750000,
+      },
+      {
+        title: "👶 Mummy Se Bachkar Fridge Se Ice-Cream Chori: Naughty Bachhe Ka Secret Mission! 🍦🤣",
+        viewsPerDay: 310000,
+        score: 98,
+        classification: "Breakout Candidate",
+        gap: "Relatable family humor with Mission Impossible style 3D cartoon baby crawling and tiptoeing.",
+        angle: "Baby dodging squeaky floor tiles like laser beams, cheekily winking at the viewer before grabbing the ice-cream.",
+        sampleChannel: "Chibi Comedy Studio",
+        sampleViews: 1550000,
+      },
+      {
+        title: "🐒 Bandor Chacha Ki Dukan: Grahak Ko Diya Aisa Masaledar Saman Ki Dukan Hil Gayi! 🌶️🙈 (3D Funny)",
+        viewsPerDay: 270000,
+        score: 96,
+        classification: "Breakout Candidate",
+        gap: "Cheeky Indian market comedy featuring mischievous 3D cartoon monkey shopkeeper with funny sound effects.",
+        angle: "High-contrast visual comedy: Customer asking for extra spicy and monkey pulling out a glowing red chili potion.",
+        sampleChannel: "Cartoon Masti Hindi",
+        sampleViews: 1350000,
+      },
+      {
+        title: "🐶 Doggy Vs Robot Vacuum: Naughty Puppy Ne Machine Ko Hi Ghoda Bana Liya! 🤖😂 (Pixar 3D)",
+        viewsPerDay: 240000,
+        score: 94,
+        classification: "Rising Opportunity",
+        gap: "High re-watch replay loop value, adorable puppy slapstick comedy, pure visual dopamine for all ages.",
+        angle: "Fluffy puppy wearing a tiny red superhero cape riding the spinning robot cleaner across the living room.",
+        sampleChannel: "Cute Pet Toons",
+        sampleViews: 1180000,
+      },
+      {
+        title: "🍕 Ek Slice Pizza Par 3 Naughty Doston Ka Mahayuddh: Aisa Twist Kabhi Nahi Dekha Hoga! 🏃‍♂️🤣",
+        viewsPerDay: 215000,
+        score: 92,
+        classification: "Rising Opportunity",
+        gap: "Friendship rivalry comedy with dramatic anime betrayal faces and high-speed cartoon chase sequences.",
+        angle: "Classic Western standoff music over the last cheese-pull slice, ending in a pet cat stealing it from under their noses.",
+        sampleChannel: "Desi Toon Memes",
+        sampleViews: 1050000,
+      },
+      {
+        title: "🦟 Machhar Vs Naughty Chintu: Raat Ko Sone Ke Liye Kiya Sabse Khatarnak Jugaad! 🛏️⚡ (Comedy 3D)",
+        viewsPerDay: 195000,
+        score: 91,
+        classification: "Rising Opportunity",
+        gap: "Relatable Indian summer mosquito battle with cheeky 3D cartoon swatting fails and witty Hindi punchlines.",
+        angle: "Mosquito wearing aviator sunglasses doing fighter-jet barrel rolls around Chintu's nose.",
+        sampleChannel: "Baklol Animation",
+        sampleViews: 960000,
+      },
+    ];
   } else if (normNiche.includes("fact") || normNiche.includes("curiosity")) {
     topics = [
       {

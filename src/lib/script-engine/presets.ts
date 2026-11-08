@@ -40,6 +40,19 @@ export const BUILT_IN_PRESETS: ScriptPreset[] = [
     pacingWpm: 145,
     description: "Aggressive first-second hook that shatters popular misconceptions, delivering rapid-fire facts in under 30 seconds with a seamless retention loop.",
   },
+  {
+    id: "preset-cute-naughty-animation",
+    name: "😜 Cute & Naughty 3D Animation (Comedy / Funny)",
+    niche: "Animation & Funny Comedy",
+    format: "shorts",
+    aspectRatio: "9:16",
+    language: "Hinglish",
+    screenTextLanguage: "English",
+    visualStyle: "Mischievous 3D Pixar & Illumination Chibi Animation, Funny Exaggerated Cartoon Physics & Cheeky Smirks",
+    tone: "Playful, Mischievous, Funny, High Dopamine & Relatable Slapstick Humor",
+    pacingWpm: 135,
+    description: "Hilarious 3D animated comedy shorts featuring cheeky naughty cartoon characters, witty punchlines, and funny relatable situations that get massive shares.",
+  },
 ];
 
 export function getPresetById(id: string): ScriptPreset {

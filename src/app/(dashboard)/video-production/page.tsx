@@ -131,6 +131,30 @@ const VIDEO_STYLES: VideoStyleOption[] = [
     ),
   },
   {
+    id: "style-cute-naughty-animation",
+    name: "Cute & Naughty 3D Cartoon Comedy",
+    creatorTag: "😜 Naughty & Funny Toon",
+    badge: "Viral Comedy #1",
+    description: "Mischievous 3D cartoon chibi character, cheeky smirks, funny exaggerated cartoon physics, playful candy-toned lighting, zero realistic humans.",
+    camera: "Funny comic double-take snap-zoom, dynamic 60fps slapstick motion timing",
+    lighting: "Bright playful Pixar daylight with candy pastel accents and soft cartoon shadows",
+    aiTools: "Midjourney Niji/v6 3D Pixar + Runway Gen-3 / Kling 1.5",
+    aspect: "9:16",
+    colorHex: "#f59e0b",
+    previewSvg: (
+      <svg viewBox="0 0 200 120" className="w-full h-full rounded-lg" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="120" fill="#1c1308" />
+        <circle cx="100" cy="55" r="32" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+        <circle cx="88" cy="48" r="4.5" fill="#1e293b" />
+        <circle cx="89" cy="46" r="1.5" fill="#ffffff" />
+        <path d="M108 48 Q114 43 120 48" stroke="#1e293b" strokeWidth="3" strokeLinecap="round" />
+        <path d="M92 64 Q104 74 116 63" stroke="#b45309" strokeWidth="3" fill="none" strokeLinecap="round" />
+        <path d="M110 67 Q114 74 116 63" fill="#ef4444" />
+        <text x="100" y="108" textAnchor="middle" fill="#fef08a" fontSize="9" fontWeight="bold">NAUGHTY 3D COMEDY</text>
+      </svg>
+    ),
+  },
+  {
     id: "style-ashishfn",
     name: "ASHISH FN Signature (Connected Channel)",
     creatorTag: "🎯 Channel Signature",
@@ -722,6 +746,10 @@ export default function VideoProductionPage() {
                   } else if (style.id === "style-curiokid-cartoon") {
                     setCharacterAnchor(
                       "Pixar-style 3D animated cartoon boy explorer with adventurer hat, big expressive curious eyes, colorful cartoon jacket, stylized 3D render, zero realistic humans"
+                    );
+                  } else if (style.id === "style-cute-naughty-animation") {
+                    setCharacterAnchor(
+                      "Charming chubby 3D animated cartoon chibi character with mischievous cheeky smirk, huge sparkling expressive cartoon eyes, playful funny gestures, Pixar and Illumination animation aesthetic, zero realistic humans"
                     );
                   } else if (style.id === "style-ashishfn") {
                     setCharacterAnchor(

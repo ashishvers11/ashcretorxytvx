@@ -491,12 +491,17 @@ export async function runScriptEnginePipeline(
   const estimatedDurationSeconds = Math.round((wordCount / targetWpm) * 60);
 
   // STAGE 6: Scene-by-Scene Visual Planning (Hook strictly 3s, all other cuts automatically under 10s)
-  const p1 = buildCinematicScenePrompts(topic, 1, false, "9:16", "style-stickman", undefined, true, voiceoverParagraphs[0]);
-  const p2 = buildCinematicScenePrompts(topic, 2, false, "9:16", "style-stickman", undefined, true, voiceoverParagraphs[1]);
-  const p3 = buildCinematicScenePrompts(topic, 3, false, "9:16", "style-stickman", undefined, true, voiceoverParagraphs[2]);
-  const p4 = buildCinematicScenePrompts(topic, 4, isUnder30, "9:16", "style-stickman", undefined, true, voiceoverParagraphs[3]);
-  const p5 = buildCinematicScenePrompts(topic, 5, false, "9:16", "style-stickman", undefined, true, voiceoverParagraphs[4]);
-  const p6 = buildCinematicScenePrompts(topic, 6, true, "9:16", "style-stickman", undefined, true, voiceoverParagraphs[5] || voiceoverParagraphs[4]);
+  let activeStyle = "style-stickman";
+  if (presetId === "preset-cute-naughty-animation" || /animation|cute|naughty|funny|comedy|cartoon|chibi/i.test(niche + " " + topic)) {
+    activeStyle = "style-cute-naughty-animation";
+  }
+
+  const p1 = buildCinematicScenePrompts(topic, 1, false, "9:16", activeStyle, undefined, true, voiceoverParagraphs[0]);
+  const p2 = buildCinematicScenePrompts(topic, 2, false, "9:16", activeStyle, undefined, true, voiceoverParagraphs[1]);
+  const p3 = buildCinematicScenePrompts(topic, 3, false, "9:16", activeStyle, undefined, true, voiceoverParagraphs[2]);
+  const p4 = buildCinematicScenePrompts(topic, 4, isUnder30, "9:16", activeStyle, undefined, true, voiceoverParagraphs[3]);
+  const p5 = buildCinematicScenePrompts(topic, 5, false, "9:16", activeStyle, undefined, true, voiceoverParagraphs[4]);
+  const p6 = buildCinematicScenePrompts(topic, 6, true, "9:16", activeStyle, undefined, true, voiceoverParagraphs[5] || voiceoverParagraphs[4]);
 
   const scenes: ScenePlanItem[] = isUnder30
     ? [

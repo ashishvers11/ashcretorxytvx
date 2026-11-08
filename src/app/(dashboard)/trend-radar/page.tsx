@@ -66,6 +66,8 @@ export default function TrendRadarPage() {
           },
         ]
       : []),
+    { id: "Cute Animation & Funny", label: "😜 Cute & Naughty Animation", nicheQuery: "Cute Animation & Funny", desc: "Hilarious 3D cartoon, naughty characters & viral funny animation shorts" },
+    { id: "Comedy & Funny Memes", label: "😂 Comedy & Funny Memes", nicheQuery: "Comedy & Funny", desc: "Indian funny relatable shorts, comedy animation & viral sketches" },
     { id: "Interesting Facts", label: "🧠 Mind-Blowing Facts", nicheQuery: "Interesting Facts", desc: "Viral curiosity & fact shorts topics" },
     { id: "Science & Mysteries", label: "🔬 Science & Mysteries", nicheQuery: "Science & Mysteries", desc: "Unsolved mysteries, Earth & deep science" },
     { id: "Live India Viral", label: "🔥 Live India Viral", nicheQuery: "Live India Viral", desc: "Real-time Google & YouTube trends across India today" },

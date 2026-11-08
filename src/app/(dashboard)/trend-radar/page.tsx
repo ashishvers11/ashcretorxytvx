@@ -54,7 +54,7 @@ export default function TrendRadarPage() {
     setSelectedCategory("channel-tailored");
   };
 
-  // Dynamic Categories based on Connected Channel
+  // Dynamic Categories tailored specifically to ASHISH FN's 3 Core Pillars
   const categories = [
     ...(connected && channel
       ? [
@@ -62,18 +62,34 @@ export default function TrendRadarPage() {
             id: "channel-tailored",
             label: `🎯 Aligned to ${channel.title}`,
             nicheQuery: "channel-tailored",
-            desc: `Fresh viral topics tailored to ${channel.title}'s uploads (Under 1 Week)`,
+            desc: `Fresh viral topics tailored directly to ${channel.title}'s uploads`,
           },
         ]
       : []),
-    { id: "Cute Animation & Funny", label: "😜 Cute & Naughty Animation", nicheQuery: "Cute Animation & Funny", desc: "Hilarious 3D cartoon, naughty characters & viral funny animation shorts" },
-    { id: "Comedy & Funny Memes", label: "😂 Comedy & Funny Memes", nicheQuery: "Comedy & Funny", desc: "Indian funny relatable shorts, comedy animation & viral sketches" },
-    { id: "Interesting Facts", label: "🧠 Mind-Blowing Facts", nicheQuery: "Interesting Facts", desc: "Viral curiosity & fact shorts topics" },
-    { id: "Science & Mysteries", label: "🔬 Science & Mysteries", nicheQuery: "Science & Mysteries", desc: "Unsolved mysteries, Earth & deep science" },
-    { id: "Live India Viral", label: "🔥 Live India Viral", nicheQuery: "Live India Viral", desc: "Real-time Google & YouTube trends across India today" },
-    { id: "Technology", label: "💻 Tech & AI", nicheQuery: "Technology", desc: "AI, smartphones, and future tech" },
-    { id: "Gaming", label: "🎮 Gaming & Esports", nicheQuery: "Gaming", desc: "GTA, BGMI, game secrets & mechanics" },
-    { id: "Space & Cosmos", label: "🚀 Space & Cosmos", nicheQuery: "Space", desc: "Black holes, NASA, and universe discoveries" },
+    {
+      id: "Science & Education",
+      label: "🔬 Pillar A: Science & Sticky Man",
+      nicheQuery: "Science & Mysteries",
+      desc: "High-retention science, ocean life, body mechanics & ancient Earth secrets (Sticky Man style)",
+    },
+    {
+      id: "Cute Animation & Funny",
+      label: "🐶 Pillar B: Cute Animals & Cartoon Comedy",
+      nicheQuery: "Cute Animation & Funny",
+      desc: "Adorable doggy & cat mischief, cheeky pet moments & Tom & Jerry slapstick cartoons",
+    },
+    {
+      id: "Visual ASMR",
+      label: "✨ Pillar C: Visual ASMR & Crushing",
+      nicheQuery: "Visual ASMR & Crushing",
+      desc: "Hydraulic press crushing, razor-sharp kinetic sand & soap slicing, satisfying 4K physics",
+    },
+    {
+      id: "Interesting Facts",
+      label: "🧠 Mind-Blowing Facts",
+      nicheQuery: "Interesting Facts",
+      desc: "Viral curiosity & mind-bending facts (Zack D. & FactTechz format)",
+    },
   ];
 
   const fetchTrendingTopics = async (catId: string, isRefresh = false) => {

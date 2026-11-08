@@ -231,8 +231,13 @@ export default function TrendScriptPage() {
     wordPointer = hookWordCount;
     currentTimeSec = 3;
 
-    const chosenStyle = /animation|cute|naughty|funny|comedy|cartoon|chibi/i.test(activeTopic + " " + scriptNiche + " " + raw)
-      ? "style-cute-naughty-animation"
+    const combinedCheck = (activeTopic + " " + scriptNiche + " " + raw).toLowerCase();
+    const chosenStyle = /dog|cat|puppy|kitten|billi|kutta|animal|pet|monkey/i.test(combinedCheck)
+      ? "style-toon-pixar-chibi"
+      : /tom\s*and\s*jerry|slapstick|cartoon|comedy|funny|meme|chibi/i.test(combinedCheck)
+      ? "style-toon-slapstick"
+      : /asmr|hydraulic|press|crush|cutting|soap|sand|satisfy|slime/i.test(combinedCheck)
+      ? "style-asmr"
       : "style-stickman";
 
     const sc1 = buildCinematicScenePrompts(activeTopic, 1, false, "9:16", chosenStyle, undefined, true, hookWords);

@@ -787,40 +787,49 @@ export default function VideoProductionPage() {
       const stored = localStorage.getItem("ash_active_script");
       if (stored) {
         const parsed = JSON.parse(stored);
-        let rawScenes: any[] = [];
-        if (Array.isArray(parsed.scenes)) {
-          rawScenes = parsed.scenes;
-        } else if (parsed.scenes && Array.isArray(parsed.scenes.scenes)) {
-          rawScenes = parsed.scenes.scenes;
-        } else if (parsed.scenes && Array.isArray(parsed.scenes.sceneList)) {
-          rawScenes = parsed.scenes.sceneList;
-        }
+        const parsedTopic = (parsed.topic || parsed.title || "").toLowerCase();
+        const currentTopicShort = cleanSpoken.toLowerCase().slice(0, 16);
+        const isSameTopic =
+          parsedTopic &&
+          (parsedTopic.includes(currentTopicShort) || currentTopicShort.includes(parsedTopic.slice(0, 16)));
 
-        if (rawScenes.length > 0) {
-          const mappedScenes: ChoreographedScene[] = rawScenes.map((s: any, idx: number) => {
-            const voLine = s.voiceover || s.voiceoverLine || s.spokenLine || s.text || "";
-            const wordCount = voLine.split(/\s+/).filter(Boolean).length;
-            // Pacing: ~2.3 words per second (natural speaking speed ~130-140 WPM)
-            const calculatedDuration = idx === 0 ? 3 : Math.min(9, Math.max(3, Math.round(wordCount / 2.3)));
-            const duration = s.durationSeconds || calculatedDuration;
+        if (isSameTopic) {
+          let rawScenes: any[] = [];
+          if (Array.isArray(parsed.scenes)) {
+            rawScenes = parsed.scenes;
+          } else if (parsed.scenes && Array.isArray(parsed.scenes.scenes)) {
+            rawScenes = parsed.scenes.scenes;
+          } else if (parsed.scenes && Array.isArray(parsed.scenes.sceneList)) {
+            rawScenes = parsed.scenes.sceneList;
+          }
 
-            return {
-              id: s.id || `sc-${idx + 1}`,
-              number: s.sceneNumber || idx + 1,
-              durationSeconds: duration,
-              title: s.title || (idx === 0 ? "Scene 1: 3-Second Viral Hook" : idx === rawScenes.length - 1 ? "Final Scene: Payoff & Retention Loop" : `Scene ${idx + 1}: Story Progression`),
-              sceneType: idx === 0 ? "Hook (3s)" : idx === rawScenes.length - 1 ? "Infinite Loop" : "Core 3D Mechanism",
-              visualDirection: s.visualDirection || s.visualConcept || `Cinematic visual capture for ${cleanSpoken}`,
-              voiceover: voLine,
-              imagePrompt: s.imagePrompt || `Cinematic 8k photorealistic close-up of ${cleanSpoken}, scene ${idx + 1}, dramatic volumetric studio lighting, Octane render 8K, 9:16 aspect ratio --v 6.1`,
-              motionPrompt: s.motionPrompt || "Runway Gen-3: Dynamic 60fps tracking camera push-in, volumetric lighting, smooth cinematic motion",
-              sfx: s.sfx || s.soundEffect || (idx === 0 ? "Bass 808 Impact + Vinyl stop" : idx === rawScenes.length - 1 ? "Dramatic tension riser into seamless resolution" : "Ambient cinematic pulse + subtle synth"),
-              onScreenText: s.onScreenText?.includes("PART 2") ? "MIND BLOWN 🤯" : s.onScreenText || (voLine.slice(0, 26) + "..."),
-            };
-          });
+          if (rawScenes.length > 0) {
+            const mappedScenes: ChoreographedScene[] = rawScenes.map((s: any, idx: number) => {
+              const voLine = s.voiceover || s.voiceoverLine || s.spokenLine || s.text || "";
+              const wordCount = voLine.split(/\s+/).filter(Boolean).length;
+              // Pacing: ~2.3 words per second (natural speaking speed ~130-140 WPM)
+              // Scene 1 strictly 3s, consecutive cuts automatically split based on script word count
+              const calculatedDuration = idx === 0 ? 3 : Math.min(9, Math.max(3, Math.round(wordCount / 2.3)));
+              const duration = calculatedDuration;
 
-          setScenes(mappedScenes);
-          return;
+              return {
+                id: s.id || `sc-${idx + 1}`,
+                number: s.sceneNumber || idx + 1,
+                durationSeconds: duration,
+                title: s.title || (idx === 0 ? "Scene 1: 3-Second Viral Hook" : idx === rawScenes.length - 1 ? "Final Scene: Payoff & Retention Loop" : `Scene ${idx + 1}: Story Progression`),
+                sceneType: idx === 0 ? "Hook (3s)" : idx === rawScenes.length - 1 ? "Infinite Loop" : "Core 3D Mechanism",
+                visualDirection: s.visualDirection || s.visualConcept || `Cinematic visual capture for ${cleanSpoken}`,
+                voiceover: voLine,
+                imagePrompt: s.imagePrompt || `Cinematic 8k photorealistic close-up of ${cleanSpoken}, scene ${idx + 1}, dramatic volumetric studio lighting, Octane render 8K, 9:16 aspect ratio --v 6.1`,
+                motionPrompt: s.motionPrompt || "Runway Gen-3: Dynamic 60fps tracking camera push-in, volumetric lighting, smooth cinematic motion",
+                sfx: s.sfx || s.soundEffect || (idx === 0 ? "Bass 808 Impact + Vinyl stop" : idx === rawScenes.length - 1 ? "Dramatic tension riser into seamless resolution" : "Ambient cinematic pulse + subtle synth"),
+                onScreenText: s.onScreenText?.includes("PART 2") ? "MIND BLOWN 🤯" : s.onScreenText || (voLine.slice(0, 26) + "..."),
+              };
+            });
+
+            setScenes(mappedScenes);
+            return;
+          }
         }
       }
     } catch (e) {
@@ -928,6 +937,109 @@ export default function VideoProductionPage() {
           </Link>
         </div>
       </div>
+
+      {/* Active Topic Console & User's 3 Dedicated Channel Pillars */}
+      <Card className="border-slate-800 bg-surface-900/90 shadow-xl p-4 space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="space-y-1.5 flex-1">
+            <div className="flex items-center justify-between text-xs font-semibold uppercase text-slate-400">
+              <span className="flex items-center gap-1.5 text-amber-400">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Active Video Topic (Prompts will adapt to this):</span>
+              </span>
+              <span className="text-[10px] text-slate-500 font-mono">Channel: ASHISH FN</span>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="Apna naya topic likhein (e.g. Sharks ke purvaj / Doggy prank / ASMR)..."
+                className="bg-slate-950 border-slate-800 text-xs text-white"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  try {
+                    localStorage.removeItem("ash_active_script");
+                  } catch {}
+                  if (activeStyle.category === "animation") {
+                    setScenes(buildUnder20FunnyAnimationScenes(cleanSpoken));
+                  } else {
+                    setScenes(durationMode === "under30" ? buildUnder30Scenes(cleanSpoken) : buildStandard60Scenes(cleanSpoken));
+                  }
+                }}
+                className="text-xs shrink-0 bg-brand-500/10 border-brand-500/30 text-brand-300 hover:bg-brand-500/20 font-semibold gap-1.5"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span>Regenerate Prompts</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* 3 Dedicated Channel Pillars Quick Switcher */}
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80 text-xs">
+          <span className="text-slate-400 font-bold text-[11px]">Aapke 3 Channel Pillars:</span>
+
+          <button
+            type="button"
+            onClick={() => {
+              const newTopic = "Sharks ke purvaj pedon se bhi purane hain! (Indestructible Biology)";
+              setTopic(newTopic);
+              setStyleCategoryTab("creator");
+              setSelectedStyleId("style-stickman");
+              setCharacterAnchor(
+                "3D stylized minimalist white stickman (sticky man) with big expressive cartoon eyes, smooth rounded 3D stick limbs, Zack D. Films and Alan Becker animation style, high-end 3D render, zero realistic humans"
+              );
+              try { localStorage.removeItem("ash_active_script"); } catch {}
+              setScenes(buildUnder30Scenes(cleanTopicForSpoken(newTopic)));
+            }}
+            className="px-2.5 py-1 rounded-lg bg-cyan-950/40 border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 text-[11px] font-semibold flex items-center gap-1.5 transition-all"
+          >
+            <span>🔬 Pillar A: Science &amp; Sticky Man</span>
+            <Badge variant="outline" className="text-[9px] bg-cyan-900/60 border-cyan-500/30 text-cyan-200">1.3K Hit</Badge>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const newTopic = "Naughty Puppy Ne Robot Vacuum Ko Ghoda Bana Liya! (Funny Pet Comedy)";
+              setTopic(newTopic);
+              setStyleCategoryTab("animation");
+              setSelectedStyleId("style-toon-pixar-chibi");
+              setCharacterAnchor(
+                "Adorable 3D chubby cartoon puppy and cheeky kitten with giant sparkling cartoon eyes, fluffy fur texture, Pixar 3D animation style, zero realistic humans"
+              );
+              try { localStorage.removeItem("ash_active_script"); } catch {}
+              setScenes(buildUnder20FunnyAnimationScenes(cleanTopicForSpoken(newTopic)));
+            }}
+            className="px-2.5 py-1 rounded-lg bg-amber-950/40 border border-amber-500/40 hover:border-amber-400 text-amber-300 text-[11px] font-semibold flex items-center gap-1.5 transition-all"
+          >
+            <span>🐶 Pillar B: Cute Animals &amp; Slapstick Toon</span>
+            <Badge variant="warning" className="text-[9px]">Under 20s</Badge>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const newTopic = "Hydraulic Press Crushing Kinetic Sand & Soap ASMR (4K 60fps)";
+              setTopic(newTopic);
+              setStyleCategoryTab("creator");
+              setSelectedStyleId("style-asmr");
+              setCharacterAnchor(
+                "Ray-traced translucent glass elements, iridescent rainbow caustics, viscous fluid dynamics, zero humans, pure physical satisfaction"
+              );
+              try { localStorage.removeItem("ash_active_script"); } catch {}
+              setScenes(buildUnder30Scenes(cleanTopicForSpoken(newTopic)));
+            }}
+            className="px-2.5 py-1 rounded-lg bg-purple-950/40 border border-purple-500/40 hover:border-purple-400 text-purple-300 text-[11px] font-semibold flex items-center gap-1.5 transition-all"
+          >
+            <span>✨ Pillar C: Visual ASMR &amp; Crushing</span>
+            <Badge variant="outline" className="text-[9px] bg-purple-900/60 border-purple-500/30 text-purple-200">Oddly Satisfying</Badge>
+          </button>
+        </div>
+      </Card>
 
       {/* Video Styles Selection Grid with Creator vs Funny Animation Tabs */}
       <div className="space-y-3">

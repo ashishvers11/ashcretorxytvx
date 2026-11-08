@@ -213,7 +213,93 @@ function extractSceneVisualSubject(
 ): { subject: string; actionDetail: string } {
   const combined = `${rawTopic} ${voiceover}`.toLowerCase();
 
-  // 1. Temperature / Heat / Thermal Runaway
+  // 1. Cute Animals / Pets / Dogs & Cats Comedy
+  if (/dog|puppy|kutta|cat|kitten|billi|monkey|bandar|bird|duck|pet|animal|mouse|cheetah|lion|tiger/i.test(combined)) {
+    if (sceneIndex === 1) {
+      return {
+        subject: "an adorable chubby 3D cartoon animal with giant sparkling eyes playfully exploring the room",
+        actionDetail: "playfully pouncing and sniffing with curious cartoon head tilts",
+      };
+    }
+    if (sceneIndex === 2) {
+      return {
+        subject: "the mischievous 3D cartoon animal sneaking past colorful toys on a secret tiptoe prank mission",
+        actionDetail: "clumsily balancing on its paws with hilarious cartoon suspense",
+      };
+    }
+    if (sceneIndex === 3) {
+      return {
+        subject: "hilarious cartoon slapstick impact with flying colorful props and comically shocked cartoon animal reaction",
+        actionDetail: "slipping on a cartoon prop and bouncing back with elastic rubber-hose physics",
+      };
+    }
+    return {
+      subject: "charming happy 3D cartoon animal giving a cheeky fourth-wall wink at the camera",
+      actionDetail: "resolving smoothly into a playful looped bow with bright candy-toned studio lighting",
+    };
+  }
+
+  // 2. ASMR & Satisfying Crushing / Slicing
+  if (/asmr|hydraulic|press|crush|cutting|soap|sand|slime|kinetic|sponge|squish|slice/i.test(combined)) {
+    if (sceneIndex === 1) {
+      return {
+        subject: "pristine colorful geometric kinetic sand block and textured soap cube positioned under heavy industrial press",
+        actionDetail: "heavy mechanical press descending smoothly with intense macro depth of field",
+      };
+    }
+    if (sceneIndex === 2) {
+      return {
+        subject: "ultra-sharp heated blade cleanly slicing through layered rainbow kinetic sand with crisp crunchy micro-textures",
+        actionDetail: "smooth continuous micro-slicing revealing mesmerizing vibrant inner gradient layers",
+      };
+    }
+    if (sceneIndex === 3) {
+      return {
+        subject: "heavy hydraulic steel ram completely crushing translucent glass spheres and squishy neon sponge into satisfying dust",
+        actionDetail: "dramatic slow-motion tactile explosion of particles with ray-traced iridescent light caustics",
+      };
+    }
+    return {
+      subject: "flawlessly smooth reshaped physical sculpture with satisfying glossy polish and studio lighting",
+      actionDetail: "resolving cleanly back into pristine uncrushed block for an infinite seamless replay loop",
+    };
+  }
+
+  // 3. Nature, Prehistoric Life & Ocean Science (Sharks, Trees, Earth, Dinosaurs)
+  if (/shark|tree|ocean|sea|dinosaur|fossil|forest|earth|nature|ancient|stone|ice age/i.test(combined)) {
+    if (sceneIndex === 1) {
+      return {
+        subject: "magnificent prehistoric ocean vista showing an ancient shark gliding past submerged giant fossilized tree roots",
+        actionDetail: "swimming smoothly through sunlit turquoise prehistoric water with volumetric god rays",
+      };
+    }
+    if (sceneIndex === 2) {
+      return {
+        subject: "side-by-side evolutionary timeline cross-section comparing ancient 400-million-year shark fossils against early tree fossils",
+        actionDetail: "highlighting glowing archaeological timeline dates and geological sediment layers",
+      };
+    }
+    if (sceneIndex === 3) {
+      return {
+        subject: "detailed biological 3D cutaway showing the indestructible cartilaginous skeleton and sensory Ampullae of Lorenzini",
+        actionDetail: "tracking the internal evolutionary resilience mechanism with glowing bio-luminescent scan lines",
+      };
+    }
+    return {
+      subject: "breathtaking panoramic oceanic ecosystem with ancient sharks and lush ancient coastal flora",
+      actionDetail: "gliding powerfully towards the camera and looping seamlessly into the opening deep-sea framing",
+    };
+  }
+
+  // 4. Human Anatomy, Biology & Brain Mechanisms (Zack D. Style)
+  if (/body|brain|heart|eye|blood|bone|muscle|lung|organ|skin|human|biology|medical/i.test(combined)) {
+    return {
+      subject: "clean 3D clinical anatomical cutaway simulation showing transparent biological structures and cellular pathways",
+      actionDetail: "tracing the physiological reaction with illuminated medical cross-section arrows",
+    };
+  }
+
+  // 5. Temperature / Heat / Thermal Runaway
   if (/temperature|heat|degree|500|thermal|overheat|hot|garam|celcius/i.test(combined)) {
     return {
       subject: "glowing holographic digital temperature gauge surging in real time with red thermal heat map indicators",
@@ -221,7 +307,7 @@ function extractSceneVisualSubject(
     };
   }
 
-  // 2. Battery / Lithium Ions / Chemical Reaction
+  // 6. Battery / Lithium Ions / Chemical Reaction
   if (/battery|lithium|ion|chemical|reaction|cell|separator|anode|cathode|electrolyte/i.test(combined)) {
     return {
       subject: "3D micro-cross-section of illuminated lithium-ion battery cells with microscopic energy pathways surging",
@@ -229,7 +315,7 @@ function extractSceneVisualSubject(
     };
   }
 
-  // 3. Charger / Cable / Voltage / Circuit / Fake vs Real
+  // 7. Charger / Cable / Voltage / Circuit
   if (/charger|cable|wire|voltage|circuit|motherboard|fake|duplicate|original|certified/i.test(combined)) {
     return {
       subject: "high-tech charging diagnostic console with glowing voltage traces and electronic circuit comparison",
@@ -237,7 +323,7 @@ function extractSceneVisualSubject(
     };
   }
 
-  // 4. Smartphone / Hardware Device
+  // 8. Smartphone / Hardware Device
   if (/phone|smartphone|screen|mobile|display|device|gadget/i.test(combined)) {
     return {
       subject: "a high-end modern smartphone hardware device with illuminated diagnostic micro-connectors",
@@ -245,15 +331,7 @@ function extractSceneVisualSubject(
     };
   }
 
-  // 5. Microchips / Nanotech / Silicon
-  if (/chip|semiconductor|asml|transistor|silicon|nanometer|microchip/i.test(combined)) {
-    return {
-      subject: "silicon microchip wafer with glowing holographic circuit traces under ultraviolet laser scan",
-      actionDetail: "analyzing the nanometer transistor lattice under high-tech microscope",
-    };
-  }
-
-  // 6. Space / Cosmic / Stars
+  // 9. Space / Cosmic / Stars
   if (/space|planet|black hole|universe|galaxy|cosmos|gravity|star/i.test(combined)) {
     return {
       subject: "awe-inspiring celestial phenomenon with glowing accretion disk and cosmic dust particles",
@@ -261,38 +339,17 @@ function extractSceneVisualSubject(
     };
   }
 
-  // Scene Role Fallbacks:
-  if (sceneIndex === 1) {
-    return {
-      subject: "high-impact illuminated technological focal subject with glowing warning indicator light",
-      actionDetail: "jumping back in comical shock as the core subject illuminates",
-    };
-  }
-
-  if (sceneIndex === 2) {
-    return {
-      subject: "high-contrast 3D technical blueprint schematic with floating holographic diagnostic data lines",
-      actionDetail: "pointing to glowing analytical data streams and structural breakdown",
-    };
-  }
-
-  if (sceneIndex === 3) {
-    return {
-      subject: "detailed 3D cross-section simulation showing internal mechanical components and glowing energy pathways",
-      actionDetail: "tracking the internal 3D mechanism as laser scan beams sweep across components",
-    };
-  }
-
-  if (isLastScene) {
-    return {
-      subject: "pristine technological system in operational perfection with clean studio lighting",
-      actionDetail: "giving a confident animated thumbs-up as the camera resolves to the opening framing",
-    };
-  }
+  // Clean Generic Subject Fallback: Extracts keywords from rawTopic rather than tech boilerplate!
+  const cleanSubjectText = rawTopic
+    .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]/g, "")
+    .replace(/^(99%\s*log\s*nahi\s*jaante:?|scientist\s*shocked:?|ye\s*galti\s*mat\s*karna:?|why\s+|what\s+if\s+)/gi, "")
+    .replace(/[#@!?_~`%*+=[\]{}|\\:;"<>]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
   return {
-    subject: "precision engineered technological device with flowing digital diagnostic traces",
-    actionDetail: "inspecting the operational details on the workstation",
+    subject: `vibrant stylized 3D visual scene representing ${cleanSubjectText || "the core physical concept"}`,
+    actionDetail: `explaining the fascinating dynamics of ${cleanSubjectText || "the concept"} with high-clarity 3D animation`,
   };
 }
 
@@ -334,12 +391,22 @@ export function buildCinematicScenePrompts(
   // Extract scene-specific physical visual subject
   const sceneVisual = extractSceneVisualSubject(rawTopic, voiceoverLine, sceneIndex, isLastScene);
 
-  // Character prompt determination:
-  // If user provided a custom anchor that does NOT mention realistic humans, use it; otherwise use the style's own character
+  // Character prompt determination with 100% Strict Consistency
   let activeCharacterDesc = style.characterDescription;
   let activeActionPrefix = style.characterActionPrefix;
 
-  if (isCharacterLocked && customCharacterAnchor && !/indian|creator|hoodie|glasses|fade haircut|photorealistic|24yo/i.test(customCharacterAnchor)) {
+  const topicIsAnimal = /dog|cat|puppy|kitten|billi|kutta|animal|pet|monkey/i.test(`${rawTopic} ${voiceoverLine}`);
+
+  if (styleKey === "style-stickman") {
+    activeCharacterDesc = "[Character Anchor: Identical 3D minimalist white stickman (sticky man), smooth cylindrical white limbs, simple round head with large expressive black cartoon eyes, exact same white color and geometry across all scenes, Zack D. Films and Alan Becker style, zero realistic humans]";
+    activeActionPrefix = "the identical 3D white stickman character examining ";
+  } else if (styleKey === "style-toon-pixar-chibi" || (styleKey === "style-cute-naughty-animation" && topicIsAnimal)) {
+    activeCharacterDesc = "[Character Anchor: Identical 3D animated chubby cartoon pet with giant sparkling cartoon eyes, fluffy fur texture, identical face and colors across all scenes, Pixar and Disney 3D animation style, zero realistic humans, no photorealistic people]";
+    activeActionPrefix = "the identical 3D cartoon animal playfully exploring ";
+  } else if (styleKey === "style-toon-slapstick") {
+    activeCharacterDesc = "[Character Anchor: Identical 3D stylized slapstick cartoon character with rubber-hose limbs, comical jaw-drop expression, exact same cartoon colors and proportions across all scenes, Tom & Jerry style, zero realistic humans]";
+    activeActionPrefix = "the identical cartoon character wildly slipping on ";
+  } else if (isCharacterLocked && customCharacterAnchor && !/indian|creator|hoodie|glasses|fade haircut|photorealistic|24yo/i.test(customCharacterAnchor)) {
     activeCharacterDesc = `[Character Anchor: ${customCharacterAnchor}], stylized 3D character, zero realistic humans, no photorealistic people`;
     activeActionPrefix = "the stylized 3D character examining ";
   }

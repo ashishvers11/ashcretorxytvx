@@ -50,6 +50,66 @@ export const STYLE_DEFINITIONS: Record<string, StyleDefinition> = {
     renderKeywords: "Pixar and Minions 3D animation aesthetic, exaggerated squash-and-stretch cartoon physics, vibrant playful pastel lighting, slapstick comedy timing, clean animated 3D studio, 8k resolution",
     cameraMovement: "funny comic double-take snap-zoom, dynamic 60fps tracking camera following cheeky cartoon antics, slapstick motion timing",
   },
+  "style-toon-pixar-chibi": {
+    id: "style-toon-pixar-chibi",
+    name: "Pixar 3D Chibi & Naughty Animals",
+    characterDescription:
+      "charming chubby 3D animated chibi pet (cheeky kitten and playful puppy) with giant glossy sparkling cartoon eyes, adorable fluffy fur texture, Pixar and Disney 3D animation aesthetic, zero realistic humans, no photorealistic people",
+    characterActionPrefix: "the adorable cheeky 3D cartoon animal playfully pouncing on ",
+    environmentDescription: "a cozy vibrant colorful living room with soft sunny morning light and playful scattered toys",
+    renderKeywords: "Pixar 3D stylized animation render, soft subsurface scattering, vibrant fairytale candy lighting, fluffy stylized fur, 8k resolution",
+    cameraMovement: "low-angle dynamic puppy-eye tracking, funny rapid snap-zoom on curious head tilt, 60fps fluid motion",
+  },
+  "style-toon-slapstick": {
+    id: "style-toon-slapstick",
+    name: "3D Slapstick Comedy (Tom & Jerry Style)",
+    characterDescription:
+      "hyper-expressive 3D stylized slapstick cartoon character with rubber-hose limbs, comical jaw-drop expression, exaggerated cartoon proportions, zero realistic humans",
+    characterActionPrefix: "the chaotic cartoon character wildly slipping and scrambling on ",
+    environmentDescription: "a classic vibrant cartoon kitchen with colorful checkered tiles and flying kitchen utensils",
+    renderKeywords: "classic slapstick cartoon animation style, exaggerated squash-and-stretch deformation, dynamic speed-lines, bright studio cartoon contrast, 8k resolution",
+    cameraMovement: "kinetic cartoon whip-pan, dramatic snap crash-zoom on funny impact, 60fps slapstick pacing",
+  },
+  "style-toon-shinchan": {
+    id: "style-toon-shinchan",
+    name: "Naughty Anime Chibi (Shinchan Style)",
+    characterDescription:
+      "cheeky 3D cel-shaded anime chibi toddler with thick funny expressive eyebrows, mischievous side-eye smirk, vibrant red t-shirt, zero realistic humans",
+    characterActionPrefix: "the naughty anime chibi kid cheekily wiggling eyebrows and sneaking past ",
+    environmentDescription: "a colorful Japanese tatami living room with funny cartoon props and bright daylight",
+    renderKeywords: "cel-shaded 3D anime chibi aesthetic, playful pop-art colors, cute comedy manga speedlines, 8k resolution",
+    cameraMovement: "funny dutch-angle tilt, snappy comic pop-in zoom on cheeky wink, 60fps fluid animation",
+  },
+  "style-toon-claymation": {
+    id: "style-toon-claymation",
+    name: "Funny Claymation (Shaun The Sheep & Aardman)",
+    characterDescription:
+      "charming tactile 3D clay puppet character with sculpted plasticine thumbprints, silly wide-eyed blank stare, goofy toothy grin, zero realistic humans",
+    characterActionPrefix: "the goofy claymation character clumsily fumbling with ",
+    environmentDescription: "a rustic miniature clay tabletop diorama barnyard with warm overhead tungsten work-lamp lighting",
+    renderKeywords: "Aardman claymation stop-motion style, visible plasticine clay textures, handcrafted charm, tactile depth of field, 8k resolution",
+    cameraMovement: "fixed tabletop framing, charming subtle stop-motion 12fps timing at 60fps smooth playback",
+  },
+  "style-toon-funny-stickman": {
+    id: "style-toon-funny-stickman",
+    name: "3D Funny Meme Stickman Gags (Alan Becker Style)",
+    characterDescription:
+      "smooth 3D white minimalist stick figure with huge expressive comical cartoon eyes, stretchy rubber stick arms, Alan Becker animation style, zero realistic humans",
+    characterActionPrefix: "the funny 3D stickman pulling a hilarious prank with ",
+    environmentDescription: "a minimalist dark neon-cyan digital desktop canvas with interactive meme drawing tools",
+    renderKeywords: "Alan Becker stickman animation aesthetic, 3D Octane stylized render, glowing neon comic lines, hilarious cartoon gravity physics, 8k resolution",
+    cameraMovement: "kinetic 60fps tracking pan following fast stickman acrobatics, instant meme snap-zoom",
+  },
+  "style-toon-baby-boss": {
+    id: "style-toon-baby-boss",
+    name: "Cute Naughty Toddler Comedy",
+    characterDescription:
+      "chubby adorable 3D cartoon baby with tiny tuft of hair, wearing funny oversized sunglasses, mischievous giggling expression, zero realistic humans",
+    characterActionPrefix: "the cute naughty baby stealthily crawling and reaching for ",
+    environmentDescription: "a high-contrast pastel nursery with towering furniture and giant colorful building blocks",
+    renderKeywords: "Illumination 3D animated movie render, soft baby cheeks subsurface scattering, bright pastel lighting, 8k resolution",
+    cameraMovement: "floor-level stealth tracking camera, funny tiptoe wobble dolly, 60fps fluid animation",
+  },
   "style-zackd": {
     id: "style-zackd",
     name: "Zack D. Films 3D Simulation",
@@ -284,6 +344,43 @@ export function buildCinematicScenePrompts(
     activeActionPrefix = "the stylized 3D character examining ";
   }
 
+  const isFunnyAnimation =
+    styleKey.startsWith("style-toon-") ||
+    styleKey === "style-cute-naughty-animation" ||
+    /animation|naughty|cute|funny|comedy|chibi|slapstick/i.test(style.name);
+
+  // === SPECIALIZED FUNNY & CUTE ANIMATION GAGS (Pure Visual Movement • No Spoken Storytelling) ===
+  if (isFunnyAnimation) {
+    if (sceneIndex === 1) {
+      return {
+        imagePrompt: `Funny cute 8k 3D stylized cartoon comedy scene, visual style of ${style.name}, featuring ${activeCharacterDesc}, ${activeActionPrefix}${sceneVisual.subject}, situated in ${style.environmentDescription}, playful candy-toned lighting, ${style.renderKeywords}, no realistic humans, no photorealistic people --ar ${aspectRatio} --v 6.1 --stylize 250`,
+        motionPrompt: `Comedic fast snap-zoom push-in tracking ${activeActionPrefix}${sceneVisual.subject}, funny exaggerated squash and stretch animation, silly head tilt, 60fps dynamic cartoon physics, playful slapstick timing, ${style.cameraMovement}`,
+        directorCue: `Comedic Gag 1 (The Setup): Cheeky character initiates mischievous movement with huge expressive cartoon eyes.`,
+      };
+    }
+    if (sceneIndex === 2) {
+      return {
+        imagePrompt: `Dynamic 3D stylized cartoon comedy action, visual style of ${style.name}, featuring ${activeCharacterDesc}, ${activeActionPrefix}${sceneVisual.subject}, funny tiptoe sneaking gesture, playful cartoon props, ${style.renderKeywords}, no realistic humans --ar ${aspectRatio} --v 6.1`,
+        motionPrompt: `Snappy comedic tracking camera following funny tiptoe movement across ${style.environmentDescription}, exaggerated wobbles, playful cartoon speedlines, 60fps slapstick timing, ${style.cameraMovement}`,
+        directorCue: `Comedic Gag 2 (The Sneak): Character clumsily balancing or tiptoeing with hilarious suspense.`,
+      };
+    }
+    if (sceneIndex === 3) {
+      return {
+        imagePrompt: `Hilarious 3D slapstick cartoon climax, visual style of ${style.name}, featuring ${activeCharacterDesc}, ${activeActionPrefix}${sceneVisual.subject}, comical shocked wide-eyed expression, flying cartoon props, ${style.renderKeywords}, no realistic humans --ar ${aspectRatio} --v 6.1`,
+        motionPrompt: `Hilarious cartoon impact camera shudder, dynamic slapstick reaction with rubber-hose physics, slow-motion funny slip and bounce, 60fps fluid comedic motion, ${style.cameraMovement}`,
+        directorCue: `Comedic Gag 3 (The Punchline Fail): Hilarious unexpected slapstick fail or flying props with comedic cartoon reaction.`,
+      };
+    }
+    // Last Scene
+    return {
+      imagePrompt: `Adorable 3D stylized cartoon comedy resolution, visual style of ${style.name}, featuring ${activeCharacterDesc}, cheeky naughty wink directly at camera, ${sceneVisual.subject}, joyful candy lighting, ${style.renderKeywords}, no realistic humans --ar ${aspectRatio} --v 6.1`,
+      motionPrompt: `Smooth comical camera pullout resolving into cheeky wink at the lens, seamless 60fps infinite loop back to the opening prank, playful comedy timing, ${style.cameraMovement}`,
+      directorCue: `Comedic Gag 4 (Infinite Replay): Cheeky character gives a funny fourth-wall wink, resetting the loop for infinite watch completion.`,
+    };
+  }
+
+  // --- REGULAR CREATOR & FACT STYLES (Evidence, Mechanism, Science & Retention) ---
   // --- SCENE 1: Strictly 3s High-Impact Opening Hook ---
   if (sceneIndex === 1) {
     return {

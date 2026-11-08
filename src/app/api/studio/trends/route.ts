@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!niche) {
-      niche = "Interesting Facts";
+      niche = connectedChannelNiche || "Interesting Facts";
     }
 
     // Special handler for Live India Google & YouTube Trends

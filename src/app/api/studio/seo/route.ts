@@ -4,14 +4,15 @@ import { generateSEOWithAI } from "@/lib/ai/provider";
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerSupabaseClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    let user: any = null;
+    let supabase: any = null;
 
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    try {
+      supabase = createServerSupabaseClient();
+      const authRes = await supabase.auth.getUser();
+      user = authRes.data?.user || null;
+    } catch {
+      // Guest or local session
     }
 
     const body = await request.json();
@@ -29,35 +30,41 @@ export async function POST(request: NextRequest) {
       videoFormat,
     });
 
-    // Save to database
-    const { data: savedProject, error: dbError } = await (supabase
-      .from("seo_projects") as any)
-      .insert({
-        user_id: user.id,
-        title: seoResult.title,
-        topic,
-        video_format: videoFormat,
-        generated_titles: seoResult.generated_titles,
-        description: seoResult.description,
-        tags: seoResult.tags,
-        hashtags: seoResult.hashtags,
-        search_intent: seoResult.search_intent,
-        quality_analysis: seoResult.quality_analysis,
-      })
-      .select()
-      .single();
+    // Save to database if authenticated
+    let savedProject = null;
+    if (user && supabase) {
+      try {
+        const { data, error: dbError } = await (supabase
+          .from("seo_projects") as any)
+          .insert({
+            user_id: user.id,
+            title: seoResult.title,
+            topic,
+            video_format: videoFormat,
+            generated_titles: seoResult.generated_titles,
+            description: seoResult.description,
+            tags: seoResult.tags,
+            hashtags: seoResult.hashtags,
+            search_intent: seoResult.search_intent,
+            quality_analysis: seoResult.quality_analysis,
+          })
+          .select()
+          .single();
 
-    if (dbError) {
-      console.warn("Could not persist SEO project to Supabase:", dbError.message);
-    } else {
-      // Log recent activity
-      await (supabase.from("recent_activities") as any).insert({
-        user_id: user.id,
-        module: "SEO Studio",
-        action: "Optimized Metadata",
-        title: seoResult.title,
-        link: "/seo-studio",
-      });
+        if (!dbError && data) {
+          savedProject = data;
+          // Log recent activity
+          await (supabase.from("recent_activities") as any).insert({
+            user_id: user.id,
+            module: "SEO Studio",
+            action: "Optimized Metadata",
+            title: seoResult.title,
+            link: "/seo-studio",
+          });
+        }
+      } catch (dbErr) {
+        console.warn("Could not persist SEO project to Supabase:", dbErr);
+      }
     }
 
     return NextResponse.json({ seo: savedProject || seoResult });

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -41,8 +41,9 @@ export default function SeoStudioPage() {
   const [copiedTags, setCopiedTags] = useState(false);
   const [selectedTitle, setSelectedTitle] = useState<string>("");
 
-  const handleGenerateSEO = async () => {
-    if (!topic.trim()) return;
+  const handleGenerateSEO = async (topicOverride?: string) => {
+    const topicToUse = (topicOverride || topic).trim();
+    if (!topicToUse) return;
     setGenerating(true);
 
     try {
@@ -50,7 +51,7 @@ export default function SeoStudioPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          topic,
+          topic: topicToUse,
           videoFormat,
         }),
       });
@@ -66,6 +67,13 @@ export default function SeoStudioPage() {
       setGenerating(false);
     }
   };
+
+  useEffect(() => {
+    if (initialTopic && initialTopic !== "Dinosaur extinction mystery") {
+      handleGenerateSEO(initialTopic);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTopic]);
 
   const handleCopy = (text: string, type: "title" | "desc" | "tags") => {
     navigator.clipboard.writeText(text);
@@ -122,7 +130,10 @@ export default function SeoStudioPage() {
               <button
                 key={v.videoId}
                 type="button"
-                onClick={() => setTopic(v.title)}
+                onClick={() => {
+                  setTopic(v.title);
+                  handleGenerateSEO(v.title);
+                }}
                 className={`px-3 py-1.5 rounded-lg text-xs transition-colors border text-left truncate max-w-sm ${
                   topic === v.title
                     ? "bg-brand-500/20 text-brand-300 border-brand-500/50 font-medium"
@@ -181,7 +192,7 @@ export default function SeoStudioPage() {
           <div>
             <Button
               variant="primary"
-              onClick={handleGenerateSEO}
+              onClick={() => handleGenerateSEO()}
               disabled={generating || !topic.trim()}
               className="w-full gap-2 text-xs font-semibold"
             >
@@ -310,39 +321,94 @@ export default function SeoStudioPage() {
                   <span className="text-sm font-bold text-white">Keyword Tags for YouTube Studio</span>
                 </div>
                 <Button
-                  variant="outline"
+                  variant="primary"
                   size="sm"
-                  onClick={() => handleCopy(seoResult.tags.join(", "), "tags")}
-                  className="h-7 text-xs gap-1.5"
+                  onClick={() => handleCopy(seoResult.commaSeparatedTags || seoResult.tags.join(", "), "tags")}
+                  className="h-7 text-xs gap-1.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold"
                 >
-                  {copiedTags ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                  <span>{copiedTags ? "Copied" : "Copy Tags CSV"}</span>
+                  {copiedTags ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  <span>{copiedTags ? "Copied All Tags!" : "📋 Copy All Tags (Studio Ready)"}</span>
                 </Button>
               </div>
 
-              <div className="flex flex-wrap gap-1.5">
-                {seoResult.tags?.map((tag, i) => (
-                  <span
-                    key={i}
-                    className="px-2.5 py-1 rounded-md bg-slate-950 border border-slate-800 text-[11px] text-slate-300"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
+              {/* Tag Breakdown: Broad vs Long-Tail vs Viral */}
+              {seoResult.ranked_tags && (
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                      🎯 High-Volume Broad Tags
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {seoResult.ranked_tags.broad.map((tag, i) => (
+                        <span key={i} className="px-2 py-0.5 rounded-md bg-brand-500/10 border border-brand-500/30 text-[11px] text-brand-300 font-medium">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
 
-              <div className="pt-3 border-t border-slate-800/60">
-                <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5 mb-2">
-                  <Hash className="h-3.5 w-3.5 text-brand-400" />
-                  <span>Optimal Hashtags:</span>
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {seoResult.hashtags?.map((hash, i) => (
-                    <span key={i} className="text-xs font-mono text-brand-400 font-medium">
-                      {hash}
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                      🔍 Long-Tail High-Ranking Queries
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {seoResult.ranked_tags.longTail.map((tag, i) => (
+                        <span key={i} className="px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/30 text-[11px] text-indigo-300">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                      🚀 Viral Algorithm Boosters
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {seoResult.ranked_tags.viral.map((tag, i) => (
+                        <span key={i} className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-300">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!seoResult.ranked_tags && (
+                <div className="flex flex-wrap gap-1.5">
+                  {seoResult.tags?.map((tag, i) => (
+                    <span
+                      key={i}
+                      className="px-2.5 py-1 rounded-md bg-slate-950 border border-slate-800 text-[11px] text-slate-300"
+                    >
+                      {tag}
                     </span>
                   ))}
                 </div>
+              )}
+
+              <div className="pt-3 border-t border-slate-800/60 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5 mb-1.5">
+                    <Hash className="h-3.5 w-3.5 text-brand-400" />
+                    <span>Optimal Hashtags:</span>
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {seoResult.hashtags?.map((hash, i) => (
+                      <span key={i} className="text-xs font-mono text-brand-400 font-medium">
+                        {hash}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <Link href={`/trend-script?topic=${encodeURIComponent(selectedTitle || topic)}&tab=script`}>
+                  <Button variant="outline" size="sm" className="text-xs gap-1 border-brand-500/40 text-brand-300 hover:bg-brand-500/10 shrink-0">
+                    <span>⚡ Write Script</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </Button>
+                </Link>
               </div>
             </Card>
           </div>
@@ -357,7 +423,7 @@ export default function SeoStudioPage() {
             Generate 5 tested psychological title angles, structured descriptions with chapter timestamps, and
             comma-separated tags ready to paste into YouTube Studio.
           </p>
-          <Button variant="primary" onClick={handleGenerateSEO} className="gap-2 text-xs">
+          <Button variant="primary" onClick={() => handleGenerateSEO()} className="gap-2 text-xs">
             <Sparkles className="h-4 w-4" />
             <span>Generate Default SEO Package</span>
           </Button>

@@ -19,6 +19,7 @@ import {
   Globe2,
   Clock,
   FileText,
+  Search,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,22 @@ export default function TrendRadarPage() {
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<DailyResearchReport | null>(null);
   const [showGuide, setShowGuide] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeSearchLabel, setActiveSearchLabel] = useState<string | null>(null);
+
+  const handleExecuteSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+    setActiveSearchLabel(`🔍 Custom Research: "${q}"`);
+    setSelectedCategory(q);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setActiveSearchLabel(null);
+    setSelectedCategory("channel-tailored");
+  };
 
   // Dynamic Categories based on Connected Channel
   const categories = [
@@ -157,6 +174,52 @@ export default function TrendRadarPage() {
           </ol>
         </div>
       )}
+
+      {/* Live Custom Topic Research Search Bar */}
+      <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 shadow-inner">
+        <form onSubmit={handleExecuteSearch} className="flex flex-col sm:flex-row items-center gap-2">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="🔍 Live Research: Type any niche or topic (e.g. Science Experiments, Photosynthesis, Black Holes, AI, BGMI...)"
+              className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition-colors"
+            />
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              type="submit"
+              disabled={loading || !searchQuery.trim()}
+              variant="primary"
+              size="sm"
+              className="w-full sm:w-auto text-xs font-semibold gap-1.5"
+            >
+              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5 text-amber-300" />}
+              <span>⚡ Live Research</span>
+            </Button>
+            {activeSearchLabel && (
+              <Button
+                type="button"
+                onClick={handleClearSearch}
+                variant="outline"
+                size="sm"
+                className="text-xs text-slate-400 hover:text-white"
+              >
+                Reset
+              </Button>
+            )}
+          </div>
+        </form>
+
+        {activeSearchLabel && (
+          <div className="mt-2 flex items-center justify-between text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-md">
+            <span>{activeSearchLabel}</span>
+            <span className="text-emerald-400 font-mono">● Real-time Google &amp; YouTube Trend Engine Live</span>
+          </div>
+        )}
+      </div>
 
       {/* Horizontal Category Selector + Format Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">

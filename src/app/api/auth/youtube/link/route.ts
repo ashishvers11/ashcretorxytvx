@@ -120,18 +120,61 @@ export async function POST(request: NextRequest) {
     const imageMatch = html.match(/<meta property="og:image" content="([^"]+)"/);
     const descMatch = html.match(/<meta property="og:description" content="([^"]+)"/);
 
-    // Subscriber count
-    const subMatch =
-      html.match(/"subscriberCountText":\{[^}]*"simpleText":"([^"]+)"/)?.[1] ||
-      html.match(/"subscriberCountText":\{[^}]*"accessibility":\{"accessibilityData":\{"label":"([^"]+)"/)?.[1] ||
-      html.match(/([\d,.]+(?:\s*[KkMmBb]|\s*crore|\s*lakh)?)\s*subscribers?/i)?.[1];
-    const parsedSubscribers = subMatch ? parseCount(subMatch) : 1000;
+    // 1. Fetch channel /about tab to extract exact public lifetime metrics (Views, Sub count, Video count)
+    const cleanHandleUrl = targetUrl.replace(/\/+$/, "");
+    let parsedAboutViews: number | null = null;
+    let parsedSubscribers: number = 1000;
+    let parsedVideoCount: number | null = null;
 
-    // Total Views
-    const aboutViewMatch =
-      html.match(/"viewCountText":\{[^}]*"simpleText":"([^"]+)"/)?.[1] ||
-      html.match(/([\d,.]+)\s*views/i)?.[1];
-    const parsedAboutViews = aboutViewMatch ? parseCount(aboutViewMatch) : null;
+    try {
+      const aboutRes = await fetch(`${cleanHandleUrl}/about`, { headers: baseHeaders, cache: "no-store" });
+      if (aboutRes.ok) {
+        const aboutHtml = await aboutRes.text();
+        const viewCountMatch = aboutHtml.match(/"viewCountText":\s*(?:{"simpleText":"([^"]+)"}|"([^"]+)")/);
+        const rawViewStr = viewCountMatch ? (viewCountMatch[1] || viewCountMatch[2]) : null;
+        if (rawViewStr) {
+          parsedAboutViews = parseCount(rawViewStr);
+        }
+
+        const subCountMatch = aboutHtml.match(/"subscriberCountText":\s*(?:{"simpleText":"([^"]+)"}|"([^"]+)")/);
+        const rawSubStr = subCountMatch ? (subCountMatch[1] || subCountMatch[2]) : null;
+        if (rawSubStr) {
+          const sCount = parseCount(rawSubStr);
+          if (sCount !== null) parsedSubscribers = sCount;
+        }
+
+        const vidCountMatch = aboutHtml.match(/"text":\s*{"content":"([\d,.]+)\s+videos"/);
+        if (vidCountMatch) {
+          parsedVideoCount = parseCount(vidCountMatch[1]);
+        }
+      }
+    } catch (aboutErr) {
+      console.warn("Could not fetch /about tab:", aboutErr);
+    }
+
+    // Fallback subscriber and view matching from main HTML if /about was blocked
+    if (!parsedAboutViews) {
+      const viewMatch =
+        html.match(/"viewCountText":\{[^}]*"simpleText":"([^"]+)"/)?.[1] ||
+        html.match(/([\d,.]+)\s*views/i)?.[1];
+      parsedAboutViews = viewMatch ? parseCount(viewMatch) : null;
+    }
+
+    if (parsedSubscribers === 1000) {
+      const subMatch =
+        html.match(/"subscriberCountText":\{[^}]*"simpleText":"([^"]+)"/)?.[1] ||
+        html.match(/"subscriberCountText":\{[^}]*"accessibility":\{"accessibilityData":\{"label":"([^"]+)"/)?.[1] ||
+        html.match(/([\d,.]+(?:\s*[KkMmBb]|\s*crore|\s*lakh)?)\s*subscribers?/i)?.[1];
+      if (subMatch) {
+        const parsed = parseCount(subMatch);
+        if (parsed !== null) parsedSubscribers = parsed;
+      }
+    }
+
+    if (!parsedVideoCount) {
+      const vidMatch = html.match(/"text":\s*{"content":"([\d,.]+)\s+videos"/);
+      if (vidMatch) parsedVideoCount = parseCount(vidMatch[1]);
+    }
 
     const channelTitle = titleMatch ? titleMatch[1] : (targetUrl.split("@")[1] || "YouTube Creator");
     const channelDesc = descMatch ? descMatch[1] : "Connected YouTube Creator.";
@@ -143,7 +186,7 @@ export async function POST(request: NextRequest) {
     const customUrl = targetUrl.includes("@") ? "@" + targetUrl.split("@")[1].split("/")[0] : null;
     const uploadsPlaylistId = "UU" + channelId.replace(/^UC/, "");
 
-    // 2. Fetch live videos from the /videos tab using ytInitialData (High-performance modern parser)
+    // 2. Fetch live videos from BOTH /shorts and /videos tabs (captures full catalogue)
     let realVideos: Array<{
       videoId: string;
       title: string;
@@ -155,12 +198,12 @@ export async function POST(request: NextRequest) {
       likes: number;
     }> = [];
 
-    // Helper to parse ytInitialData
+    // Helper to parse ytInitialData for standard videos
     const extractVideosFromYtData = (jsonObj: any) => {
       const vids: typeof realVideos = [];
       try {
         const tabs = jsonObj?.contents?.twoColumnBrowseResultsRenderer?.tabs || [];
-        const videoTab = tabs.find((t: any) => t?.tabRenderer?.content?.richGridRenderer) || tabs[1] || tabs[0];
+        const videoTab = tabs.find((t: any) => t?.tabRenderer?.title === "Videos" || t?.tabRenderer?.content?.richGridRenderer) || tabs[1] || tabs[0];
         const contents = videoTab?.tabRenderer?.content?.richGridRenderer?.contents || [];
 
         for (const item of contents) {
@@ -176,8 +219,8 @@ export async function POST(request: NextRequest) {
               viewLabel = metaRows[0].metadataParts[0]?.accessibilityLabel || metaRows[0].metadataParts[0]?.text?.content || "";
               timeLabel = metaRows[0].metadataParts[1]?.accessibilityLabel || metaRows[0].metadataParts[1]?.text?.content || "";
             }
-            const views = parseCount(viewLabel) || 5000;
-            const estLikes = Math.max(10, Math.round(views * 0.045));
+            const views = parseCount(viewLabel) || 500;
+            const estLikes = Math.max(5, Math.round(views * 0.045));
             vids.push({
               videoId: vId,
               title,
@@ -197,8 +240,8 @@ export async function POST(request: NextRequest) {
             const title = vr.title?.runs?.[0]?.text || vr.title?.simpleText || "YouTube Video";
             const viewText = vr.viewCountText?.simpleText || vr.viewCountText?.runs?.[0]?.text || "";
             const published = vr.publishedTimeText?.simpleText || "";
-            const views = parseCount(viewText) || 5000;
-            const estLikes = Math.max(10, Math.round(views * 0.045));
+            const views = parseCount(viewText) || 500;
+            const estLikes = Math.max(5, Math.round(views * 0.045));
             vids.push({
               videoId: vId,
               title,
@@ -217,9 +260,62 @@ export async function POST(request: NextRequest) {
       return vids;
     };
 
-    // Try parsing /videos tab
+    // Helper to parse ytInitialData for Shorts
+    const extractShortsFromYtData = (jsonObj: any) => {
+      const vids: typeof realVideos = [];
+      try {
+        const tabs = jsonObj?.contents?.twoColumnBrowseResultsRenderer?.tabs || [];
+        const shortsTab = tabs.find((t: any) => t?.tabRenderer?.title === "Shorts" || t?.tabRenderer?.content?.richGridRenderer) || tabs[2] || tabs[1];
+        const contents = shortsTab?.tabRenderer?.content?.richGridRenderer?.contents || [];
+
+        for (const item of contents) {
+          const slm = item?.richItemRenderer?.content?.shortsLockupViewModel;
+          if (slm) {
+            const vId = slm.entityId?.replace("shorts-shelf-item-", "") || "";
+            const title = slm.overlayMetadata?.primaryText?.content || "Short";
+            const viewText = slm.overlayMetadata?.secondaryText?.content || "";
+            const views = parseCount(viewText) || 100;
+            const estLikes = Math.max(5, Math.round(views * 0.05));
+            vids.push({
+              videoId: vId,
+              title,
+              description: `Short • ${viewText || `${views} views`}`,
+              publishedAt: "Recently",
+              thumbnailUrl: `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`,
+              videoUrl: `https://www.youtube.com/shorts/${vId}`,
+              views,
+              likes: estLikes,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Error parsing shorts items:", err);
+      }
+      return vids;
+    };
+
+    // A. Parse /shorts tab
     try {
-      const cleanHandleUrl = targetUrl.replace(/\/+$/, "");
+      const shortsRes = await fetch(`${cleanHandleUrl}/shorts`, { headers: baseHeaders, cache: "no-store" });
+      if (shortsRes.ok) {
+        const sHtml = await shortsRes.text();
+        const mShorts = sHtml.match(/var ytInitialData = ({[\s\S]*?});<\/script>/);
+        if (mShorts) {
+          const ytShortsData = JSON.parse(mShorts[1]);
+          const shortsVids = extractShortsFromYtData(ytShortsData);
+          for (const sv of shortsVids) {
+            if (!realVideos.some((v) => v.videoId === sv.videoId)) {
+              realVideos.push(sv);
+            }
+          }
+        }
+      }
+    } catch (sErr) {
+      console.warn("Could not fetch /shorts tab:", sErr);
+    }
+
+    // B. Parse /videos tab
+    try {
       const videosUrl = `${cleanHandleUrl}/videos`;
       const vResponse = await fetch(videosUrl, { headers: baseHeaders, cache: "no-store" });
       if (vResponse.ok) {
@@ -227,20 +323,30 @@ export async function POST(request: NextRequest) {
         const m = vHtml.match(/var ytInitialData = ({[\s\S]*?});<\/script>/);
         if (m) {
           const ytData = JSON.parse(m[1]);
-          realVideos = extractVideosFromYtData(ytData);
+          const vids = extractVideosFromYtData(ytData);
+          for (const v of vids) {
+            if (!realVideos.some((existing) => existing.videoId === v.videoId)) {
+              realVideos.push(v);
+            }
+          }
         }
       }
     } catch (vErr) {
       console.warn("Could not fetch /videos tab:", vErr);
     }
 
-    // Fallback: check main page ytInitialData if /videos was empty
+    // C. Fallback: check main page ytInitialData if still empty
     if (realVideos.length === 0) {
       const mMain = html.match(/var ytInitialData = ({[\s\S]*?});<\/script>/);
       if (mMain) {
         try {
           const ytDataMain = JSON.parse(mMain[1]);
-          realVideos = extractVideosFromYtData(ytDataMain);
+          const mainVids = extractVideosFromYtData(ytDataMain);
+          for (const mv of mainVids) {
+            if (!realVideos.some((v) => v.videoId === mv.videoId)) {
+              realVideos.push(mv);
+            }
+          }
         } catch {
           // ignore
         }
@@ -250,18 +356,23 @@ export async function POST(request: NextRequest) {
     // Compute realistic metrics
     const totalRecentViews = realVideos.reduce((acc, v) => acc + (v.views || 0), 0);
     const totalRecentLikes = realVideos.reduce((acc, v) => acc + (v.likes || 0), 0);
-    const avgViewsPerRecentVideo = realVideos.length > 0 ? Math.round(totalRecentViews / realVideos.length) : 25000;
-    const avgLikesPerRecentVideo = realVideos.length > 0 ? Math.round(totalRecentLikes / realVideos.length) : 1200;
-    const likeToViewRatio = totalRecentViews > 0 ? ((totalRecentLikes / totalRecentViews) * 100).toFixed(1) + "%" : "5.2%";
+    const avgViewsPerRecentVideo = realVideos.length > 0 ? Math.round(totalRecentViews / realVideos.length) : 0;
+    const avgLikesPerRecentVideo = realVideos.length > 0 ? Math.round(totalRecentLikes / realVideos.length) : 0;
+    const likeToViewRatio = totalRecentViews > 0 ? ((totalRecentLikes / totalRecentViews) * 100).toFixed(1) + "%" : "5.0%";
 
     const finalTotalViews =
-      parsedAboutViews !== null && parsedAboutViews > totalRecentViews
+      parsedAboutViews !== null && parsedAboutViews > 0
         ? parsedAboutViews
         : totalRecentViews > 0
         ? totalRecentViews
-        : (parsedSubscribers || 1000) * 85;
+        : (parsedSubscribers || 10) * 15;
 
-    const finalVideoCount = realVideos.length > 0 ? realVideos.length : 12;
+    const finalVideoCount =
+      parsedVideoCount !== null && parsedVideoCount > 0
+        ? parsedVideoCount
+        : realVideos.length > 0
+        ? realVideos.length
+        : 1;
 
     const detectedNiche = detectNiche(
       channelTitle,
@@ -272,6 +383,9 @@ export async function POST(request: NextRequest) {
     const sortedByViews = [...realVideos].sort((a, b) => (b.views || 0) - (a.views || 0));
     const topVideo = sortedByViews[0] || null;
     const underperformingVideo = sortedByViews.length > 1 ? sortedByViews[sortedByViews.length - 1] : null;
+
+    // Realistic watch time: Shorts average 35s watch duration (~0.58 mins per view)
+    const realisticWatchMins = Math.round(finalTotalViews * 0.58);
 
     const channelData = {
       channelId,
@@ -287,14 +401,14 @@ export async function POST(request: NextRequest) {
       recentVideos: realVideos,
       analytics: {
         isAvailable: true,
-        estimatedMinutesWatched: Math.round(totalRecentViews * 1.5) || 50000,
-        averageViewDuration: 42,
-        subscribersGained: Math.max(1, Math.round((parsedSubscribers || 10) * 0.08)),
+        estimatedMinutesWatched: realisticWatchMins,
+        averageViewDuration: 38,
+        subscribersGained: parsedSubscribers,
         subscribersLost: 0,
-        views: totalRecentViews > 0 ? totalRecentViews : finalTotalViews,
-        likes: totalRecentLikes > 0 ? totalRecentLikes : Math.round(finalTotalViews * 0.045),
-        comments: Math.round(totalRecentLikes * 0.15) || 350,
-        avgViewsPerVideo: avgViewsPerRecentVideo,
+        views: finalTotalViews,
+        likes: totalRecentLikes > 0 ? totalRecentLikes : Math.round(finalTotalViews * 0.05),
+        comments: Math.round((totalRecentLikes || 10) * 0.12),
+        avgViewsPerVideo: avgViewsPerRecentVideo || (finalVideoCount > 0 ? Math.round(finalTotalViews / finalVideoCount) : 0),
         avgLikesPerVideo: avgLikesPerRecentVideo,
         engagementRate: likeToViewRatio,
         topVideo: topVideo ? { title: topVideo.title, views: topVideo.views, likes: topVideo.likes, videoId: topVideo.videoId } : null,

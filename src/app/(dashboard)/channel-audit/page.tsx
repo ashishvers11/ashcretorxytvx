@@ -26,6 +26,7 @@ import {
   Flame,
   Award,
   Zap,
+  RefreshCw,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,12 +36,17 @@ import { useYouTubeChannel } from "@/hooks/use-youtube-channel";
 import { ChannelAuditResult } from "@/lib/ai/provider";
 
 export default function ChannelAuditPage() {
-  const { channel, connected, loading: channelLoading } = useYouTubeChannel();
+  const { channel, connected, loading: channelLoading, refreshChannel } = useYouTubeChannel();
   const [dateRange, setDateRange] = useState<string>("30d");
   const [customChannelName, setCustomChannelName] = useState<string>("");
   const [auditing, setAuditing] = useState(false);
   const [auditResult, setAuditResult] = useState<ChannelAuditResult | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const handleSyncAndAudit = async () => {
+    await refreshChannel();
+    handleRunAudit();
+  };
 
   const handleRunAudit = useCallback(async () => {
     setAuditing(true);
@@ -121,6 +127,18 @@ ${auditResult.recommendations
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {connected && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSyncAndAudit}
+              disabled={channelLoading || auditing}
+              className="text-xs gap-1.5 border-brand-500/40 bg-brand-500/10 text-brand-300 hover:bg-brand-500/20"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${channelLoading || auditing ? "animate-spin" : ""}`} />
+              <span>{channelLoading ? "Syncing..." : "🔄 Re-Sync Live YouTube Data"}</span>
+            </Button>
+          )}
           <Badge variant={connected ? "success" : "outline"} className="gap-1.5 py-1">
             <ShieldCheck className="h-3.5 w-3.5" />
             <span>{connected ? `Connected: ${channel?.title}` : "Standalone Audit Mode"}</span>

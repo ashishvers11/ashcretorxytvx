@@ -37,6 +37,7 @@ import {
   Film,
   Zap,
   Youtube,
+  Edit3,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,8 @@ export default function TrendScriptPage() {
   const [customScriptTopic, setCustomScriptTopic] = useState<string>(initialTopic);
   const [splittingCustom, setSplittingCustom] = useState<boolean>(false);
   const [customError, setCustomError] = useState<string | null>(null);
+  const [editableVoiceoverText, setEditableVoiceoverText] = useState<string>("");
+  const [voiceoverViewMode, setVoiceoverViewMode] = useState<"edit" | "preview">("edit");
 
   // Research Filters
   const [niche, setNiche] = useState<string>(urlNiche || "Science");
@@ -162,6 +165,8 @@ export default function TrendScriptPage() {
       if (res.ok) {
         const data = await res.json();
         setScript(data.script);
+        setEditableVoiceoverText(data.script.fullVoiceover || "");
+        setCustomScriptTopic(targetTopic);
         try {
           localStorage.setItem("ash_active_script", JSON.stringify(data.script));
         } catch (e) {
@@ -183,14 +188,16 @@ export default function TrendScriptPage() {
     handleGenerateScript(opp.topic, opp.niche);
   };
 
-  const handleProcessCustomScript = () => {
-    const raw = customScriptText.trim();
+  const handleProcessCustomScript = (overrideText?: string) => {
+    const raw = (typeof overrideText === "string" ? overrideText : customScriptText || editableVoiceoverText || "").trim();
     if (!raw) {
       setCustomError("Kripya pehle apni script paste ya type karein.");
       return;
     }
     setCustomError(null);
     setSplittingCustom(true);
+
+    const activeTopic = customScriptTopic || scriptTopic || "Viral Video Topic";
 
     const allWords = raw.split(/\s+/).filter(Boolean);
     if (allWords.length < 5) {
@@ -230,11 +237,11 @@ export default function TrendScriptPage() {
       timecode: "0:00 - 0:03",
       sceneType: "3s Viral Hook",
       title: "Scene 1: 3-Second Viral Hook",
-      visualDirection: `High-impact extreme macro visual for "${customScriptTopic}". Explosive rim lighting, captivating subject reveal.`,
+      visualDirection: `High-impact extreme macro visual for "${activeTopic}". Explosive rim lighting, captivating subject reveal.`,
       voiceover: hookWords,
       onScreenText: hookWords.slice(0, 32).toUpperCase() + "...",
       sfx: "Bass Boom Impact + Deep Sub Whoosh",
-      imagePrompt: `Cinematic 8k photorealistic close-up of ${customScriptTopic}, dramatic neon rim lighting, Octane 3D render, hyper-detailed, 9:16 aspect ratio --v 6.1`,
+      imagePrompt: `Cinematic 8k photorealistic close-up of ${activeTopic}, dramatic neon rim lighting, Octane 3D render, hyper-detailed, 9:16 aspect ratio --v 6.1`,
       motionPrompt: "Fast push-in snap zoom with 60fps cinematic motion blur into focal object",
     });
 
@@ -272,7 +279,7 @@ export default function TrendScriptPage() {
         voiceover: chunkWords,
         onScreenText: chunkWords.slice(0, 30) + "...",
         sfx: isLast ? "High-tension riser to seamless cut" : "Subtle cinematic ambient pulse",
-        imagePrompt: `Cinematic 8k realistic camera shot of ${customScriptTopic}, scene ${sceneIndex}, visual storytelling, volumetric studio lighting, hyper-detailed Octane 3D render, 9:16 aspect ratio --v 6.1`,
+        imagePrompt: `Cinematic 8k realistic camera shot of ${activeTopic}, scene ${sceneIndex}, visual storytelling, volumetric studio lighting, hyper-detailed Octane 3D render, 9:16 aspect ratio --v 6.1`,
         motionPrompt: isLast
           ? "Seamless circular dolly tracking pan looping back to starting angle"
           : "Smooth cinematic 60fps tracking camera orbit with volumetric light rays",
@@ -283,12 +290,12 @@ export default function TrendScriptPage() {
 
     const customScriptObj: any = {
       id: `custom-script-${Date.now()}`,
-      topic: customScriptTopic,
+      topic: activeTopic,
       targetDuration: currentTimeSec,
       language: "Hinglish",
       preset: BUILT_IN_PRESETS.find((p) => p.id === selectedPresetId) || BUILT_IN_PRESETS[0],
       brief: {
-        topic: customScriptTopic,
+        topic: activeTopic,
         targetAudience: "YouTube Viewers & Shorts Audience",
         coreAngle: "Creator's Own Authored Custom Script",
         retentionMechanism: "Strict 3-Second Viral Hook + Under-10s Auto Scene Cuts",
@@ -345,7 +352,7 @@ export default function TrendScriptPage() {
     }
 
     setSplittingCustom(false);
-    window.location.href = `/video-production?topic=${encodeURIComponent(customScriptTopic)}`;
+    window.location.href = `/video-production?topic=${encodeURIComponent(activeTopic)}`;
   };
 
   const handleCopy = (text: string, label: string) => {
@@ -1219,48 +1226,132 @@ export default function TrendScriptPage() {
                 </button>
               </div>
 
-              {/* SUBSTAGE: FULL VOICEOVER */}
+              {/* SUBSTAGE: FULL VOICEOVER & CUSTOM SCRIPT WORKSPACE */}
               {activeScriptStage === "voiceover" && (
-                <Card className="border-slate-800 bg-surface-900/90 shadow-xl">
+                <Card className="border-slate-800 bg-surface-900/90 shadow-xl overflow-hidden">
                   <CardHeader className="border-b border-slate-800/80 pb-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <CardTitle className="text-base flex items-center gap-2">
                           <Volume2 className="h-4 w-4 text-brand-400" />
-                          <span>Natural Spoken Teleprompter ({script.language})</span>
+                          <span>Spoken Script &amp; Custom Editor ({script.language})</span>
                         </CardTitle>
-                        <CardDescription className="text-xs text-slate-400">
-                          Complete spoken script calculated at ~130 WPM. No arbitrary slicing or truncation.
+                        <CardDescription className="text-xs text-slate-400 mt-0.5">
+                          Aap is box mein script ko edit kar sakte hain ya apni poori custom script enter kar sakte hain. Usi ke hisaab se scenes split honge.
                         </CardDescription>
                       </div>
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCopy(script.fullVoiceover, "voiceover")}
-                        className="text-xs gap-1.5 border-slate-700"
-                      >
-                        {copiedText === "voiceover" ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                        <span>{copiedText === "voiceover" ? "Copied!" : "Copy Voiceover"}</span>
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {/* Mode Toggle: Edit Mode vs Structure View */}
+                        <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg p-0.5 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => setVoiceoverViewMode("edit")}
+                            className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 ${
+                              voiceoverViewMode === "edit"
+                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold"
+                                : "text-slate-400 hover:text-white"
+                            }`}
+                          >
+                            <Edit3 className="h-3 w-3" />
+                            <span>✍️ Edit / Custom Script</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setVoiceoverViewMode("preview")}
+                            className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 ${
+                              voiceoverViewMode === "preview"
+                                ? "bg-brand-500/20 text-brand-300 border border-brand-500/40 font-bold"
+                                : "text-slate-400 hover:text-white"
+                            }`}
+                          >
+                            <FileText className="h-3 w-3" />
+                            <span>👁️ Structured View</span>
+                          </button>
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCopy(editableVoiceoverText || script.fullVoiceover, "voiceover")}
+                          className="text-xs gap-1.5 border-slate-700 h-8"
+                        >
+                          {copiedText === "voiceover" ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                          <span>{copiedText === "voiceover" ? "Copied!" : "Copy"}</span>
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
 
-                  <CardContent className="pt-6">
-                    <div className="p-6 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-base leading-relaxed font-sans space-y-4 select-text">
-                      <p className="border-l-2 border-brand-500 pl-3 font-semibold text-brand-300">
-                        {script.narrativeStructure.hook}
-                      </p>
-                      <p>{script.narrativeStructure.curiosityDevelopment}</p>
-                      <p>{script.narrativeStructure.context}</p>
-                      <p>{script.narrativeStructure.mainExplanation}</p>
-                      <p className="border-l-2 border-amber-500 pl-3 font-medium text-amber-200">
-                        {script.narrativeStructure.payoff}
-                      </p>
-                      <p className="text-xs text-slate-400 italic">
-                        {script.narrativeStructure.cta}
-                      </p>
-                    </div>
+                  <CardContent className="pt-5 space-y-4">
+                    {voiceoverViewMode === "edit" ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-[11px] text-slate-400">
+                          <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                            <span>Zero-Rewrite Mode: Aapka ek bhi shabd change nahi hoga, exact ye words split honge.</span>
+                          </span>
+                          <span className="font-mono text-slate-400">
+                            {(editableVoiceoverText || script.fullVoiceover).split(/\s+/).filter(Boolean).length} words • ~
+                            {Math.round(((editableVoiceoverText || script.fullVoiceover).split(/\s+/).filter(Boolean).length / 130) * 60)}s duration
+                          </span>
+                        </div>
+
+                        <textarea
+                          value={editableVoiceoverText || script.fullVoiceover}
+                          onChange={(e) => setEditableVoiceoverText(e.target.value)}
+                          rows={8}
+                          className="w-full rounded-xl border border-slate-700/80 bg-slate-950 p-4 text-slate-100 text-sm font-sans leading-relaxed focus:outline-none focus:border-emerald-500 shadow-inner resize-y select-text"
+                          placeholder="Type or paste your custom script here... Har scene 10s se chhota split hoga aur 0-3s ka hook banega."
+                        />
+
+                        {/* Split Button right below the box */}
+                        <Button
+                          onClick={() => handleProcessCustomScript(editableVoiceoverText || script.fullVoiceover)}
+                          disabled={splittingCustom || !(editableVoiceoverText || script.fullVoiceover).trim()}
+                          className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-sm uppercase tracking-wide gap-2.5 shadow-xl shadow-emerald-500/20 active:scale-[0.99] transition-transform"
+                        >
+                          {splittingCustom ? (
+                            <>
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                              <span>Splitting Scenes &amp; Generating 8K AI Visuals...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Zap className="h-5 w-5 fill-slate-950" />
+                              <span>✂️ SPLIT THIS SCRIPT INTO VIDEO SCENES &amp; GENERATE 8K VISUALS 🎬</span>
+                              <ArrowRight className="h-5 w-5" />
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="p-6 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-base leading-relaxed font-sans space-y-4 select-text">
+                          <p className="border-l-2 border-brand-500 pl-3 font-semibold text-brand-300">
+                            {script.narrativeStructure.hook}
+                          </p>
+                          <p>{script.narrativeStructure.curiosityDevelopment}</p>
+                          <p>{script.narrativeStructure.context}</p>
+                          <p>{script.narrativeStructure.mainExplanation}</p>
+                          <p className="border-l-2 border-amber-500 pl-3 font-medium text-amber-200">
+                            {script.narrativeStructure.payoff}
+                          </p>
+                          <p className="text-xs text-slate-400 italic">
+                            {script.narrativeStructure.cta}
+                          </p>
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          onClick={() => setVoiceoverViewMode("edit")}
+                          className="w-full border-dashed border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 gap-2 text-xs"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                          <span>Switch to Edit Mode to Modify Words or Add Custom Script</span>
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
@@ -1606,7 +1697,7 @@ export default function TrendScriptPage() {
 
               {/* Big Action Submit Button */}
               <Button
-                onClick={handleProcessCustomScript}
+                onClick={() => handleProcessCustomScript()}
                 disabled={splittingCustom || !customScriptText.trim()}
                 className="w-full h-13 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-sm uppercase tracking-wide gap-2.5 shadow-xl shadow-emerald-500/25 active:scale-[0.99] transition-transform"
               >

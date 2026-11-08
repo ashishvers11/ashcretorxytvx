@@ -140,12 +140,35 @@ export function useYouTubeChannel() {
     }
   };
 
+  const refreshChannel = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/auth/youtube/status?refresh=true", {
+        method: "GET",
+        headers: {
+          "Cache-Control": "no-cache",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.connected && data.channel) {
+          setChannel(data.channel);
+        }
+      }
+    } catch (err: unknown) {
+      console.warn("Error refreshing channel:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     channel,
     connected: Boolean(channel),
     loading,
     error,
-    refreshChannel: fetchChannelStatus,
+    refreshChannel,
     connectByUrl,
     disconnectChannel,
   };

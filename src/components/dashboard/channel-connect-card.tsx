@@ -24,6 +24,7 @@ import {
   BarChart3,
   Calendar,
   Link2,
+  RefreshCw,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -219,9 +220,23 @@ export function ChannelConnectCard() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
-              <ShieldCheck className="h-4 w-4 shrink-0" />
-              <span>AES-256 Encrypted Token</span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refreshChannel()}
+                disabled={loading}
+                className="h-8 text-xs gap-1.5 border-brand-500/40 bg-brand-500/10 text-brand-300 hover:bg-brand-500/20"
+                title="Re-fetch latest subscribers, views and videos directly from YouTube"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+                <span>{loading ? "Syncing..." : "🔄 Re-Sync Live YouTube Data"}</span>
+              </Button>
+
+              <div className="hidden sm:flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
+                <ShieldCheck className="h-4 w-4 shrink-0" />
+                <span>AES-256 Encrypted</span>
+              </div>
             </div>
           </div>
 

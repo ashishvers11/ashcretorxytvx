@@ -356,7 +356,7 @@ export default function VideoProductionPage() {
       title: "Seamless Retention Loop (Infinite Replay)",
       sceneType: "Infinite Loop",
       visualDirection: `Breathtaking camera pullout vista resolving into the exact opening frame perspective for an infinite loop.`,
-      voiceover: `And that is why this is pure genius — jise dekh kar viewers sabse pehle scroll rok kar yahi question puchte hain ki—`,
+      voiceover: `Isliye ${spokenTitle} itna bada viral secret hai — share karo unke saath jo iske baare mein bilkul nahi jaante!`,
       imagePrompt: `Breathtaking cinematic vista of ${spokenTitle}, golden hour rim light, hyper-detailed 8k, masterpiece composition, 9:16 --v 6.1`,
       motionPrompt: "Runway Gen-3: Slow backward crane tracking pullout resolving into the first frame perspective",
       sfx: "Cinematic impact boom resolving cleanly into opening ambient chord",
@@ -437,7 +437,7 @@ export default function VideoProductionPage() {
       title: "Seamless Retention Loop (Infinite Replay)",
       sceneType: "Infinite Loop",
       visualDirection: "Dramatic pullout vista transitioning back to the opening frame angle for a seamless infinite loop.",
-      voiceover: "Aur yahi mind-blowing reason hai ki log baar-baar scroll rok kar pehla sawaal yahi puchte hain ki—",
+      voiceover: `Aur yahi mind-blowing reason hai jo ${spokenTitle} ko sabse unique aur viral banata hai!`,
       imagePrompt: `Epic cinematic vista of ${spokenTitle}, golden hour rim light, breathtaking hyper-detailed 8k`,
       motionPrompt: "Runway Gen-3: Slow backward crane tracking pullout resolving into the first frame perspective",
       sfx: "Cinematic impact boom + Soft resolving chord",
@@ -456,25 +456,38 @@ export default function VideoProductionPage() {
       const stored = localStorage.getItem("ash_active_script");
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed.scenes && Array.isArray(parsed.scenes) && parsed.scenes.length >= 3) {
-          const mappedScenes: ChoreographedScene[] = parsed.scenes.map((s: any, idx: number) => {
-            const duration = s.endSeconds - s.startSeconds;
-            // Force hook to 3s if scene 1, and ensure cuts are under 10s
-            const safeDuration = idx === 0 ? 3 : Math.min(duration, 9);
+        let rawScenes: any[] = [];
+        if (Array.isArray(parsed.scenes)) {
+          rawScenes = parsed.scenes;
+        } else if (parsed.scenes && Array.isArray(parsed.scenes.scenes)) {
+          rawScenes = parsed.scenes.scenes;
+        } else if (parsed.scenes && Array.isArray(parsed.scenes.sceneList)) {
+          rawScenes = parsed.scenes.sceneList;
+        }
+
+        if (rawScenes.length > 0) {
+          const mappedScenes: ChoreographedScene[] = rawScenes.map((s: any, idx: number) => {
+            const voLine = s.voiceover || s.voiceoverLine || s.spokenLine || s.text || "";
+            const wordCount = voLine.split(/\s+/).filter(Boolean).length;
+            // Pacing: ~2.3 words per second (natural speaking speed ~130-140 WPM)
+            const calculatedDuration = idx === 0 ? 3 : Math.min(9, Math.max(3, Math.round(wordCount / 2.3)));
+            const duration = s.durationSeconds || calculatedDuration;
+
             return {
-              id: `sc-${idx + 1}`,
-              number: idx + 1,
-              durationSeconds: safeDuration,
-              title: idx === 0 ? "The Impossible Hook (Pattern Interrupt)" : idx === parsed.scenes.length - 1 ? "Seamless Retention Loop" : `Cut ${idx + 1}: Core Evidence`,
-              sceneType: idx === 0 ? "Hook (3s)" : idx === parsed.scenes.length - 1 ? "Infinite Loop" : "Core 3D Mechanism",
-              visualDirection: s.visualConcept || `Cinematic visual capture of ${cleanSpoken}`,
-              voiceover: s.voiceoverLine || "",
-              imagePrompt: s.imagePrompt || `Cinematic 8k macro photograph of ${cleanSpoken}`,
-              motionPrompt: s.motionPrompt || "Runway Gen-3: Fast continuous crash-zoom push-in toward camera, 60fps",
-              sfx: s.soundEffect || "Sub-bass 808 drop + vinyl needle stop",
-              onScreenText: s.onScreenText?.includes("PART 2") ? "MIND BLOWN 🤯" : s.onScreenText || "THE UNTOLD TRUTH ⚡",
+              id: s.id || `sc-${idx + 1}`,
+              number: s.sceneNumber || idx + 1,
+              durationSeconds: duration,
+              title: s.title || (idx === 0 ? "Scene 1: 3-Second Viral Hook" : idx === rawScenes.length - 1 ? "Final Scene: Payoff & Retention Loop" : `Scene ${idx + 1}: Story Progression`),
+              sceneType: idx === 0 ? "Hook (3s)" : idx === rawScenes.length - 1 ? "Infinite Loop" : "Core 3D Mechanism",
+              visualDirection: s.visualDirection || s.visualConcept || `Cinematic visual capture for ${cleanSpoken}`,
+              voiceover: voLine,
+              imagePrompt: s.imagePrompt || `Cinematic 8k photorealistic close-up of ${cleanSpoken}, scene ${idx + 1}, dramatic volumetric studio lighting, Octane render 8K, 9:16 aspect ratio --v 6.1`,
+              motionPrompt: s.motionPrompt || "Runway Gen-3: Dynamic 60fps tracking camera push-in, volumetric lighting, smooth cinematic motion",
+              sfx: s.sfx || s.soundEffect || (idx === 0 ? "Bass 808 Impact + Vinyl stop" : idx === rawScenes.length - 1 ? "Dramatic tension riser into seamless resolution" : "Ambient cinematic pulse + subtle synth"),
+              onScreenText: s.onScreenText?.includes("PART 2") ? "MIND BLOWN 🤯" : s.onScreenText || (voLine.slice(0, 26) + "..."),
             };
           });
+
           setScenes(mappedScenes);
           return;
         }
@@ -942,125 +955,122 @@ export default function VideoProductionPage() {
                       </div>
                     </div>
 
-                    {/* Live 8K AI Generated Scene Visual Card */}
-                    <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950/80 p-3.5 flex flex-col md:flex-row gap-4 items-center md:items-start">
-                      <div className="relative aspect-[9/16] w-48 md:w-44 rounded-lg overflow-hidden bg-slate-900 border border-slate-800 shrink-0 shadow-xl group">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={`https://image.pollinations.ai/prompt/${encodeURIComponent(
-                            cleanTopicForSpoken(scene.title) + " " + scene.visualDirection + " " + activeStyle.name + " 8k cinematic photorealistic Octane 3D render masterpiece"
-                          )}?width=720&height=1280&nologo=true&seed=${scene.number * 83}`}
-                          alt={scene.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          loading="lazy"
-                        />
-                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[9px] font-mono font-bold text-amber-300 border border-amber-500/30">
-                          Scene {scene.number} Visual
-                        </div>
-                        <a
-                          href={`https://image.pollinations.ai/prompt/${encodeURIComponent(
-                            cleanTopicForSpoken(scene.title) + " " + scene.visualDirection + " " + activeStyle.name + " 8k cinematic photorealistic Octane 3D render masterpiece"
-                          )}?width=1080&height=1920&nologo=true&seed=${scene.number * 83}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/80 hover:bg-brand-500 text-white text-[10px] font-semibold transition-colors flex items-center gap-1 shadow-lg"
-                        >
-                          <ExternalLink className="h-2.5 w-2.5" />
-                          <span>View 8K HD</span>
-                        </a>
-                      </div>
-
-                      <div className="flex-1 w-full space-y-3 flex flex-col justify-between">
-                        {/* Visual Direction & Spoken Voiceover Teleprompter */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 space-y-1">
-                            <span className="font-semibold text-brand-400 block flex items-center gap-1.5">
-                              <Eye className="h-3.5 w-3.5" />
-                              <span>Director Visual Cue:</span>
-                            </span>
-                            <p className="text-slate-300 leading-relaxed text-[11px]">{scene.visualDirection}</p>
-                          </div>
-
-                          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 space-y-1">
-                            <span className="font-semibold text-slate-400 block">🎙️ Spoken Teleprompter Line:</span>
-                            <p className="text-slate-100 font-medium italic leading-relaxed text-xs">&ldquo;{scene.voiceover}&rdquo;</p>
-                          </div>
-                        </div>
-
-                        {/* SFX Audio Cue & On-Screen Caption */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs bg-slate-950/40 px-3 py-2 rounded-lg border border-slate-800">
-                          <div className="flex items-center gap-2 text-slate-400">
-                            <Volume2 className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                            <span>
-                              <strong>SFX Cue:</strong> {scene.sfx}
-                            </span>
-                          </div>
-                          <Badge variant="outline" className="text-[10px] bg-slate-900 border-slate-700 text-slate-300 self-start sm:self-auto font-bold">
-                            On-Screen: &quot;{scene.onScreenText}&quot;
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* AI Prompt 1: Midjourney / FLUX 8K Image Prompt */}
-                    <div className="space-y-1.5 pt-1">
+                    {/* 1. PHELA: IMAGE PROMPT */}
+                    <div className="space-y-2 rounded-xl bg-slate-950 p-4 border border-slate-800/80">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-amber-400 flex items-center gap-1.5">
-                          <Camera className="h-3.5 w-3.5" />
-                          <span>🎨 Midjourney / FLUX 8K Image Prompt:</span>
+                        <span className="font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-wide">
+                          <Camera className="h-4 w-4" />
+                          <span>1. 🎨 Image Prompt (Midjourney / FLUX 8K)</span>
                         </span>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleCopy(`img-${scene.id}`, fullImagePrompt)}
-                          className="h-6 text-[11px] px-2.5 text-slate-200 gap-1 hover:border-brand-500 font-semibold"
+                          className="h-7 text-xs px-2.5 text-slate-200 gap-1.5 hover:border-amber-500/50 font-semibold"
                         >
                           {copiedPromptId === `img-${scene.id}` ? (
                             <>
-                              <Check className="h-3 w-3 text-emerald-400" />
-                              <span>Copied Image Prompt</span>
+                              <Check className="h-3.5 w-3.5 text-emerald-400" />
+                              <span>Copied Image Prompt!</span>
                             </>
                           ) : (
                             <>
-                              <Copy className="h-3 w-3" />
+                              <Copy className="h-3.5 w-3.5" />
                               <span>Copy Image Prompt</span>
                             </>
                           )}
                         </Button>
                       </div>
-                      <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80 font-mono text-[11px] text-slate-300 leading-relaxed break-all select-all">
+                      <div className="p-3 rounded-lg bg-slate-900/70 border border-slate-800 font-mono text-xs text-slate-200 leading-relaxed break-words select-all">
                         {fullImagePrompt}
                       </div>
                     </div>
 
-                    {/* AI Prompt 2: Runway Gen-3 / Kling AI Motion Prompt */}
-                    <div className="space-y-1.5">
+                    {/* 2. VIDIO PROMPT AUR ISSME BACKGROUND MUSIC EK SATH HE */}
+                    <div className="space-y-2 rounded-xl bg-slate-950 p-4 border border-slate-800/80">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-brand-400 flex items-center gap-1.5">
-                          <Video className="h-3.5 w-3.5" />
-                          <span>🎥 Runway Gen-3 / Kling AI Motion Video Prompt:</span>
+                        <span className="font-bold text-cyan-400 flex items-center gap-1.5 uppercase tracking-wide">
+                          <Video className="h-4 w-4" />
+                          <span>2. 🎥 Video Motion Prompt &amp; Background Music (BGM + SFX)</span>
                         </span>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleCopy(`vid-${scene.id}`, fullMotionPrompt)}
-                          className="h-6 text-[11px] px-2.5 text-slate-200 gap-1 hover:border-brand-500 font-semibold"
+                          onClick={() => handleCopy(`vid-${scene.id}`, `${fullMotionPrompt}\n\n🎵 Background Music & SFX: ${scene.sfx}`)}
+                          className="h-7 text-xs px-2.5 text-slate-200 gap-1.5 hover:border-cyan-500/50 font-semibold"
                         >
                           {copiedPromptId === `vid-${scene.id}` ? (
                             <>
-                              <Check className="h-3 w-3 text-emerald-400" />
-                              <span>Copied Motion Prompt</span>
+                              <Check className="h-3.5 w-3.5 text-emerald-400" />
+                              <span>Copied Video &amp; BGM!</span>
                             </>
                           ) : (
                             <>
-                              <Copy className="h-3 w-3" />
-                              <span>Copy Motion Prompt</span>
+                              <Copy className="h-3.5 w-3.5" />
+                              <span>Copy Video &amp; BGM</span>
                             </>
                           )}
                         </Button>
                       </div>
-                      <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80 font-mono text-[11px] text-brand-200 leading-relaxed break-all select-all">
-                        {fullMotionPrompt}
+
+                      <div className="space-y-2 text-xs">
+                        <div className="p-3 rounded-lg bg-slate-900/70 border border-slate-800 space-y-1">
+                          <span className="text-[11px] font-bold text-slate-400 block">🎥 Camera Movement (Runway Gen-3 / Kling 1.5):</span>
+                          <p className="font-mono text-xs text-slate-200 leading-relaxed break-words select-all">
+                            {fullMotionPrompt}
+                          </p>
+                        </div>
+
+                        <div className="p-2.5 rounded-lg bg-indigo-950/20 border border-indigo-500/30 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 text-xs text-indigo-300">
+                            <Music className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                            <span><strong className="text-indigo-300">Background Music (BGM) &amp; SFX Cue:</strong> {scene.sfx}</span>
+                          </div>
+                          {scene.onScreenText && (
+                            <Badge variant="outline" className="text-[10px] bg-slate-900 border-indigo-500/30 text-indigo-200 shrink-0">
+                              On-Screen: &quot;{scene.onScreenText}&quot;
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. ISE NEECHE: VOICEOVER */}
+                    <div className="space-y-2 rounded-xl bg-brand-950/20 p-4 border border-brand-500/30">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-emerald-400 flex items-center gap-1.5 uppercase tracking-wide">
+                          <Volume2 className="h-4 w-4" />
+                          <span>3. 🎙️ Voiceover (Spoken Script Line)</span>
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCopy(`vo-${scene.id}`, scene.voiceover)}
+                          className="h-7 text-xs px-2.5 text-slate-200 gap-1.5 hover:border-emerald-500/50 font-semibold"
+                        >
+                          {copiedPromptId === `vo-${scene.id}` ? (
+                            <>
+                              <Check className="h-3.5 w-3.5 text-emerald-400" />
+                              <span>Copied Voiceover!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-3.5 w-3.5" />
+                              <span>Copy Voiceover</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      <div className="bg-slate-950 p-3.5 rounded-lg border border-slate-800">
+                        <p className="text-sm sm:text-base font-semibold text-white leading-relaxed select-all font-sans">
+                          &ldquo;{scene.voiceover}&rdquo;
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-0.5">
+                        <span>Word Count: <strong className="text-slate-200">{scene.voiceover.split(/\s+/).filter(Boolean).length} words</strong></span>
+                        <span>Scene Duration: <strong className="text-emerald-400">~{scene.durationSeconds}s</strong> (Calculated from script at ~130 WPM)</span>
                       </div>
                     </div>
                   </div>

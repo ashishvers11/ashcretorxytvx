@@ -200,6 +200,26 @@ export const STYLE_DEFINITIONS: Record<string, StyleDefinition> = {
     renderKeywords: "high-contrast 3D stylized character cutout, vibrant yellow/cyan grading, sticker callouts, 8k resolution",
     cameraMovement: "dynamic fast push-in, 60fps snap zoom with motion blur, kinetic tracking",
   },
+  "style-asmr-crushing": {
+    id: "style-asmr-crushing",
+    name: "10-Ton Hydraulic Press Crushing 4K",
+    characterDescription:
+      "heavy industrial steel hydraulic press cylinder descending smoothly in extreme macro 4K 1000fps slow-motion, crushing satisfying textured items into flat pancakes, zero humans",
+    characterActionPrefix: "the massive hydraulic press cylinder slowly descending with 10 tons of force crushing ",
+    environmentDescription: "clean dark industrial studio workbench with directional metallic rim highlights, high-contrast reflections, and macro depth of field",
+    renderKeywords: "hydraulic press crushing ASMR style, 1000fps ultra-slow-motion tactile destruction, Cinema4D Octane render, ray-traced steel reflections, 8k resolution",
+    cameraMovement: "extreme microscopic macro focus tracking the descending steel press cylinder, high-frame-rate 60fps slow-motion",
+  },
+  "style-asmr-cutting": {
+    id: "style-asmr-cutting",
+    name: "Kinetic Sand & Soap Slicing ASMR",
+    characterDescription:
+      "razor-sharp heated utility craft blade cleanly slicing through multi-colored textured soap cubes and crunchy kinetic sand blocks, extreme macro 4K, zero humans",
+    characterActionPrefix: "the razor-sharp blade cleanly gliding and slicing through ",
+    environmentDescription: "pristine pastel studio table with soft diffused overhead softbox lighting, crisp geometric grid patterns, and textured shavings",
+    renderKeywords: "kinetic sand cutting and soap grid carving ASMR style, ultra-crisp tactile macro textures, 8k resolution, razor-sharp clean edges",
+    cameraMovement: "side-angle macro tracking glide following the blade path, smooth 60fps focus pull",
+  },
 };
 
 /**

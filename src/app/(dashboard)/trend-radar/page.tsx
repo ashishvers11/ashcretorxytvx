@@ -46,15 +46,17 @@ export default function TrendRadarPage() {
     if (!q) return;
     setActiveSearchLabel(`🔍 Custom Research: "${q}"`);
     setSelectedCategory(q);
+    fetchTrendingTopics(q);
   };
 
   const handleClearSearch = () => {
     setSearchQuery("");
     setActiveSearchLabel(null);
     setSelectedCategory("channel-tailored");
+    fetchTrendingTopics("channel-tailored");
   };
 
-  // Dynamic Categories tailored specifically to ASHISH FN's 3 Core Pillars
+  // Dynamic Categories based on Connected Channel and Popular Viral Niches
   const categories = [
     ...(connected && channel
       ? [
@@ -67,22 +69,22 @@ export default function TrendRadarPage() {
         ]
       : []),
     {
-      id: "Science & Education",
-      label: "🔬 Pillar A: Science & Sticky Man",
+      id: "Science & Mysteries",
+      label: "🔬 Science & Nature",
       nicheQuery: "Science & Mysteries",
-      desc: "High-retention science, ocean life, body mechanics & ancient Earth secrets (Sticky Man style)",
+      desc: "High-retention science, ocean life, body mechanics & ancient Earth secrets",
     },
     {
       id: "Cute Animation & Funny",
-      label: "🐶 Pillar B: Cute Animals & Cartoon Comedy",
+      label: "🐶 Animals & Comedy",
       nicheQuery: "Cute Animation & Funny",
-      desc: "Adorable doggy & cat mischief, cheeky pet moments & Tom & Jerry slapstick cartoons",
+      desc: "Adorable doggy & cat mischief, cheeky pet moments & cartoon comedy",
     },
     {
       id: "Visual ASMR",
-      label: "✨ Pillar C: Visual ASMR & Crushing",
+      label: "✨ Satisfying ASMR",
       nicheQuery: "Visual ASMR & Crushing",
-      desc: "Hydraulic press crushing, razor-sharp kinetic sand & soap slicing, satisfying 4K physics",
+      desc: "Hydraulic press crushing, razor-sharp kinetic sand & soap slicing",
     },
     {
       id: "Interesting Facts",
@@ -244,12 +246,17 @@ export default function TrendRadarPage() {
         {/* Category Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           {categories.map((cat) => {
-            const isSelected = selectedCategory === cat.id;
+            const isSelected = !activeSearchLabel && selectedCategory === cat.id;
             return (
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={() => {
+                  setActiveSearchLabel(null);
+                  setSearchQuery("");
+                  setSelectedCategory(cat.id);
+                  fetchTrendingTopics(cat.id);
+                }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all border ${
                   isSelected
                     ? "bg-amber-500/15 border-amber-500/50 text-amber-300 shadow-sm font-bold"

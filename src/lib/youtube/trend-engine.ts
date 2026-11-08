@@ -514,8 +514,167 @@ export function getCuratedTrendOpportunities(
     sampleViews: number;
   }> = [];
 
-  // 1. DYNAMIC CHANNEL-TAILORED VIRAL TOPICS (< 7 DAYS OLD)
-  if (userChannelVideos && userChannelVideos.length > 0 && (normNiche.includes("tailored") || normNiche.includes("aligned") || normNiche.includes("ashish") || normNiche === "channel-tailored")) {
+  // 0. SPECIFIC CUSTOM USER SEARCH QUERY (Direct keyword matching - Never return Sora/DeepSeek for fruit/custom searches!)
+  const isCustomQuery =
+    !normNiche.includes("tailored") &&
+    !normNiche.includes("aligned") &&
+    !normNiche.includes("channel-tailored") &&
+    normNiche !== "science & mysteries" &&
+    normNiche !== "science & education" &&
+    normNiche !== "cute animation & funny" &&
+    normNiche !== "visual asmr & crushing" &&
+    normNiche !== "interesting facts";
+
+  if (isCustomQuery) {
+    const cleanKw = niche.replace(/[^a-zA-Z0-9 ]/g, " ").trim();
+    const isFruit = /fruit|apple|banana|mango|watermelon|berry|grapes|orange|seb|kela/i.test(cleanKw);
+    const isAnimal = /dog|cat|puppy|kitten|pet|animal|bear|duck|monkey|kutta|billi/i.test(cleanKw);
+    const isAsmr = /asmr|crush|press|cutting|soap|sand|satisfy|slime/i.test(cleanKw);
+
+    if (isFruit) {
+      topics = [
+        {
+          title: "🍎 Apple Ke Beej Sach Mein Zeherile Hote Hain? 30s Science Truth! 🔬",
+          viewsPerDay: 320000,
+          score: 99,
+          classification: "Breakout Candidate",
+          gap: "Cyanogenic glycosides (amygdalin) chemical breakdown in stomach acid explained with 3D molecular visuals.",
+          angle: "Start immediately at 0:00: 'Kya 10 seb ke beej khane se insaan behosh ho sakta hai? Sach jaan lo!'",
+          sampleChannel: "Food Science Hindi",
+          sampleViews: 1650000,
+        },
+        {
+          title: "🍌 Banana Asal Mein Ek Berry Hai Par Strawberry Nahi? Mind-Blowing Fact! 🤯",
+          viewsPerDay: 280000,
+          score: 98,
+          classification: "Breakout Candidate",
+          gap: "Botanical taxonomy vs culinary definition comparison showing ovary seed wall structures in cross-section.",
+          angle: "Show botanical cross-section revealing tiny black seeds inside bananas compared to outer achenes on strawberries.",
+          sampleChannel: "Curiosity Matrix",
+          sampleViews: 1400000,
+        },
+        {
+          title: "🍈 Duniya Ka Sabse Mehnga Fruit: 1 Tarbooz Ki Keemat ₹20 Lakh? 💰✨",
+          viewsPerDay: 250000,
+          score: 96,
+          classification: "Breakout Candidate",
+          gap: "Japanese Yubari King melon and Densuke black watermelon precision greenhouse farming secrets.",
+          angle: "Compare ordinary fruit vs velvet-cushioned auction fruit sold at Tokyo luxury markets.",
+          sampleChannel: "Luxury Secrets Hindi",
+          sampleViews: 1250000,
+        },
+        {
+          title: "🍍 Pineapple Khate Waqt Zubaan Par Chubhan Kyun Hoti Hai? 🍍😱",
+          viewsPerDay: 220000,
+          score: 94,
+          classification: "Rising Opportunity",
+          gap: "Bromelain protease enzyme actively digesting protein molecules on the tongue surface.",
+          angle: "3D micro simulation showing enzyme molecules breaking down protein bonds in 15 seconds.",
+          sampleChannel: "Biology Deep Dive",
+          sampleViews: 1100000,
+        },
+        {
+          title: "🍉 Seedless Watermelon Aakhir Kaise Banta Hai? (Laboratory Secret Revealed) 🍉⚡",
+          viewsPerDay: 195000,
+          score: 92,
+          classification: "Rising Opportunity",
+          gap: "Triploid chromosome breeding using colchicine chemical treatment in modern agricultural science.",
+          angle: "Diagram showing 2N diploid crossed with 4N tetraploid producing sterile 3N fruit.",
+          sampleChannel: "Agri Tech Hindi",
+          sampleViews: 980000,
+        },
+      ];
+    } else if (isAnimal) {
+      topics = [
+        {
+          title: `🐶 Naughty ${cleanKw} Ne Ghar Mein Machaya Aisa Toofan Ki Sab Hairan! 😂🐾`,
+          viewsPerDay: 340000,
+          score: 99,
+          classification: "Breakout Candidate",
+          gap: "Hilarious pet comedic timing with cheeky slow-mo antics and huge sparkling cartoon eyes.",
+          angle: "Open immediately at 0:00: Mischievous puppy tiptoeing past sleeping owner with stolen shoe.",
+          sampleChannel: "Funny Pets Hindi",
+          sampleViews: 1700000,
+        },
+        {
+          title: `🐱 ${cleanKw} Vs Secret Prank: Jab Bilkull Unexpected Twist Hua! 🤣💥`,
+          viewsPerDay: 290000,
+          score: 97,
+          classification: "Breakout Candidate",
+          gap: "Cute animals getting startled by everyday harmless objects with cartoon slapstick physics.",
+          angle: "Show classic double-take jump reaction with cartoon boing sound effects.",
+          sampleChannel: "Cute Pet Toons",
+          sampleViews: 1450000,
+        },
+      ];
+    } else if (isAsmr) {
+      topics = [
+        {
+          title: `✨ Hydraulic Press Vs ${cleanKw}: Pure Oddly Satisfying ASMR! 🎧💥`,
+          viewsPerDay: 360000,
+          score: 99,
+          classification: "Breakout Candidate",
+          gap: "Hypnotic high-retention crushing physics with ultra-clean micro sound design.",
+          angle: "Slow descending steel ram flattening vibrant objects in pristine 4K 60fps macro zoom.",
+          sampleChannel: "Satisfying Lab Hindi",
+          sampleViews: 1800000,
+        },
+        {
+          title: `🌈 Heated Knife Slicing ${cleanKw}: Most Relaxing Crunchy ASMR! 🔪🧼`,
+          viewsPerDay: 300000,
+          score: 96,
+          classification: "Breakout Candidate",
+          gap: "Sensory ASMR with crisp grid slicing, perfect geometric separation, and zero background noise.",
+          angle: "Razor-sharp heated blade gliding effortlessly through textured layers.",
+          sampleChannel: "Sensory Crunch",
+          sampleViews: 1500000,
+        },
+      ];
+    } else {
+      topics = [
+        {
+          title: `🧠 ${cleanKw} Ka Sabse Bada Unseen Secret Jo 99% Log Nahi Jaante! ⚡`,
+          viewsPerDay: 290000,
+          score: 98,
+          classification: "Breakout Candidate",
+          gap: `Curiosity surge around ${cleanKw} this week. Unexplored counter-intuitive angle.`,
+          angle: `Direct pattern interrupt: 'Agar aap sochte ho ki ${cleanKw} simple hai, to ye 20 second ka video aapka dimaag hila dega.'`,
+          sampleChannel: "ASHISH FN",
+          sampleViews: 1450000,
+        },
+        {
+          title: `🔬 The Real Science & Mystery Behind ${cleanKw} Explained In 30s! ⏱️`,
+          viewsPerDay: 240000,
+          score: 96,
+          classification: "Breakout Candidate",
+          gap: `New research revealing a hidden mechanism in ${cleanKw} that defies previous consensus.`,
+          angle: `Compare the old common belief against the new scientific proof using high-contrast visual demonstration.`,
+          sampleChannel: "ASHISH FN",
+          sampleViews: 1200000,
+        },
+        {
+          title: `⚠️ Why Most People Are Completely Wrong About ${cleanKw}! ❌`,
+          viewsPerDay: 210000,
+          score: 94,
+          classification: "Rising Opportunity",
+          gap: `High search intent on mobile devices searching for clear, evidence-based explanation.`,
+          angle: `Open with the biggest misconception and reveal the actual mechanical truth in under 30 seconds.`,
+          sampleChannel: "ASHISH FN",
+          sampleViews: 1050000,
+        },
+        {
+          title: `💡 Mind-Blowing Facts About ${cleanKw} That Sound Fake But Are True! 🤯`,
+          viewsPerDay: 185000,
+          score: 92,
+          classification: "Rising Opportunity",
+          gap: `High viral engagement driven by counter-intuitive facts driving intense replay loops.`,
+          angle: `Rapid 3-second rapid fire pacing with surprising visual b-roll for every fact.`,
+          sampleChannel: "ASHISH FN",
+          sampleViews: 920000,
+        },
+      ];
+    }
+  } else if (userChannelVideos && userChannelVideos.length > 0 && (normNiche.includes("tailored") || normNiche.includes("aligned") || normNiche.includes("ashish") || normNiche === "channel-tailored")) {
     const seedTitles = userChannelVideos.map((v) => v.title).join(" ").toLowerCase();
     const isGaming = /(gta|bgmi|freefire|minecraft|roblox|gameplay|playthrough|fortnite|esports)/i.test(seedTitles);
     const isTech = /(phone|smartphones?|ai\b|tech\b|deepseek|sora|chatgpt|coding|laptop|battery)/i.test(seedTitles);

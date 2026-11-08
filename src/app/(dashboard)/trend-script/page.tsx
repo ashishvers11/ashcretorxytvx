@@ -231,7 +231,7 @@ export default function TrendScriptPage() {
     wordPointer = hookWordCount;
     currentTimeSec = 3;
 
-    const sc1 = buildCinematicScenePrompts(activeTopic, 1, false);
+    const sc1 = buildCinematicScenePrompts(activeTopic, 1, false, "9:16", "style-stickman", undefined, true, hookWords);
 
     scenes.push({
       id: "scene-1",
@@ -268,7 +268,7 @@ export default function TrendScriptPage() {
       };
 
       const isLast = wordPointer >= allWords.length;
-      const scProgress = buildCinematicScenePrompts(activeTopic, sceneIndex, isLast);
+      const scProgress = buildCinematicScenePrompts(activeTopic, sceneIndex, isLast, "9:16", "style-stickman", undefined, true, chunkWords);
 
       scenes.push({
         id: `scene-${sceneIndex}`,

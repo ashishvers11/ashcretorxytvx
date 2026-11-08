@@ -377,10 +377,15 @@ export default function VideoProductionPage() {
 
   // Build Fast Viral Scenes: Hook STRICTLY 3s, all other cuts automatically UNDER 10s. ZERO "part 2"!
   const buildUnder30Scenes = (spokenTitle: string): ChoreographedScene[] => {
-    const p1 = buildCinematicScenePrompts(spokenTitle, 1, false);
-    const p2 = buildCinematicScenePrompts(spokenTitle, 2, false);
-    const p3 = buildCinematicScenePrompts(spokenTitle, 3, false);
-    const p4 = buildCinematicScenePrompts(spokenTitle, 4, true);
+    const vo1 = `Wait! Kya aapko pata hai iske peeche ka real visual secret kya hai?`;
+    const vo2 = `Almost 99% log iske underlying mechanics ko completely miss kar dete hain. But high-speed scans ne kuch aur hi reveal kiya!`;
+    const vo3 = `Actually, yahan operate kar raha hai ek unbelievable scientific principle jo extreme dynamic stress ko 100% absorb karta hai!`;
+    const vo4 = `Isliye ye itna bada viral secret hai — share karo unke saath jo iske baare mein bilkul nahi jaante!`;
+
+    const p1 = buildCinematicScenePrompts(spokenTitle, 1, false, aspectRatio, selectedStyleId, characterAnchor, characterConsistencyLocked, vo1);
+    const p2 = buildCinematicScenePrompts(spokenTitle, 2, false, aspectRatio, selectedStyleId, characterAnchor, characterConsistencyLocked, vo2);
+    const p3 = buildCinematicScenePrompts(spokenTitle, 3, false, aspectRatio, selectedStyleId, characterAnchor, characterConsistencyLocked, vo3);
+    const p4 = buildCinematicScenePrompts(spokenTitle, 4, true, aspectRatio, selectedStyleId, characterAnchor, characterConsistencyLocked, vo4);
 
     return [
       {
@@ -390,7 +395,7 @@ export default function VideoProductionPage() {
         title: "The Impossible Hook (Pattern Interrupt)",
         sceneType: "Hook (3s)",
         visualDirection: p1.directorCue,
-        voiceover: `Wait! Kya aapko pata hai iske peeche ka real visual secret kya hai?`,
+        voiceover: vo1,
         imagePrompt: p1.imagePrompt,
         motionPrompt: p1.motionPrompt,
         sfx: "Sub-bass 808 drop + Vinyl needle scratch stop",
@@ -403,7 +408,7 @@ export default function VideoProductionPage() {
         title: "The Hidden Reality (Assumption Break)",
         sceneType: "Assumption Break",
         visualDirection: p2.directorCue,
-        voiceover: `Almost 99% log iske underlying mechanics ko completely miss kar dete hain. But high-speed scans ne kuch aur hi reveal kiya!`,
+        voiceover: vo2,
         imagePrompt: p2.imagePrompt,
         motionPrompt: p2.motionPrompt,
         sfx: "Fast whoosh cut + UI glitch beep",
@@ -416,7 +421,7 @@ export default function VideoProductionPage() {
         title: "The Core 3D Mechanism & Evidence",
         sceneType: "Core 3D Mechanism",
         visualDirection: p3.directorCue,
-        voiceover: `Actually, yahan operate kar raha hai ek unbelievable scientific principle jo extreme dynamic stress ko 100% absorb karta hai!`,
+        voiceover: vo3,
         imagePrompt: p3.imagePrompt,
         motionPrompt: p3.motionPrompt,
         sfx: "Rising violin tension + Digital scan hum",
@@ -429,7 +434,7 @@ export default function VideoProductionPage() {
         title: "Seamless Retention Loop (Infinite Replay)",
         sceneType: "Infinite Loop",
         visualDirection: p4.directorCue,
-        voiceover: `Isliye ye itna bada viral secret hai — share karo unke saath jo iske baare mein bilkul nahi jaante!`,
+        voiceover: vo4,
         imagePrompt: p4.imagePrompt,
         motionPrompt: p4.motionPrompt,
         sfx: "Cinematic impact boom resolving cleanly into opening ambient chord",
@@ -439,12 +444,19 @@ export default function VideoProductionPage() {
   };
 
   const buildStandard60Scenes = (spokenTitle: string): ChoreographedScene[] => {
-    const p1 = buildCinematicScenePrompts(spokenTitle, 1, false);
-    const p2 = buildCinematicScenePrompts(spokenTitle, 2, false);
-    const p3 = buildCinematicScenePrompts(spokenTitle, 3, false);
-    const p4 = buildCinematicScenePrompts(spokenTitle, 4, false);
-    const p5 = buildCinematicScenePrompts(spokenTitle, 5, false);
-    const p6 = buildCinematicScenePrompts(spokenTitle, 6, true);
+    const vo1 = `Wait! Kya aapko pata hai iske peeche ka real visual secret kya hai?`;
+    const vo2 = "Almost 99% log iske underlying mechanics ko completely overlook kar dete hain aur isko ek simple coincidence samajhte hain.";
+    const vo3 = "Lekin recent laboratory scans mein dekha gaya ki yahan ek specific physical law operate karta hai.";
+    const vo4 = "Actually, yahan operate kar raha hai ek ground-breaking physical law jo dynamic stress ko 100% absorb karta hai!";
+    const vo5 = "Bottom line: Ye koi lucky coincidence nahi hai, balki evidence-based science aur precision ka perfect combination hai.";
+    const vo6 = `Aur yahi mind-blowing reason hai jo isko sabse unique aur viral banata hai!`;
+
+    const p1 = buildCinematicScenePrompts(spokenTitle, 1, false, aspectRatio, selectedStyleId, characterAnchor, characterConsistencyLocked, vo1);
+    const p2 = buildCinematicScenePrompts(spokenTitle, 2, false, aspectRatio, selectedStyleId, characterAnchor, characterConsistencyLocked, vo2);
+    const p3 = buildCinematicScenePrompts(spokenTitle, 3, false, aspectRatio, selectedStyleId, characterAnchor, characterConsistencyLocked, vo3);
+    const p4 = buildCinematicScenePrompts(spokenTitle, 4, false, aspectRatio, selectedStyleId, characterAnchor, characterConsistencyLocked, vo4);
+    const p5 = buildCinematicScenePrompts(spokenTitle, 5, false, aspectRatio, selectedStyleId, characterAnchor, characterConsistencyLocked, vo5);
+    const p6 = buildCinematicScenePrompts(spokenTitle, 6, true, aspectRatio, selectedStyleId, characterAnchor, characterConsistencyLocked, vo6);
 
     return [
       {
@@ -454,7 +466,7 @@ export default function VideoProductionPage() {
         title: "The Impossible Hook (Pattern Interrupt)",
         sceneType: "Hook (3s)",
         visualDirection: p1.directorCue,
-        voiceover: `Wait! Kya aapko pata hai iske peeche ka real visual secret kya hai?`,
+        voiceover: vo1,
         imagePrompt: p1.imagePrompt,
         motionPrompt: p1.motionPrompt,
         sfx: "Sub-bass 808 drop + Vinyl needle scratch stop",
@@ -467,7 +479,7 @@ export default function VideoProductionPage() {
         title: "The Common Misconception",
         sceneType: "Assumption Break",
         visualDirection: p2.directorCue,
-        voiceover: "Almost 99% log iske underlying mechanics ko completely overlook kar dete hain aur isko ek simple coincidence samajhte hain.",
+        voiceover: vo2,
         imagePrompt: p2.imagePrompt,
         motionPrompt: p2.motionPrompt,
         sfx: "Whoosh transition + Low ambient drone",
@@ -480,7 +492,7 @@ export default function VideoProductionPage() {
         title: "The Laboratory Discovery",
         sceneType: "Assumption Break",
         visualDirection: p3.directorCue,
-        voiceover: "Lekin recent laboratory scans mein dekha gaya ki yahan ek specific physical law operate karta hai.",
+        voiceover: vo3,
         imagePrompt: p3.imagePrompt,
         motionPrompt: p3.motionPrompt,
         sfx: "Mechanical hum + Electronic beep",
@@ -493,7 +505,7 @@ export default function VideoProductionPage() {
         title: "The Core 3D Mechanism",
         sceneType: "Core 3D Mechanism",
         visualDirection: p4.directorCue,
-        voiceover: "Actually, yahan operate kar raha hai ek ground-breaking physical law jo dynamic stress ko 100% absorb karta hai!",
+        voiceover: vo4,
         imagePrompt: p4.imagePrompt,
         motionPrompt: p4.motionPrompt,
         sfx: "Digital UI data chirp + Rising cinematic string swell",
@@ -506,7 +518,7 @@ export default function VideoProductionPage() {
         title: "The Real-World Consequence",
         sceneType: "Core 3D Mechanism",
         visualDirection: p5.directorCue,
-        voiceover: "Bottom line: Ye koi lucky coincidence nahi hai, balki evidence-based science aur precision ka perfect combination hai.",
+        voiceover: vo5,
         imagePrompt: p5.imagePrompt,
         motionPrompt: p5.motionPrompt,
         sfx: "Deep sub-bass swell + Resolving synth pad",
@@ -519,7 +531,7 @@ export default function VideoProductionPage() {
         title: "Seamless Retention Loop (Infinite Replay)",
         sceneType: "Infinite Loop",
         visualDirection: p6.directorCue,
-        voiceover: `Aur yahi mind-blowing reason hai jo isko sabse unique aur viral banata hai!`,
+        voiceover: vo6,
         imagePrompt: p6.imagePrompt,
         motionPrompt: p6.motionPrompt,
         sfx: "Cinematic impact boom + Soft resolving chord",
@@ -699,7 +711,51 @@ export default function VideoProductionPage() {
             return (
               <div
                 key={style.id}
-                onClick={() => setSelectedStyleId(style.id)}
+                onClick={() => {
+                  setSelectedStyleId(style.id);
+                  // Automatically update character anchor to match the clicked style with zero realistic humans!
+                  if (style.id === "style-stickman") {
+                    setCharacterAnchor(
+                      "3D stylized minimalist white stickman (sticky man) with big expressive cartoon eyes, smooth rounded 3D stick limbs, Zack D. Films and Alan Becker animation style, high-end 3D render, zero realistic humans"
+                    );
+                  } else if (style.id === "style-curiokid-cartoon") {
+                    setCharacterAnchor(
+                      "Pixar-style 3D animated cartoon boy explorer with adventurer hat, big expressive curious eyes, colorful cartoon jacket, stylized 3D render, zero realistic humans"
+                    );
+                  } else if (style.id === "style-zackd") {
+                    setCharacterAnchor(
+                      "Zack D. Films smooth beige 3D clay anatomical simulation model, faceless dummy figure, clinical physical cutaway, zero realistic humans"
+                    );
+                  } else if (style.id === "style-mrbeast") {
+                    setCharacterAnchor(
+                      "3D stylized cartoon energetic character with exaggerated comical shocked expression, thick yellow stroke callout graphics, zero realistic humans"
+                    );
+                  } else if (style.id === "style-facttechz") {
+                    setCharacterAnchor(
+                      "Cosmic scientific visualization with glowing cyan and violet holographic telemetry HUD overlays, zero humans"
+                    );
+                  } else if (style.id === "style-asmr") {
+                    setCharacterAnchor(
+                      "Ray-traced translucent glass elements, iridescent rainbow caustics, viscous fluid dynamics, zero humans, pure physical satisfaction"
+                    );
+                  } else if (style.id === "style-dhruv") {
+                    setCharacterAnchor(
+                      "Clean 3D minimalist vector motion graphics with floating highlighted document cutouts and analytical spotlights, zero realistic humans"
+                    );
+                  } else if (style.id === "style-cyberpunk") {
+                    setCharacterAnchor(
+                      "Cel-shaded 3D anime stylized character with glowing neon visor, comic speed lines, zero realistic humans, no photorealistic people"
+                    );
+                  } else if (style.id === "style-papercut") {
+                    setCharacterAnchor(
+                      "Whimsical layered craft paper cutout puppet character with textured cardboard limbs, charming stop-motion aesthetic, zero realistic humans"
+                    );
+                  } else {
+                    setCharacterAnchor(
+                      "3D stylized character matching " + style.name + ", clean animated studio render, zero realistic humans, no photorealistic people"
+                    );
+                  }
+                }}
                 className={`group cursor-pointer rounded-xl border p-3.5 transition-all relative overflow-hidden ${
                   isSelected
                     ? "border-brand-500 bg-brand-500/15 shadow-xl shadow-brand-500/20 ring-2 ring-brand-500/50"
@@ -1009,9 +1065,10 @@ export default function VideoProductionPage() {
                 scene.number,
                 isLast,
                 aspectRatio,
-                activeStyle.name,
+                selectedStyleId,
                 characterAnchor,
-                characterConsistencyLocked
+                characterConsistencyLocked,
+                scene.voiceover
               );
 
               // 100% Policy-Safe Cinema Prompts: Zero clickbait, zero emojis, zero NSFW triggers

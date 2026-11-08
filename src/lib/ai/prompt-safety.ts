@@ -4,8 +4,9 @@
  *
  * Guarantees:
  * 1. ZERO policy violations or false-positive errors (Google Flow, Veo, Runway Gen-3, Kling 1.5, Midjourney).
- * 2. Complete eradication of raw clickbait titles, emojis, Hinglish text, and trigger words (e.g., "Exposed", "Blast", "Scam").
- * 3. 100% Hollywood / commercial-grade cinematic prompts for every scene.
+ * 2. 100% Stylized Cartoon / 3D Sticky Man character animation (No realistic humans).
+ * 3. Complete eradication of raw clickbait titles, emojis, Hinglish text, and trigger words (e.g., "Exposed", "Blast", "Scam").
+ * 4. 100% Hollywood / commercial-grade cinematic prompts for every scene.
  */
 
 export interface CinematicVisualSubject {
@@ -104,66 +105,92 @@ export interface CinematicScenePrompt {
 }
 
 /**
- * Builds 100% Policy-Safe, Cinema-Grade Prompts for any scene index.
- * Strips all noise, prevents nudity/NSFW false positives, and ensures pure cinematic camera movement.
+ * Builds 100% Policy-Safe, Cartoonish & 3D Sticky Man Prompts for any scene index.
+ * Strictly avoids realistic humans; uses 3D stylized white stick figure (Zack D. / Alan Becker style)
+ * or Pixar/Disney cartoon boy (CURIOKID style) as requested by user.
  */
 export function buildCinematicScenePrompts(
   rawTopic: string,
   sceneIndex: number, // 1, 2, 3, 4, etc.
   isLastScene: boolean = false,
   aspectRatio: string = "9:16",
-  styleName: string = "Cinematic 3D",
+  styleName: string = "3D Sticky Man Animation",
   characterAnchor?: string,
-  isCharacterLocked: boolean = false
+  isCharacterLocked: boolean = true
 ): CinematicScenePrompt {
   const visual = extractVisualSubjectAndEnvironment(rawTopic);
 
-  const anchorModesty =
-    isCharacterLocked && characterAnchor
-      ? `[Character Anchor: ${characterAnchor}], fully clothed in modern tech hoodie, modest attire, no bare skin, `
-      : "fully clothed tech presenter wearing dark hoodie, clean laboratory setting, professional attire, no bare skin or nudity, ";
+  const isStickman =
+    /stickman|sticky man|stick figure|alan becker/i.test(styleName) ||
+    /stickman|sticky man|stick figure/i.test(characterAnchor || "") ||
+    (!styleName.includes("Cartoon") && !styleName.includes("Cosmos"));
+
+  const isCartoon =
+    /curiokid|pixar|disney|cartoon|anime|manga/i.test(styleName) ||
+    /curiokid|cartoon|pixar|disney/i.test(characterAnchor || "");
+
+  let characterPrompt = "";
+  let characterAction = "";
+
+  if (isStickman) {
+    characterPrompt =
+      "3D stylized minimalist white stickman (sticky man) character with big expressive cartoon eyes, smooth rounded 3D stick limbs, Zack D. Films and Alan Becker animation style, high-end Octane 3D render, no realistic humans, no photorealistic people, ";
+    characterAction = "the 3D white stickman character with expressive cartoon reactions interacting with ";
+  } else if (isCartoon) {
+    characterPrompt =
+      "Pixar-style 3D animated cartoon character with big expressive eyes, colorful animated outfit, stylized 3D render, vibrant lighting, no realistic humans, no photorealistic people, ";
+    characterAction = "the 3D stylized cartoon character curiously observing ";
+  } else if (isCharacterLocked && characterAnchor) {
+    characterPrompt = `[Character Anchor: ${characterAnchor}], stylized 3D cartoon render, no realistic humans, no photorealistic people, `;
+    characterAction = "the stylized 3D character examining ";
+  } else {
+    // Default to 3D Sticky Man as preferred by user
+    characterPrompt =
+      "3D stylized white stickman character with expressive cartoon eyes, smooth 3D rounded stick figure body, Zack D. Films animation aesthetic, clean studio setting, no realistic humans, no photorealistic people, ";
+    characterAction = "the 3D white stickman character interacting with ";
+  }
 
   // Scene 1: Strictly 3s High-Impact Viral Opening Hook
   if (sceneIndex === 1) {
     return {
-      imagePrompt: `Cinematic 8k extreme macro photograph of ${visual.macroFocus} inside ${visual.subjectNoun}, resting on ${visual.environment}, dramatic neon cyan rim lighting, anamorphic lens flare, shallow depth of field, photorealistic, ${anchorModesty}Hasselblad medium format photography, 8k resolution, clean tech studio --ar ${aspectRatio} --v 6.1 --stylize 250`,
-      motionPrompt: `Cinematic smooth continuous camera push-in zoom gliding directly into the ${visual.macroFocus} on ${visual.environment}, dramatic volumetric studio lighting, shallow depth of field, 60fps fluid camera motion, professional commercial lighting`,
-      directorCue: `High-impact extreme macro push-in on the illuminated core subject with instant shallow depth-of-field transition.`,
+      imagePrompt: `Cinematic 8k 3D stylized scene of ${characterPrompt}${characterAction}${visual.macroFocus} inside ${visual.subjectNoun}, resting on ${visual.environment}, dramatic neon cyan rim lighting, anamorphic lens flare, shallow depth of field, Octane 3D render, playful comic infographic overlays, 8k resolution, clean tech studio --ar ${aspectRatio} --v 6.1 --stylize 250`,
+      motionPrompt: `Cinematic smooth continuous camera push-in zoom gliding directly into ${characterAction}${visual.macroFocus} on ${visual.environment}, dramatic volumetric studio lighting, shallow depth of field, 60fps fluid 3D animated motion, professional commercial lighting`,
+      directorCue: `High-impact 3D cartoon push-in tracking the sticky man character reacting to the illuminated core subject with instant shallow depth-of-field transition.`,
     };
   }
 
   // Scene 2: Evidence & Diagram / Common Assumption Break
   if (sceneIndex === 2) {
     return {
-      imagePrompt: `High-contrast scientific blueprint schematic of ${visual.subjectNoun}, glowing holographic technical diagnostic data lines floating above surface, dark minimalist studio tech backdrop, micro-details in razor-sharp focus, ${anchorModesty}visual style of ${styleName}, 8k resolution --ar ${aspectRatio} --v 6.1`,
-      motionPrompt: `Smooth horizontal parallax camera sweep across ${visual.subjectNoun}, floating glowing cyan diagnostic elements emerging seamlessly, 60fps cinematic fluidity, volumetric atmospheric lighting`,
-      directorCue: `Horizontal tracking sweep revealing technical data indicators and analytical breakdown.`,
+      imagePrompt: `High-contrast 3D stylized diagram of ${visual.subjectNoun}, ${characterPrompt}glowing holographic technical diagnostic data lines floating above surface, dark minimalist studio tech backdrop, micro-details in razor-sharp focus, visual style of ${styleName}, 8k resolution --ar ${aspectRatio} --v 6.1`,
+      motionPrompt: `Smooth horizontal parallax camera sweep across ${visual.subjectNoun} as ${characterAction}points to floating glowing cyan diagnostic elements emerging seamlessly, 60fps cinematic fluidity, volumetric atmospheric lighting`,
+      directorCue: `Horizontal tracking sweep revealing technical data indicators and analytical breakdown with 3D stickman callout.`,
     };
   }
 
   // Scene 3: Core 3D Mechanism & Evidence Cross-Section
   if (sceneIndex === 3) {
     return {
-      imagePrompt: `Detailed 3D simulation cross-section of ${visual.subjectNoun}, glowing bioluminescent particle pathways visualizing energy flow, precision octane render 8k, ${anchorModesty}clean industrial technology lab, visual style of ${styleName} --ar ${aspectRatio} --v 6.1`,
-      motionPrompt: `Slow 360-degree orbital camera rotation around the internal cross-section of ${visual.subjectNoun}, slow volumetric laser scan beam sweeping across components, 60fps fluid tracking, cinematic lighting`,
-      directorCue: `360-degree orbital rotation exposing the internal 3D mechanism and dynamic energy flow.`,
+      imagePrompt: `Detailed 3D simulation cross-section of ${visual.subjectNoun}, glowing bioluminescent particle pathways visualizing energy flow, precision octane render 8k, ${characterPrompt}clean industrial technology lab, visual style of ${styleName} --ar ${aspectRatio} --v 6.1`,
+      motionPrompt: `Slow 360-degree orbital camera rotation around the internal cross-section of ${visual.subjectNoun} with ${characterAction}the internal components, slow volumetric laser scan beam, 60fps fluid tracking, cinematic lighting`,
+      directorCue: `360-degree orbital rotation exposing the internal 3D mechanism and dynamic energy flow alongside the sticky man.`,
     };
   }
 
   // Last Scene: Seamless Infinite Retention Loop
   if (isLastScene) {
     return {
-      imagePrompt: `Breathtaking cinematic wide vista of ${visual.subjectNoun} in pristine operational glory, golden hour atmospheric rim lighting, hyper-detailed 8k masterpiece, shallow depth of field, clean studio setting, ${anchorModesty}visual style of ${styleName} --ar ${aspectRatio} --v 6.1`,
-      motionPrompt: `Slow backward crane tracking pullout gliding smoothly from ${visual.subjectNoun} back to the exact opening camera framing perspective, seamless infinite loop, 60fps fluidity`,
-      directorCue: `Slow backward crane pullout returning smoothly to the exact opening frame angle for 100% infinite retention.`,
+      imagePrompt: `Breathtaking 3D stylized wide vista of ${visual.subjectNoun} in pristine operational glory with ${characterPrompt}golden hour atmospheric rim lighting, hyper-detailed 8k masterpiece, shallow depth of field, clean studio setting, visual style of ${styleName} --ar ${aspectRatio} --v 6.1`,
+      motionPrompt: `Slow backward crane tracking pullout gliding smoothly from ${characterAction}${visual.subjectNoun} back to the exact opening camera framing perspective, seamless infinite loop, 60fps fluidity`,
+      directorCue: `Slow backward crane pullout returning smoothly to the exact opening frame angle for 100% infinite retention loop.`,
     };
   }
 
   // Middle Progression Scenes (Scenes 4, 5 in longer scripts)
   return {
-    imagePrompt: `Cinematic 8k realistic camera shot inspecting ${visual.subjectNoun}, scene ${sceneIndex}, visual storytelling, fully clothed presenter, volumetric studio lighting, hyper-detailed octane 3D render, clean technology lab, ${anchorModesty}--ar ${aspectRatio} --v 6.1`,
-    motionPrompt: `Smooth cinematic 60fps tracking camera orbit around ${visual.subjectNoun} with volumetric light rays, studio environment`,
-    directorCue: `Smooth continuous tracking camera motion showcasing precision operational details.`,
+    imagePrompt: `Cinematic 8k 3D stylized camera shot inspecting ${visual.subjectNoun}, scene ${sceneIndex}, visual storytelling, ${characterPrompt}volumetric studio lighting, hyper-detailed octane 3D render, clean technology lab, visual style of ${styleName} --ar ${aspectRatio} --v 6.1`,
+    motionPrompt: `Smooth cinematic 60fps tracking camera orbit around ${visual.subjectNoun} with ${characterAction}volumetric light rays, studio environment`,
+    directorCue: `Smooth continuous tracking camera motion showcasing precision operational details with cartoon stickman animations.`,
   };
 }
 
@@ -186,16 +213,16 @@ export function buildSafeMotionPrompt(
   // Strip tool prefixes
   motion = motion.replace(/^(?:Runway Gen-3|Kling 1\.5|Luma|Pika):\s*/i, "");
 
-  // If rawMotion contains old contaminated title or focal junk, replace entirely with cinema-grade motion
+  // If rawMotion contains old contaminated title or focal junk, replace entirely with 3D stickman motion
   if (motion.includes("🔥") || motion.includes("Exposed") || motion.includes("Blast") || motion.includes("Scam") || motion.includes("3 Seconds")) {
-    return `Cinematic smooth continuous camera push-in zoom gliding toward ${visual.subjectNoun} on ${visual.environment}, dramatic volumetric studio lighting, shallow depth of field, 60fps fluid camera motion, professional commercial lighting`;
+    return `Cinematic smooth continuous camera push-in zoom tracking the 3D white stickman character inspecting ${visual.subjectNoun} on ${visual.environment}, dramatic volumetric studio lighting, shallow depth of field, 60fps fluid 3D animated motion, professional commercial lighting`;
   }
 
   // Strip audio cues (ES5-safe)
   motion = motion.replace(/🎵[\s\S]*$/, "").trim();
 
   // Replace generic focal object with extracted visual subject
-  motion = motion.replace(/\b(?:focal object|focal point)\b/gi, visual.subjectNoun);
+  motion = motion.replace(/\b(?:focal object|focal point)\b/gi, `the 3D stickman character and ${visual.subjectNoun}`);
 
-  return `${motion}, ${cameraStyle}, volumetric studio light rays, 60fps fluidity, cinematic composition, laboratory setting`;
+  return `${motion}, ${cameraStyle}, volumetric studio light rays, 60fps fluidity, 3D stylized animation, clean studio setting`;
 }

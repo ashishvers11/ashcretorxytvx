@@ -64,6 +64,72 @@ interface VideoStyleOption {
 
 const VIDEO_STYLES: VideoStyleOption[] = [
   {
+    id: "style-stickman",
+    name: "3D Sticky Man Animation (Channel Signature)",
+    creatorTag: "🪄 3D Sticky Man",
+    badge: "User Channel Style • Viral #1",
+    description: "Minimalist 3D white stick figure (sticky man) with big expressive cartoon eyes, smooth rounded 3D stick limbs, Zack D. Films & Alan Becker animation style, zero realistic humans.",
+    camera: "Dynamic 60fps tracking camera following the 3D stickman, comic snap-zooms and kinetic infographic pops",
+    lighting: "Vibrant clean studio lighting with soft cartoon drop-shadows on modern dark slate background",
+    aiTools: "Midjourney 3D Stylized + Runway Gen-3 / Kling 1.5",
+    aspect: "9:16",
+    colorHex: "#38bdf8",
+    previewSvg: (
+      <svg viewBox="0 0 200 120" className="w-full h-full rounded-lg" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="120" fill="#090d16" />
+        <circle cx="100" cy="60" r="45" fill="url(#stickmanGlow)" opacity="0.35" />
+        <circle cx="100" cy="38" r="14" fill="#ffffff" stroke="#38bdf8" strokeWidth="2" />
+        <ellipse cx="96" cy="37" rx="2.5" ry="4" fill="#0f172a" />
+        <ellipse cx="104" cy="37" rx="2.5" ry="4" fill="#0f172a" />
+        <ellipse cx="97" cy="35" rx="1" ry="1.5" fill="#ffffff" />
+        <ellipse cx="105" cy="35" rx="1" ry="1.5" fill="#ffffff" />
+        <line x1="100" y1="52" x2="100" y2="80" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" />
+        <path d="M100 60 L78 70 L65 58" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M100 60 L122 68 L138 56" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M100 80 L84 104" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" />
+        <path d="M100 80 L116 104" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" />
+        <text x="100" y="115" textAnchor="middle" fill="#38bdf8" fontSize="9" fontWeight="bold">3D STICKY MAN</text>
+        <defs>
+          <radialGradient id="stickmanGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#090d16" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+      </svg>
+    ),
+  },
+  {
+    id: "style-curiokid-cartoon",
+    name: "CURIOKID 3D Cartoon Explorer",
+    creatorTag: "👦 CURIOKID VERS",
+    badge: "Channel Avatar",
+    description: "Pixar/Disney 3D animated cartoon boy explorer with adventurer hat, huge curious eyes, vibrant stylized cartoon world, zero realistic humans.",
+    camera: "Cinematic 60fps crane orbit and push-in tracking the cartoon character",
+    lighting: "Warm fairytale golden rim lighting, soft subsurface scattering, vibrant saturated palette",
+    aiTools: "Midjourney v6 3D Pixar + Kling 1.5",
+    aspect: "9:16",
+    colorHex: "#f59e0b",
+    previewSvg: (
+      <svg viewBox="0 0 200 120" className="w-full h-full rounded-lg" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="120" fill="#0c1222" />
+        <circle cx="100" cy="60" r="45" fill="url(#curioGlow)" opacity="0.3" />
+        <path d="M72 36 Q100 18 128 36 L138 42 L62 42 Z" fill="#b45309" stroke="#f59e0b" strokeWidth="1.5" />
+        <circle cx="100" cy="54" r="16" fill="#fed7aa" />
+        <circle cx="95" cy="52" r="3.5" fill="#0284c7" />
+        <circle cx="105" cy="52" r="3.5" fill="#0284c7" />
+        <path d="M96 61 Q100 65 104 61" stroke="#b45309" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path d="M85 70 L115 70 L110 92 L90 92 Z" fill="#0284c7" />
+        <text x="100" y="112" textAnchor="middle" fill="#fbbf24" fontSize="9" fontWeight="bold">CURIOKID CARTOON</text>
+        <defs>
+          <radialGradient id="curioGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#0c1222" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+      </svg>
+    ),
+  },
+  {
     id: "style-ashishfn",
     name: "ASHISH FN Signature (Connected Channel)",
     creatorTag: "🎯 Channel Signature",
@@ -291,15 +357,15 @@ export default function VideoProductionPage() {
   const initialTopic = searchParams.get("topic") || "ASML Microchip Monopoly & Extreme EUV Physics";
 
   const [topic, setTopic] = useState<string>(initialTopic);
-  const [selectedStyleId, setSelectedStyleId] = useState<string>("style-ashishfn");
+  const [selectedStyleId, setSelectedStyleId] = useState<string>("style-stickman");
   const [aspectRatio, setAspectRatio] = useState<"9:16" | "16:9">("9:16");
   const [durationMode, setDurationMode] = useState<"under30" | "standard60">("under30");
   const [copiedPromptId, setCopiedPromptId] = useState<string | null>(null);
 
-  // 100% Character Consistency Engine
+  // 100% Character Consistency Engine (Cartoonish & 3D Sticky Man)
   const [characterConsistencyLocked, setCharacterConsistencyLocked] = useState<boolean>(true);
   const [characterAnchor, setCharacterAnchor] = useState<string>(
-    "24-year-old Indian creator with clean fade haircut, modern round dark-rim glasses, fully clothed in navy blue hoodie, modest tech attire, no bare skin, identical face structure across all scenes, photorealistic 8K"
+    "3D stylized minimalist white stickman (sticky man) with big expressive cartoon eyes, smooth rounded 3D stick limbs, Zack D. Films / Alan Becker cartoon animation style, high-end 3D render, no realistic humans, no photorealistic people"
   );
 
   const cleanSpoken = useMemo(() => cleanTopicForSpoken(topic), [topic]);
@@ -734,28 +800,39 @@ export default function VideoProductionPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-slate-400">
-            <span className="text-slate-500">Fast Creator Anchors:</span>
+            <span className="text-slate-500 font-semibold">Cartoon &amp; Sticky Man Anchors:</span>
             <button
               type="button"
               onClick={() =>
                 setCharacterAnchor(
-                  "24yo Indian creator with round glasses, navy blue hoodie, clean fade haircut, photorealistic consistency across all scenes"
+                  "3D stylized minimalist white stickman (sticky man) with big expressive cartoon eyes, smooth rounded 3D stick limbs, Zack D. Films and Alan Becker animation style, high-end 3D render, zero realistic humans"
                 )
               }
-              className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 hover:border-slate-700 text-[10px] text-slate-300"
+              className="px-2.5 py-1 rounded-md bg-cyan-950/40 border border-cyan-500/40 hover:border-cyan-400 text-[10px] text-cyan-300 font-medium"
             >
-              Indian Creator (Glasses + Hoodie)
+              🪄 3D Sticky Man (Zack D. Style)
             </button>
             <button
               type="button"
               onClick={() =>
                 setCharacterAnchor(
-                  "Stylized Zack D. 3D humanoid clay figure, smooth faceless anatomical model, blue medical studio lighting"
+                  "Pixar-style 3D animated cartoon boy explorer with adventurer hat, big expressive curious eyes, vibrant cartoon outfit, stylized 3D render, zero realistic humans"
                 )
               }
-              className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 hover:border-slate-700 text-[10px] text-slate-300"
+              className="px-2.5 py-1 rounded-md bg-amber-950/40 border border-amber-500/40 hover:border-amber-400 text-[10px] text-amber-300 font-medium"
             >
-              Zack D. 3D Clay Figure
+              👦 CURIOKID 3D Cartoon Boy
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setCharacterAnchor(
+                  "Cute 3D animated chibi robot mascot with glowing blue LED screen eyes, smooth white rounded ceramic body, playful cartoon proportions, no realistic humans"
+                )
+              }
+              className="px-2.5 py-1 rounded-md bg-slate-950 border border-slate-800 hover:border-slate-700 text-[10px] text-slate-300"
+            >
+              🤖 3D Chibi Robot
             </button>
           </div>
         </Card>

@@ -47,6 +47,7 @@ import { ProfessionalScript } from "@/lib/script-engine/types";
 import { BUILT_IN_PRESETS } from "@/lib/script-engine/presets";
 import { DailyResearchReport, TrendOpportunity } from "@/lib/youtube/trend-engine";
 import { useYouTubeChannel } from "@/hooks/use-youtube-channel";
+import { sanitizeTopicForAIPrompt } from "@/lib/ai/prompt-safety";
 
 export default function TrendScriptPage() {
   const { channel, connected } = useYouTubeChannel();
@@ -230,6 +231,8 @@ export default function TrendScriptPage() {
     wordPointer = hookWordCount;
     currentTimeSec = 3;
 
+    const safeSubject = sanitizeTopicForAIPrompt(activeTopic);
+
     scenes.push({
       id: "scene-1",
       sceneNumber: 1,
@@ -237,12 +240,12 @@ export default function TrendScriptPage() {
       timecode: "0:00 - 0:03",
       sceneType: "3s Viral Hook",
       title: "Scene 1: 3-Second Viral Hook",
-      visualDirection: `High-impact extreme macro visual for "${activeTopic}". Explosive rim lighting, captivating subject reveal.`,
+      visualDirection: `High-impact extreme macro visual for "${safeSubject}". Clean rim lighting, captivating subject reveal in professional studio setting.`,
       voiceover: hookWords,
       onScreenText: hookWords.slice(0, 32).toUpperCase() + "...",
       sfx: "Bass Boom Impact + Deep Sub Whoosh",
-      imagePrompt: `Cinematic 8k photorealistic close-up of ${activeTopic}, dramatic neon rim lighting, Octane 3D render, hyper-detailed, 9:16 aspect ratio --v 6.1`,
-      motionPrompt: "Fast push-in snap zoom with 60fps cinematic motion blur into focal object",
+      imagePrompt: `Cinematic 8k photorealistic close-up of modern technology device explaining ${safeSubject}, fully clothed presenter in dark hoodie, professional laboratory setting, no nudity, dramatic neon rim lighting, Octane 3D render, hyper-detailed, 9:16 aspect ratio --v 6.1`,
+      motionPrompt: `Fast push-in snap zoom with 60fps cinematic motion blur focusing on the tech device on desk, volumetric lighting, smooth camera movement`,
     });
 
     // Consecutive Scenes: Strictly under 10 seconds each (~16-22 words per chunk)
@@ -279,10 +282,10 @@ export default function TrendScriptPage() {
         voiceover: chunkWords,
         onScreenText: chunkWords.slice(0, 30) + "...",
         sfx: isLast ? "High-tension riser to seamless cut" : "Subtle cinematic ambient pulse",
-        imagePrompt: `Cinematic 8k realistic camera shot of ${activeTopic}, scene ${sceneIndex}, visual storytelling, volumetric studio lighting, hyper-detailed Octane 3D render, 9:16 aspect ratio --v 6.1`,
+        imagePrompt: `Cinematic 8k realistic camera shot explaining ${safeSubject}, scene ${sceneIndex}, visual storytelling, fully clothed subject in modern tech attire, volumetric studio lighting, hyper-detailed Octane 3D render, clean technology lab, 9:16 aspect ratio --v 6.1`,
         motionPrompt: isLast
-          ? "Seamless circular dolly tracking pan looping back to starting angle"
-          : "Smooth cinematic 60fps tracking camera orbit with volumetric light rays",
+          ? `Seamless circular dolly tracking pan around the tech subject looping back to starting angle, studio lighting`
+          : `Smooth cinematic 60fps tracking camera orbit around the technology subject with volumetric light rays`,
       });
 
       sceneIndex++;

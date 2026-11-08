@@ -84,14 +84,23 @@ export function detectNiche(channelTitle: string, channelDesc: string, videoTitl
 
 export async function fetchLiveYouTubeChannel(rawInput: string): Promise<SyncedChannelData | null> {
   try {
-    let targetUrl = rawInput.trim();
+    let clean = (rawInput || "").trim();
+    // Strictly strip query parameters (like mobile share ?si=...) and fragments
+    clean = clean.split("?")[0].split("#")[0].trim().replace(/\/+$/, "");
+    clean = clean.replace(/\/(videos|shorts|about|featured|community)$/, "");
+
+    let targetUrl = clean;
     if (targetUrl.startsWith("@")) {
       targetUrl = `https://www.youtube.com/${targetUrl}`;
-    } else if (!targetUrl.startsWith("http")) {
-      targetUrl = `https://www.youtube.com/@${targetUrl.replace(/^@/, "")}`;
+    } else if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+      if (targetUrl.startsWith("UC") && targetUrl.length === 24) {
+        targetUrl = `https://www.youtube.com/channel/${targetUrl}`;
+      } else {
+        targetUrl = `https://www.youtube.com/@${targetUrl.replace(/^@/, "")}`;
+      }
     }
 
-    const cleanBaseUrl = targetUrl.replace(/\/+$/, "").replace(/\/(videos|shorts|about|featured|community)$/, "");
+    const cleanBaseUrl = targetUrl;
 
     const baseHeaders = {
       "User-Agent":
@@ -102,7 +111,7 @@ export async function fetchLiveYouTubeChannel(rawInput: string): Promise<SyncedC
 
     // 1. Fetch channel about tab
     let parsedAboutViews: number | null = null;
-    let parsedSubscribers: number = 1000;
+    let parsedSubscribers: number | null = null;
     let parsedVideoCount: number | null = null;
     let channelId = "";
     let channelTitle = "";
@@ -113,22 +122,33 @@ export async function fetchLiveYouTubeChannel(rawInput: string): Promise<SyncedC
       const aboutRes = await fetch(`${cleanBaseUrl}/about`, { headers: baseHeaders, cache: "no-store" });
       if (aboutRes.ok) {
         const aboutHtml = await aboutRes.text();
-        const viewCountMatch = aboutHtml.match(/"viewCountText":\s*(?:{"simpleText":"([^"]+)"}|"([^"]+)")/);
+        const viewCountMatch =
+          aboutHtml.match(/"viewCountText":\s*(?:{"simpleText":"([^"]+)"}|"([^"]+)")/) ||
+          aboutHtml.match(/"viewCountText":\{[^}]*"simpleText":"([^"]+)"/) ||
+          aboutHtml.match(/"viewCountText":\{[^}]*"accessibility":\{"accessibilityData":\{"label":"([^"]+)"/) ||
+          aboutHtml.match(/([\d,.]+)\s*views/i);
         const rawViewStr = viewCountMatch ? (viewCountMatch[1] || viewCountMatch[2]) : null;
         if (rawViewStr) {
           parsedAboutViews = parseCount(rawViewStr);
         }
 
-        const subCountMatch = aboutHtml.match(/"subscriberCountText":\s*(?:{"simpleText":"([^"]+)"}|"([^"]+)")/);
+        const subCountMatch =
+          aboutHtml.match(/"subscriberCountText":\s*(?:{"simpleText":"([^"]+)"}|"([^"]+)")/) ||
+          aboutHtml.match(/"subscriberCountText":\{[^}]*"simpleText":"([^"]+)"/) ||
+          aboutHtml.match(/"subscriberCountText":\{[^}]*"accessibility":\{"accessibilityData":\{"label":"([^"]+)"/) ||
+          aboutHtml.match(/([\d,.]+(?:\s*[KkMmBb]|\s*crore|\s*lakh)?)\s*subscribers?/i);
         const rawSubStr = subCountMatch ? (subCountMatch[1] || subCountMatch[2]) : null;
         if (rawSubStr) {
           const sCount = parseCount(rawSubStr);
           if (sCount !== null) parsedSubscribers = sCount;
         }
 
-        const vidCountMatch = aboutHtml.match(/"text":\s*{"content":"([\d,.]+)\s+videos"/);
+        const vidCountMatch =
+          aboutHtml.match(/"text":\s*{"content":"([\d,.]+)\s+videos"}/) ||
+          aboutHtml.match(/"videoCountText":\s*(?:{"simpleText":"([^"]+)"}|"([^"]+)")/) ||
+          aboutHtml.match(/([\d,.]+)\s+videos/i);
         if (vidCountMatch) {
-          parsedVideoCount = parseCount(vidCountMatch[1]);
+          parsedVideoCount = parseCount(vidCountMatch[1] || vidCountMatch[2]);
         }
 
         channelId =
@@ -149,8 +169,8 @@ export async function fetchLiveYouTubeChannel(rawInput: string): Promise<SyncedC
       console.warn("About fetch error:", e);
     }
 
-    // 2. Fetch main page if channelId or title missing
-    if (!channelId || !channelTitle) {
+    // 2. Fetch main page if channelId, title, or counts missing
+    if (!channelId || !channelTitle || parsedSubscribers === null || parsedAboutViews === null) {
       try {
         const mainRes = await fetch(cleanBaseUrl, { headers: baseHeaders, cache: "no-store" });
         if (mainRes.ok) {
@@ -167,18 +187,34 @@ export async function fetchLiveYouTubeChannel(rawInput: string): Promise<SyncedC
             const titleMatch = mainHtml.match(/<meta property="og:title" content="([^"]+)"/);
             if (titleMatch) channelTitle = titleMatch[1];
           }
-          if (parsedSubscribers === 1000) {
+          if (parsedSubscribers === null) {
             const subMatch =
-              mainHtml.match(/"subscriberCountText":\{[^}]*"simpleText":"([^"]+)"/)?.[1] ||
-              mainHtml.match(/([\d,.]+(?:\s*[KkMmBb]|\s*crore|\s*lakh)?)\s*subscribers?/i)?.[1];
+              mainHtml.match(/"subscriberCountText":\s*(?:{"simpleText":"([^"]+)"}|"([^"]+)")/) ||
+              mainHtml.match(/"subscriberCountText":\{[^}]*"simpleText":"([^"]+)"/) ||
+              mainHtml.match(/"subscriberCountText":\{[^}]*"accessibility":\{"accessibilityData":\{"label":"([^"]+)"/) ||
+              mainHtml.match(/([\d,.]+(?:\s*[KkMmBb]|\s*crore|\s*lakh)?)\s*subscribers?/i);
             if (subMatch) {
-              const p = parseCount(subMatch);
+              const p = parseCount(subMatch[1] || subMatch[2]);
               if (p !== null) parsedSubscribers = p;
             }
           }
+          if (parsedAboutViews === null) {
+            const viewMatch =
+              mainHtml.match(/"viewCountText":\s*(?:{"simpleText":"([^"]+)"}|"([^"]+)")/) ||
+              mainHtml.match(/"viewCountText":\{[^}]*"simpleText":"([^"]+)"/) ||
+              mainHtml.match(/"viewCountText":\{[^}]*"accessibility":\{"accessibilityData":\{"label":"([^"]+)"/) ||
+              mainHtml.match(/([\d,.]+)\s*views/i);
+            if (viewMatch) {
+              const p = parseCount(viewMatch[1] || viewMatch[2]);
+              if (p !== null) parsedAboutViews = p;
+            }
+          }
           if (!parsedVideoCount) {
-            const vidMatch = mainHtml.match(/"text":\s*{"content":"([\d,.]+)\s+videos"/);
-            if (vidMatch) parsedVideoCount = parseCount(vidMatch[1]);
+            const vidMatch =
+              mainHtml.match(/"text":\s*{"content":"([\d,.]+)\s+videos"}/) ||
+              mainHtml.match(/"videoCountText":\s*(?:{"simpleText":"([^"]+)"}|"([^"]+)")/) ||
+              mainHtml.match(/([\d,.]+)\s+videos/i);
+            if (vidMatch) parsedVideoCount = parseCount(vidMatch[1] || vidMatch[2]);
           }
         }
       } catch (e) {
@@ -193,7 +229,7 @@ export async function fetchLiveYouTubeChannel(rawInput: string): Promise<SyncedC
       channelTitle = cleanBaseUrl.split("@")[1] || "YouTube Creator";
     }
 
-    const customUrl = cleanBaseUrl.includes("@") ? "@" + cleanBaseUrl.split("@")[1].split("/")[0] : null;
+    const customUrl = cleanBaseUrl.includes("@") ? "@" + cleanBaseUrl.split("@")[1].split("/")[0].split("?")[0] : null;
     const uploadsPlaylistId = "UU" + channelId.replace(/^UC/, "");
 
     // 3. Fetch recent videos from /shorts and /videos
@@ -300,12 +336,14 @@ export async function fetchLiveYouTubeChannel(rawInput: string): Promise<SyncedC
     const avgLikesPerRecentVideo = realVideos.length > 0 ? Math.round(totalRecentLikes / realVideos.length) : 0;
     const likeToViewRatio = totalRecentViews > 0 ? ((totalRecentLikes / totalRecentViews) * 100).toFixed(1) + "%" : "5.0%";
 
+    const finalSubscribers = parsedSubscribers !== null && parsedSubscribers >= 0 ? parsedSubscribers : 0;
+
     const finalTotalViews =
       parsedAboutViews !== null && parsedAboutViews > 0
         ? parsedAboutViews
         : totalRecentViews > 0
         ? totalRecentViews
-        : (parsedSubscribers || 10) * 15;
+        : (finalSubscribers || 1) * 15;
 
     const finalVideoCount =
       parsedVideoCount !== null && parsedVideoCount > 0
@@ -333,7 +371,7 @@ export async function fetchLiveYouTubeChannel(rawInput: string): Promise<SyncedC
       description: channelDesc,
       customUrl,
       thumbnailUrl,
-      subscriberCount: parsedSubscribers,
+      subscriberCount: finalSubscribers,
       viewCount: finalTotalViews,
       videoCount: finalVideoCount,
       uploadsPlaylistId,
@@ -343,7 +381,7 @@ export async function fetchLiveYouTubeChannel(rawInput: string): Promise<SyncedC
         isAvailable: true,
         estimatedMinutesWatched: realisticWatchMins,
         averageViewDuration: 38,
-        subscribersGained: parsedSubscribers,
+        subscribersGained: finalSubscribers,
         subscribersLost: 0,
         views: finalTotalViews,
         likes: totalRecentLikes > 0 ? totalRecentLikes : Math.round(finalTotalViews * 0.05),

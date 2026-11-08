@@ -213,8 +213,8 @@ export function ChannelConnectCard() {
                   ID: {channel.channelId}
                 </p>
                 {channel.customUrl && (
-                  <p className="text-xs text-brand-400">
-                    {channel.customUrl}
+                  <p className="text-xs text-brand-400 font-mono">
+                    {channel.customUrl.split("?")[0].split("#")[0]}
                   </p>
                 )}
               </div>

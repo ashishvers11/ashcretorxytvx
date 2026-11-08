@@ -515,10 +515,10 @@ export function getCuratedTrendOpportunities(
   }> = [];
 
   // 1. DYNAMIC CHANNEL-TAILORED VIRAL TOPICS (< 7 DAYS OLD)
-  if (userChannelVideos && userChannelVideos.length > 0 && (normNiche.includes("tailored") || normNiche.includes("aligned") || normNiche.includes("ashish"))) {
-    const seedTitles = userChannelVideos.slice(0, 3).map((v) => v.title).join(" ");
-    const isGaming = /(game|gaming|gta|bgmi|freefire|minecraft|fn|fortnite)/i.test(seedTitles);
-    const isTech = /(phone|ai|tech|code|apple|android|laptop)/i.test(seedTitles);
+  if (userChannelVideos && userChannelVideos.length > 0 && (normNiche.includes("tailored") || normNiche.includes("aligned") || normNiche.includes("ashish") || normNiche === "channel-tailored")) {
+    const seedTitles = userChannelVideos.map((v) => v.title).join(" ").toLowerCase();
+    const isGaming = /(gta|bgmi|freefire|minecraft|roblox|gameplay|playthrough|fortnite|esports)/i.test(seedTitles);
+    const isTech = /(phone|smartphones?|ai\b|tech\b|deepseek|sora|chatgpt|coding|laptop|battery)/i.test(seedTitles);
 
     if (isGaming) {
       topics = [

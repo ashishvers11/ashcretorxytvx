@@ -110,6 +110,16 @@ export const STYLE_DEFINITIONS: Record<string, StyleDefinition> = {
     renderKeywords: "vintage papercraft stop-motion style, layered textured cardboard, tactile diorama feel, 12fps aesthetic at 60fps, 8k resolution",
     cameraMovement: "fixed tabletop framing, subtle cardboard layer depth shifting, stop-motion transitions",
   },
+  "style-darkmystery": {
+    id: "style-darkmystery",
+    name: "Dark Mystery & True Crime Noir",
+    characterDescription:
+      "atmospheric chiaroscuro silhouette in trench coat and fedora, face hidden in dramatic shadow, red evidence string on pinboard, zero realistic human faces, no photorealistic people",
+    characterActionPrefix: "the mysterious silhouette examining the glowing red pinboard clues for ",
+    environmentDescription: "a dark smoky detective archive room illuminated by single amber desk lamp and venetian blind shadows",
+    renderKeywords: "35mm grain film noir aesthetic, heavy chiaroscuro shadow contrast, atmospheric volumetric dust motes, moody amber lighting, 8k resolution",
+    cameraMovement: "slow creeping dolly-in push, ultra-shallow depth of field f/1.2, 60fps cinematic fluidity",
+  },
   "style-ashishfn": {
     id: "style-ashishfn",
     name: "ASHISH FN Signature 3D",

@@ -61,8 +61,8 @@ export default function TrendRadarPage() {
           {
             id: "channel-tailored",
             label: `🎯 Aligned to ${channel.title}`,
-            nicheQuery: channel.niche || "Interesting Facts",
-            desc: `Fresh viral topics tailored to ${channel.title}'s uploads`,
+            nicheQuery: "channel-tailored",
+            desc: `Fresh viral topics tailored to ${channel.title}'s uploads (Under 1 Week)`,
           },
         ]
       : []),

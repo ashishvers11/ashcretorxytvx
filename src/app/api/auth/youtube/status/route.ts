@@ -73,16 +73,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ connected: false, channel: null });
     }
 
-    // AUTO RE-SYNC: If refresh requested or if cached data has outdated metrics
+    // AUTO RE-SYNC: If refresh requested or if cached data has outdated metrics or contaminated URLs
     const hasOutdatedData =
       forceRefresh ||
       !connectionData.recentVideos ||
       connectionData.recentVideos.length === 0 ||
       connectionData.viewCount === 495 ||
-      connectionData.videoCount === 12;
+      connectionData.viewCount === 3 ||
+      connectionData.subscriberCount === 1000 ||
+      (connectionData.customUrl && (connectionData.customUrl.includes("?") || connectionData.customUrl.includes("si=")));
 
     if (hasOutdatedData) {
-      const queryHandle = connectionData.customUrl || connectionData.channelId || connectionData.title;
+      const cleanCustomUrl = connectionData.customUrl
+        ? connectionData.customUrl.split("?")[0].split("#")[0].replace(/\/+$/, "")
+        : "";
+      const queryHandle = cleanCustomUrl || connectionData.channelId || connectionData.title;
       if (queryHandle) {
         const liveFresh = await fetchLiveYouTubeChannel(queryHandle);
         if (liveFresh) {

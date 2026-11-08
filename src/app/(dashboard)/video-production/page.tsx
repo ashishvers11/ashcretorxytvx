@@ -24,6 +24,7 @@ import {
   Eye,
   RefreshCw,
   ExternalLink,
+  CheckCircle2,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -722,9 +723,17 @@ export default function VideoProductionPage() {
                     setCharacterAnchor(
                       "Pixar-style 3D animated cartoon boy explorer with adventurer hat, big expressive curious eyes, colorful cartoon jacket, stylized 3D render, zero realistic humans"
                     );
+                  } else if (style.id === "style-ashishfn") {
+                    setCharacterAnchor(
+                      "3D stylized cartoon sticky man cutout with vibrant yellow and cyan grading, comic sticker callouts, high-end 3D render, zero realistic humans, no photorealistic people"
+                    );
                   } else if (style.id === "style-zackd") {
                     setCharacterAnchor(
                       "Zack D. Films smooth beige 3D clay anatomical simulation model, faceless dummy figure, clinical physical cutaway, zero realistic humans"
+                    );
+                  } else if (style.id === "style-darkmystery") {
+                    setCharacterAnchor(
+                      "atmospheric chiaroscuro silhouette in trench coat and fedora, face hidden in dramatic shadow, red evidence string on pinboard, zero realistic human faces, no photorealistic people"
                     );
                   } else if (style.id === "style-mrbeast") {
                     setCharacterAnchor(
@@ -811,6 +820,19 @@ export default function VideoProductionPage() {
               </div>
             );
           })}
+        </div>
+
+        {/* Active Style Confirmation Bar */}
+        <div className="rounded-xl border border-brand-500/30 bg-brand-500/10 p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-brand-200">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-brand-400 shrink-0" />
+            <span>
+              Active Selected Style: <strong className="text-white font-bold">{activeStyle.name}</strong> • Sabhi Scene Prompts is style me instant regenerate ho chuke hain!
+            </span>
+          </div>
+          <Badge variant="outline" className="border-brand-500/40 bg-brand-950/60 text-brand-300 text-[10px] shrink-0 font-mono">
+            {activeStyle.creatorTag}
+          </Badge>
         </div>
       </div>
 

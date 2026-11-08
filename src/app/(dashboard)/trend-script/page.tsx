@@ -47,7 +47,7 @@ import { ProfessionalScript } from "@/lib/script-engine/types";
 import { BUILT_IN_PRESETS } from "@/lib/script-engine/presets";
 import { DailyResearchReport, TrendOpportunity } from "@/lib/youtube/trend-engine";
 import { useYouTubeChannel } from "@/hooks/use-youtube-channel";
-import { sanitizeTopicForAIPrompt } from "@/lib/ai/prompt-safety";
+import { sanitizeTopicForAIPrompt, buildCinematicScenePrompts } from "@/lib/ai/prompt-safety";
 
 export default function TrendScriptPage() {
   const { channel, connected } = useYouTubeChannel();
@@ -231,7 +231,7 @@ export default function TrendScriptPage() {
     wordPointer = hookWordCount;
     currentTimeSec = 3;
 
-    const safeSubject = sanitizeTopicForAIPrompt(activeTopic);
+    const sc1 = buildCinematicScenePrompts(activeTopic, 1, false);
 
     scenes.push({
       id: "scene-1",
@@ -240,12 +240,12 @@ export default function TrendScriptPage() {
       timecode: "0:00 - 0:03",
       sceneType: "3s Viral Hook",
       title: "Scene 1: 3-Second Viral Hook",
-      visualDirection: `High-impact extreme macro visual for "${safeSubject}". Clean rim lighting, captivating subject reveal in professional studio setting.`,
+      visualDirection: sc1.directorCue,
       voiceover: hookWords,
       onScreenText: hookWords.slice(0, 32).toUpperCase() + "...",
       sfx: "Bass Boom Impact + Deep Sub Whoosh",
-      imagePrompt: `Cinematic 8k photorealistic close-up of modern technology device explaining ${safeSubject}, fully clothed presenter in dark hoodie, professional laboratory setting, no nudity, dramatic neon rim lighting, Octane 3D render, hyper-detailed, 9:16 aspect ratio --v 6.1`,
-      motionPrompt: `Fast push-in snap zoom with 60fps cinematic motion blur focusing on the tech device on desk, volumetric lighting, smooth camera movement`,
+      imagePrompt: sc1.imagePrompt,
+      motionPrompt: sc1.motionPrompt,
     });
 
     // Consecutive Scenes: Strictly under 10 seconds each (~16-22 words per chunk)
@@ -268,6 +268,7 @@ export default function TrendScriptPage() {
       };
 
       const isLast = wordPointer >= allWords.length;
+      const scProgress = buildCinematicScenePrompts(activeTopic, sceneIndex, isLast);
 
       scenes.push({
         id: `scene-${sceneIndex}`,
@@ -276,16 +277,12 @@ export default function TrendScriptPage() {
         timecode: `${formatTime(startTime)} - ${formatTime(endTime)}`,
         sceneType: isLast ? "Infinite Retention Loop" : `Progression ${sceneIndex - 1}`,
         title: `Scene ${sceneIndex}: ${chunkWords.slice(0, 26)}...`,
-        visualDirection: isLast
-          ? `Seamless looping visual returning cleanly to the opening hook object for 100% infinite retention loop.`
-          : `Dynamic cinematic camera movement illustrating the exact spoken narration: "${chunkWords.slice(0, 40)}"`,
+        visualDirection: scProgress.directorCue,
         voiceover: chunkWords,
         onScreenText: chunkWords.slice(0, 30) + "...",
         sfx: isLast ? "High-tension riser to seamless cut" : "Subtle cinematic ambient pulse",
-        imagePrompt: `Cinematic 8k realistic camera shot explaining ${safeSubject}, scene ${sceneIndex}, visual storytelling, fully clothed subject in modern tech attire, volumetric studio lighting, hyper-detailed Octane 3D render, clean technology lab, 9:16 aspect ratio --v 6.1`,
-        motionPrompt: isLast
-          ? `Seamless circular dolly tracking pan around the tech subject looping back to starting angle, studio lighting`
-          : `Smooth cinematic 60fps tracking camera orbit around the technology subject with volumetric light rays`,
+        imagePrompt: scProgress.imagePrompt,
+        motionPrompt: scProgress.motionPrompt,
       });
 
       sceneIndex++;

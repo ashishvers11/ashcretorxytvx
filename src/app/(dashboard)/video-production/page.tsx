@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useYouTubeChannel } from "@/hooks/use-youtube-channel";
-import { sanitizeTopicForAIPrompt, buildSafeMotionPrompt } from "@/lib/ai/prompt-safety";
+import { sanitizeTopicForAIPrompt, buildSafeMotionPrompt, buildCinematicScenePrompts } from "@/lib/ai/prompt-safety";
 
 // Helper to extract a concise, natural spoken topic for teleprompter and prompts
 function cleanTopicForSpoken(topic: string): string {
@@ -311,7 +311,11 @@ export default function VideoProductionPage() {
 
   // Build Fast Viral Scenes: Hook STRICTLY 3s, all other cuts automatically UNDER 10s. ZERO "part 2"!
   const buildUnder30Scenes = (spokenTitle: string): ChoreographedScene[] => {
-    const safeTopic = sanitizeTopicForAIPrompt(spokenTitle);
+    const p1 = buildCinematicScenePrompts(spokenTitle, 1, false);
+    const p2 = buildCinematicScenePrompts(spokenTitle, 2, false);
+    const p3 = buildCinematicScenePrompts(spokenTitle, 3, false);
+    const p4 = buildCinematicScenePrompts(spokenTitle, 4, true);
+
     return [
       {
         id: "sc-1",
@@ -319,10 +323,10 @@ export default function VideoProductionPage() {
         durationSeconds: 3, // STRICTLY 3 SECONDS
         title: "The Impossible Hook (Pattern Interrupt)",
         sceneType: "Hook (3s)",
-        visualDirection: `Fast macro push-in on ${safeTopic} with sudden lightning-fast depth of field shift and studio lighting.`,
-        voiceover: `Wait! Kya aapko pata hai ki ${safeTopic} ke peeche ek mind-blowing secret chupa hai?`,
-        imagePrompt: `Cinematic 8k macro photograph of modern technology device explaining ${safeTopic}, fully clothed presenter in dark tech hoodie, professional laboratory setting, no nudity, dramatic neon rim lighting, anamorphic lens flare, shallow depth of field, photorealistic, 9:16 aspect ratio --v 6.1`,
-        motionPrompt: `Fast continuous crash-zoom push-in toward camera focusing on the tech device on desk, 60fps, high dynamic motion blur transition`,
+        visualDirection: p1.directorCue,
+        voiceover: `Wait! Kya aapko pata hai iske peeche ka real visual secret kya hai?`,
+        imagePrompt: p1.imagePrompt,
+        motionPrompt: p1.motionPrompt,
         sfx: "Sub-bass 808 drop + Vinyl needle scratch stop",
         onScreenText: "WAIT FOR THIS... 😱",
       },
@@ -332,10 +336,10 @@ export default function VideoProductionPage() {
         durationSeconds: 7, // UNDER 10s (7 seconds)
         title: "The Hidden Reality (Assumption Break)",
         sceneType: "Assumption Break",
-        visualDirection: `Split-screen comparison showing why 99% of people misunderstand ${safeTopic}.`,
+        visualDirection: p2.directorCue,
         voiceover: `Almost 99% log iske underlying mechanics ko completely miss kar dete hain. But high-speed scans ne kuch aur hi reveal kiya!`,
-        imagePrompt: `High-contrast scientific diagram of ${safeTopic}, fully clothed presenter in lab attire, glowing holographic UI lines, dark studio backdrop, 9:16 --v 6.1`,
-        motionPrompt: `Smooth horizontal parallax sweep across technical circuit board, glowing holographic UI element emergence`,
+        imagePrompt: p2.imagePrompt,
+        motionPrompt: p2.motionPrompt,
         sfx: "Fast whoosh cut + UI glitch beep",
         onScreenText: "THE UNSEEN DETAIL ❌",
       },
@@ -345,10 +349,10 @@ export default function VideoProductionPage() {
         durationSeconds: 8, // UNDER 10s (8 seconds)
         title: "The Core 3D Mechanism & Evidence",
         sceneType: "Core 3D Mechanism",
-        visualDirection: `Photorealistic 3D simulation cross-section of ${safeTopic} revealing the hidden physical reaction.`,
+        visualDirection: p3.directorCue,
         voiceover: `Actually, yahan operate kar raha hai ek unbelievable scientific principle jo extreme dynamic stress ko 100% absorb karta hai!`,
-        imagePrompt: `Detailed 3D simulation cross-section of ${safeTopic} hardware components, glowing bioluminescent particle pathways, Octane render 8K, clean tech setup, 9:16 --v 6.1`,
-        motionPrompt: `360-degree orbital rotation around internal hardware cross-section, slow volumetric laser scan sweep`,
+        imagePrompt: p3.imagePrompt,
+        motionPrompt: p3.motionPrompt,
         sfx: "Rising violin tension + Digital scan hum",
         onScreenText: "WHAT ACTUALLY HAPPENS ⚡",
       },
@@ -358,10 +362,10 @@ export default function VideoProductionPage() {
         durationSeconds: 8, // UNDER 10s (8 seconds) — Infinite Retention Loop (NO PART 2)
         title: "Seamless Retention Loop (Infinite Replay)",
         sceneType: "Infinite Loop",
-        visualDirection: `Breathtaking camera pullout vista resolving into the exact opening frame perspective for an infinite loop.`,
-        voiceover: `Isliye ${safeTopic} itna bada viral secret hai — share karo unke saath jo iske baare mein bilkul nahi jaante!`,
-        imagePrompt: `Breathtaking cinematic vista of ${safeTopic}, fully clothed presenter, golden hour rim light, hyper-detailed 8k, masterpiece composition, 9:16 --v 6.1`,
-        motionPrompt: `Slow backward crane tracking pullout resolving into the first frame perspective`,
+        visualDirection: p4.directorCue,
+        voiceover: `Isliye ye itna bada viral secret hai — share karo unke saath jo iske baare mein bilkul nahi jaante!`,
+        imagePrompt: p4.imagePrompt,
+        motionPrompt: p4.motionPrompt,
         sfx: "Cinematic impact boom resolving cleanly into opening ambient chord",
         onScreenText: "MIND BLOWN 🤯",
       },
@@ -369,83 +373,89 @@ export default function VideoProductionPage() {
   };
 
   const buildStandard60Scenes = (spokenTitle: string): ChoreographedScene[] => {
-    const safeTopic = sanitizeTopicForAIPrompt(spokenTitle);
+    const p1 = buildCinematicScenePrompts(spokenTitle, 1, false);
+    const p2 = buildCinematicScenePrompts(spokenTitle, 2, false);
+    const p3 = buildCinematicScenePrompts(spokenTitle, 3, false);
+    const p4 = buildCinematicScenePrompts(spokenTitle, 4, false);
+    const p5 = buildCinematicScenePrompts(spokenTitle, 5, false);
+    const p6 = buildCinematicScenePrompts(spokenTitle, 6, true);
+
     return [
       {
         id: "sc-1",
         number: 1,
-        durationSeconds: 3, // STRICTLY 3 SECONDS
+        durationSeconds: 3,
         title: "The Impossible Hook (Pattern Interrupt)",
         sceneType: "Hook (3s)",
-        visualDirection: `Fast macro push-in on ${safeTopic} with sudden lightning-fast depth of field shift.`,
-        voiceover: `Wait! Kya aapko pata hai ki ${safeTopic} ke peeche ek mind-blowing secret chupa hai?`,
-        imagePrompt: `Cinematic 8k macro photograph of modern technology explaining ${safeTopic}, fully clothed presenter in dark hoodie, dramatic neon rim lighting, anamorphic lens flare, 9:16 --v 6.1`,
-        motionPrompt: `Fast continuous crash-zoom push-in toward camera focusing on the tech device, 60fps`,
+        visualDirection: p1.directorCue,
+        voiceover: `Wait! Kya aapko pata hai iske peeche ka real visual secret kya hai?`,
+        imagePrompt: p1.imagePrompt,
+        motionPrompt: p1.motionPrompt,
         sfx: "Sub-bass 808 drop + Vinyl needle scratch stop",
         onScreenText: "WAIT FOR THIS... 😱",
       },
       {
         id: "sc-2",
         number: 2,
-        durationSeconds: 8, // UNDER 10s (8s)
+        durationSeconds: 8,
         title: "The Common Misconception",
         sceneType: "Assumption Break",
-        visualDirection: "Split screen comparison between traditional belief vs recent scientific scans.",
+        visualDirection: p2.directorCue,
         voiceover: "Almost 99% log iske underlying mechanics ko completely overlook kar dete hain aur isko ek simple coincidence samajhte hain.",
-        imagePrompt: `Split-screen scientific diagram of ${safeTopic}, fully clothed researcher in lab setting, glowing holographic interface, dark background, 8k resolution`,
-        motionPrompt: `Subtle left-to-right panning motion, smooth UI element emergence`,
+        imagePrompt: p2.imagePrompt,
+        motionPrompt: p2.motionPrompt,
         sfx: "Whoosh transition + Low ambient drone",
         onScreenText: "COMMON MYTH ❌",
       },
       {
         id: "sc-3",
         number: 3,
-        durationSeconds: 8, // UNDER 10s (8s)
+        durationSeconds: 8,
         title: "The Laboratory Discovery",
         sceneType: "Assumption Break",
-        visualDirection: "Laboratory analysis showing electron microscope scanning the structural surface.",
+        visualDirection: p3.directorCue,
         voiceover: "Lekin recent laboratory scans mein dekha gaya ki yahan ek specific physical law operate karta hai.",
-        imagePrompt: `Electron microscope scan of ${safeTopic}, glowing atomic grid lines, volumetric laboratory lighting, clean industrial lab, 9:16 --v 6.1`,
-        motionPrompt: `Microscopic zoom pull revealing atomic crystalline lattice structure`,
+        imagePrompt: p3.imagePrompt,
+        motionPrompt: p3.motionPrompt,
         sfx: "Mechanical hum + Electronic beep",
         onScreenText: "THE UNSEEN DETAIL 🔬",
       },
       {
         id: "sc-4",
         number: 4,
-        durationSeconds: 9, // UNDER 10s (9s)
+        durationSeconds: 9,
         title: "The Core 3D Mechanism",
         sceneType: "Core 3D Mechanism",
-        visualDirection: "3D animated simulation cross-section with glowing holographic particle lines showing the hidden physical process.",
+        visualDirection: p4.directorCue,
         voiceover: "Actually, yahan operate kar raha hai ek ground-breaking physical law jo dynamic stress ko 100% absorb karta hai!",
-        imagePrompt: `Detailed 3D simulation cross-section of ${safeTopic}, glowing cyan and gold holographic data interface, Octane render 8K`,
-        motionPrompt: `360-degree orbital rotation around internal cross-section, slow volumetric laser scan sweep`,
+        imagePrompt: p4.imagePrompt,
+        motionPrompt: p4.motionPrompt,
         sfx: "Digital UI data chirp + Rising cinematic string swell",
         onScreenText: "WHAT ACTUALLY HAPPENS ⚡",
       },
       {
         id: "sc-5",
         number: 5,
-        durationSeconds: 9, // UNDER 10s (9s)
+        durationSeconds: 9,
         title: "The Real-World Consequence",
         sceneType: "Core 3D Mechanism",
-        visualDirection: "Dynamic visualization of the physical outcome and technological impact across modern industry.",
+        visualDirection: p5.directorCue,
         voiceover: "Bottom line: Ye koi lucky coincidence nahi hai, balki evidence-based science aur precision ka perfect combination hai.",
-        imagePrompt: `Epic cinematic wide shot of ${safeTopic} in operational glory, fully clothed presenter, dramatic volumetric lighting, 8k resolution`,
-        motionPrompt: `Forward tracking shot across technological landscape`,
+        imagePrompt: p5.imagePrompt,
+        motionPrompt: p5.motionPrompt,
         sfx: "Deep sub-bass swell + Resolving synth pad",
         onScreenText: "EVIDENCE-BASED SCIENCE 🏆",
       },
       {
         id: "sc-6",
         number: 6,
-        durationSeconds: 8, // UNDER 10s (8s) — Infinite Retention Loop (NO PART 2)
+        durationSeconds: 8,
         title: "Seamless Retention Loop (Infinite Replay)",
         sceneType: "Infinite Loop",
-        visualDirection: "Dramatic pullout vista transitioning back to the opening frame angle for a seamless infinite loop.",
-        voiceover: `Aur yahi mind-blowing reason hai jo ${safeTopic} ko sabse unique aur viral banata hai!`,
-        imagePrompt: `Epic cinematic vista of ${safeTopic}, fully clothed presenter, golden hour rim light, breathtaking hyper-detailed 8k`,
-        motionPrompt: `Slow backward crane tracking pullout resolving into the first frame perspective`,
+        visualDirection: p6.directorCue,
+        voiceover: `Aur yahi mind-blowing reason hai jo isko sabse unique aur viral banata hai!`,
+        imagePrompt: p6.imagePrompt,
+        motionPrompt: p6.motionPrompt,
         sfx: "Cinematic impact boom + Soft resolving chord",
         onScreenText: "MIND BLOWN 🤯",
       },
@@ -915,17 +925,21 @@ export default function VideoProductionPage() {
           </div>
 
           <div className="space-y-4">
-            {scenesWithTimecodes.map((scene) => {
-              // Construct 100% Policy-Safe Midjourney / FLUX prompt with modesty guardrails
-              const safeImgPrompt = sanitizeTopicForAIPrompt(scene.imagePrompt || cleanSpoken);
-              const anchorModesty = characterConsistencyLocked
-                ? `[Character Anchor: ${characterAnchor}], fully clothed, modest tech attire, no nudity, `
-                : "fully clothed in modern dark tech hoodie, professional laboratory setting, no bare skin or nudity, ";
+            {scenesWithTimecodes.map((scene, idx) => {
+              const isLast = idx === scenesWithTimecodes.length - 1;
+              const cinematic = buildCinematicScenePrompts(
+                topic || cleanSpoken,
+                scene.number,
+                isLast,
+                aspectRatio,
+                activeStyle.name,
+                characterAnchor,
+                characterConsistencyLocked
+              );
 
-              const fullImagePrompt = `${safeImgPrompt}, visual style of ${activeStyle.name}, ${anchorModesty}hyper-cinematic lighting, octane render, 8k resolution, clean tech studio --ar ${aspectRatio} --v 6.1 --stylize 250`;
-
-              // Construct Google Flow / Veo / Runway / Kling 100% Policy-Safe Video Motion prompt
-              const fullMotionPrompt = buildSafeMotionPrompt(scene.motionPrompt, activeStyle.camera, cleanSpoken);
+              // 100% Policy-Safe Cinema Prompts: Zero clickbait, zero emojis, zero NSFW triggers
+              const fullImagePrompt = cinematic.imagePrompt;
+              const fullMotionPrompt = cinematic.motionPrompt;
 
               return (
                 <Card key={scene.id} className="border-slate-800 bg-surface-900/95 shadow-xl overflow-hidden">

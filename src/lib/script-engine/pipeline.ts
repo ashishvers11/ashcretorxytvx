@@ -16,6 +16,7 @@ import {
   ScriptPreset,
 } from "./types";
 import { getPresetById } from "./presets";
+import { buildCinematicScenePrompts } from "@/lib/ai/prompt-safety";
 
 export interface PipelineGenerateParams {
   topic: string;
@@ -490,6 +491,13 @@ export async function runScriptEnginePipeline(
   const estimatedDurationSeconds = Math.round((wordCount / targetWpm) * 60);
 
   // STAGE 6: Scene-by-Scene Visual Planning (Hook strictly 3s, all other cuts automatically under 10s)
+  const p1 = buildCinematicScenePrompts(topic, 1, false);
+  const p2 = buildCinematicScenePrompts(topic, 2, false);
+  const p3 = buildCinematicScenePrompts(topic, 3, false);
+  const p4 = buildCinematicScenePrompts(topic, 4, isUnder30);
+  const p5 = buildCinematicScenePrompts(topic, 5, false);
+  const p6 = buildCinematicScenePrompts(topic, 6, true);
+
   const scenes: ScenePlanItem[] = isUnder30
     ? [
         {
@@ -498,9 +506,9 @@ export async function runScriptEnginePipeline(
           startSeconds: 0,
           endSeconds: 3,
           voiceoverLine: voiceoverParagraphs[0],
-          visualConcept: `Extreme fast macro push-in on ${cleanSpoken} with sudden lightning-fast depth of field shift and cinematic backlighting.`,
-          imagePrompt: `Cinematic 8k macro photograph of ${cleanSpoken}, dramatic neon rim lighting, anamorphic lens flare, shallow depth of field, photorealistic, 9:16 aspect ratio --v 6.1`,
-          motionPrompt: "Fast push-in crash zoom with rapid suspended particle dust, 60fps.",
+          visualConcept: p1.directorCue,
+          imagePrompt: p1.imagePrompt,
+          motionPrompt: p1.motionPrompt,
           onScreenText: "WAIT FOR THIS... 😱",
           soundEffect: "Deep sub-bass impact whoosh followed by vinyl needle stop",
           transition: "Fast whip pan blur into Scene 2",
@@ -511,9 +519,9 @@ export async function runScriptEnginePipeline(
           startSeconds: 3,
           endSeconds: 10,
           voiceoverLine: voiceoverParagraphs[1],
-          visualConcept: `Split-screen comparison between common myth vs real internal mechanics of ${cleanSpoken}.`,
-          imagePrompt: `High-contrast scientific diagram of ${cleanSpoken}, glowing holographic UI lines, dark studio backdrop, 9:16 --v 6.1`,
-          motionPrompt: "Subtle continuous panning across split-screen, rapid glowing UI element pop.",
+          visualConcept: p2.directorCue,
+          imagePrompt: p2.imagePrompt,
+          motionPrompt: p2.motionPrompt,
           onScreenText: "THE UNSEEN DETAIL ❌",
           soundEffect: "Digital glitch chirp + ambient tension riser",
           transition: "Flash cut into Scene 3",
@@ -524,9 +532,9 @@ export async function runScriptEnginePipeline(
           startSeconds: 10,
           endSeconds: 18,
           voiceoverLine: voiceoverParagraphs[2],
-          visualConcept: `Cross-section 3D schematic of ${cleanSpoken} demonstrating the exact physical mechanism and micro-structure.`,
-          imagePrompt: `Detailed 3D simulation cross-section of ${cleanSpoken}, glowing bioluminescent particle pathways, Octane render 8K, 9:16 --v 6.1`,
-          motionPrompt: "Smooth 360-degree orbital rotation around the internal mechanical core.",
+          visualConcept: p3.directorCue,
+          imagePrompt: p3.imagePrompt,
+          motionPrompt: p3.motionPrompt,
           onScreenText: "WHAT ACTUALLY HAPPENS ⚡",
           soundEffect: "Mechanical hum + rising string pulse",
           transition: "Kinetic zoom out",
@@ -537,9 +545,9 @@ export async function runScriptEnginePipeline(
           startSeconds: 18,
           endSeconds: 26,
           voiceoverLine: voiceoverParagraphs[3],
-          visualConcept: `Grand reveal vista of ${cleanSpoken} seamlessly resolving into the opening camera angle for an infinite retention loop.`,
-          imagePrompt: `Breathtaking cinematic vista of ${cleanSpoken}, golden hour rim light, hyper-detailed 8K, masterpiece composition, 9:16 --v 6.1`,
-          motionPrompt: "Slow backward crane tracking pullout resolving into the first frame perspective.",
+          visualConcept: p4.directorCue,
+          imagePrompt: p4.imagePrompt,
+          motionPrompt: p4.motionPrompt,
           onScreenText: "MIND BLOWN 🤯",
           soundEffect: "Impact boom resolving cleanly into opening ambient chord",
           transition: "Seamless loop back to first frame",
@@ -552,9 +560,9 @@ export async function runScriptEnginePipeline(
           startSeconds: 0,
           endSeconds: 3,
           voiceoverLine: voiceoverParagraphs[0],
-          visualConcept: `Extreme macro close-up of ${cleanSpoken} with sudden lightning-fast depth of field shift and cinematic backlighting.`,
-          imagePrompt: `Cinematic 8k macro photograph of ${cleanSpoken}, dramatic neon rim lighting, anamorphic lens flare, shallow depth of field, photorealistic, 9:16 aspect ratio --v 6.1`,
-          motionPrompt: "Fast push-in crash zoom with rapid particle suspension in the air.",
+          visualConcept: p1.directorCue,
+          imagePrompt: p1.imagePrompt,
+          motionPrompt: p1.motionPrompt,
           onScreenText: "WAIT FOR THIS... 😱",
           soundEffect: "Deep sub-bass impact whoosh followed by vinyl needle stop",
           transition: "Fast whip pan blur into Scene 2",
@@ -565,9 +573,9 @@ export async function runScriptEnginePipeline(
           startSeconds: 3,
           endSeconds: 11,
           voiceoverLine: voiceoverParagraphs[1],
-          visualConcept: `Cross-section schematic showing stress concentration points and force vectors of ${cleanSpoken}.`,
-          imagePrompt: `Technical cross-section diagram of ${cleanSpoken}, glowing bioluminescent particle pathways, dark slate aesthetic, HUD overlays, 9:16 --v 6.1`,
-          motionPrompt: "Smooth 360-degree orbit around the internal mechanical core.",
+          visualConcept: p2.directorCue,
+          imagePrompt: p2.imagePrompt,
+          motionPrompt: p2.motionPrompt,
           onScreenText: "THE UNSEEN DETAIL ❌",
           soundEffect: "Subtle mechanical ticking and air suction SFX",
           transition: "Digital glitch cut",
@@ -578,9 +586,9 @@ export async function runScriptEnginePipeline(
           startSeconds: 11,
           endSeconds: 19,
           voiceoverLine: voiceoverParagraphs[2],
-          visualConcept: `Side-by-side scientific visualization: conventional intuitive belief vs real empirical physics of ${cleanSpoken}.`,
-          imagePrompt: `High contrast side-by-side scientific comparison of ${cleanSpoken}, cinematic lighting, laboratory clean aesthetic, 9:16 --v 6.1`,
-          motionPrompt: "Left panel de-saturates while right panel pulses with thermal resonance.",
+          visualConcept: p3.directorCue,
+          imagePrompt: p3.imagePrompt,
+          motionPrompt: p3.motionPrompt,
           onScreenText: "THE HIDDEN LAW 🔬",
           soundEffect: "Low electrical hum with subtle voltage zap",
           transition: "Horizontal light streak wipe",
@@ -591,9 +599,9 @@ export async function runScriptEnginePipeline(
           startSeconds: 19,
           endSeconds: 28,
           voiceoverLine: voiceoverParagraphs[3],
-          visualConcept: `High-speed 1000fps capture of the critical equilibrium reaction of ${cleanSpoken} holding under dynamic stress.`,
-          imagePrompt: `1000fps phantom camera footage of ${cleanSpoken} reaction, suspended crystalline shards, volumetric god rays, 9:16 --v 6.1`,
-          motionPrompt: "Super slow-motion expansion radiating outward in spherical shockwaves.",
+          visualConcept: p4.directorCue,
+          imagePrompt: p4.imagePrompt,
+          motionPrompt: p4.motionPrompt,
           onScreenText: "WHAT ACTUALLY HAPPENS ⚡",
           soundEffect: "Heartbeat thud followed by spatial bass drop",
           transition: "Flash frame zoom transition",
@@ -604,9 +612,9 @@ export async function runScriptEnginePipeline(
           startSeconds: 28,
           endSeconds: 37,
           voiceoverLine: voiceoverParagraphs[4],
-          visualConcept: `Grand wide angle reveal of ${cleanSpoken} operating in pristine harmonious stability.`,
-          imagePrompt: `Majestic wide shot of ${cleanSpoken} in pristine state, golden hour atmospheric haze, studio quality, 9:16 --v 6.1`,
-          motionPrompt: "Gentle upward crane pull-back revealing complete scale.",
+          visualConcept: p5.directorCue,
+          imagePrompt: p5.imagePrompt,
+          motionPrompt: p5.motionPrompt,
           onScreenText: "NATURE'S PRECISION ✨",
           soundEffect: "Warm resolving synth chord with organic chimes",
           transition: "Soft dissolve",
@@ -617,9 +625,9 @@ export async function runScriptEnginePipeline(
           startSeconds: 37,
           endSeconds: 46,
           voiceoverLine: voiceoverParagraphs[5] || voiceoverParagraphs[4],
-          visualConcept: `Final seamless retention loop transition reconnecting back to the opening hook question.`,
-          imagePrompt: `Cinematic loop framing of ${cleanSpoken}, dramatic golden rim lighting, 8k resolution, 9:16 --v 6.1`,
-          motionPrompt: "Smooth camera ease returning to the exact perspective of Scene 1.",
+          visualConcept: p6.directorCue,
+          imagePrompt: p6.imagePrompt,
+          motionPrompt: p6.motionPrompt,
           onScreenText: "MIND BLOWN 🤯",
           soundEffect: "Subtle sub-bass resolving echo into opening loop",
           transition: "Seamless loop back to first frame",
